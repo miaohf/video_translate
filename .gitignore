@@ -37,9 +37,9 @@ ENV/
 # Project specific
 temp/
 *.wav
+*.mp3
 *.mp4
 *.srt
-*.log
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -60,7 +60,15 @@ var/
 wheels/
 *.egg-info/
 .installed.cfg
-*.egg 
+*.egg
 
 videos
 test.py
+test_translate.sh
+
+# Configuration files (contains sensitive information)
+config.py
+config_local.py
+
+# Logs
+*.log
