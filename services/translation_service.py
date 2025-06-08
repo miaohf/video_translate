@@ -58,21 +58,14 @@ class TranslationService:
                 os.makedirs(output_dir)
                 logger.info(f"Creating output directory: {output_dir}")
             
-            # 保存翻译后的字幕（中文）
+            # 只保存翻译后的字幕（中文）
             with open(output_path, "w", encoding="utf-8") as f:
                 for i, subtitle in enumerate(subtitles, 1):
                     start_time = self.format_time(subtitle["start"])
                     end_time = self.format_time(subtitle["end"])
                     f.write(f"{i}\n{start_time} --> {end_time}\n{subtitle['text']}\n\n")
                     
-            # 保存原始字幕（英文）
-            with open(original_path, "w", encoding="utf-8") as f:
-                for i, subtitle in enumerate(subtitles, 1):
-                    start_time = self.format_time(subtitle["start"])
-                    end_time = self.format_time(subtitle["end"])
-                    f.write(f"{i}\n{start_time} --> {end_time}\n{subtitle['original_text']}\n\n")
-                    
-            logger.info(f"Subtitles saved to {output_path} and {original_path}")
+            logger.info(f"Subtitles saved to {output_path}")
             
         except Exception as e:
             logger.error(f"Error saving subtitles: {str(e)}")

@@ -43,19 +43,19 @@ class SubtitleProcessor:
         try:
             # 计算文件哈希值
             file_hash = self.get_file_hash(audio_path)
-            cache_file = os.path.join("temp", f"{file_hash}_subtitles.json")
-            speaker_cache_file = os.path.join("temp", f"{file_hash}_speaker_segments.json")
-            srt_file = os.path.join("temp", f"{file_hash}_subtitles.srt")
+            
+            # 从音频路径中获取视频目录名
+            # 音频路径格式：temp/{video_name}/{file_hash}_audio.wav
+            video_name = os.path.basename(os.path.dirname(audio_path))
+            
+            cache_file = os.path.join("temp", video_name, f"{file_hash}_subtitles.json")
+            speaker_cache_file = os.path.join("temp", video_name, f"{file_hash}_speaker_segments.json")
             
             # 检查缓存
             if os.path.exists(cache_file):
                 logger.info(f"Using cached subtitle file: {cache_file}")
                 with open(cache_file, 'r', encoding='utf-8') as f:
-                    subtitles = json.load(f)
-                    # 如果存在缓存但不存在 SRT 文件，则生成 SRT 文件
-                    if not os.path.exists(srt_file):
-                        self.save_subtitles_to_srt(subtitles, srt_file)
-                    return subtitles
+                    return json.load(f)
             
             # 检查说话人识别缓存
             speaker_segments = []
@@ -124,9 +124,6 @@ class SubtitleProcessor:
             with open(cache_file, 'w', encoding='utf-8') as f:
                 json.dump(segments, f, ensure_ascii=False, indent=2)
             logger.info(f"Subtitles saved to: {cache_file}")
-            
-            # 生成 SRT 文件
-            self.save_subtitles_to_srt(segments, srt_file)
             
             return segments
             

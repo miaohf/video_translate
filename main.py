@@ -64,6 +64,7 @@ class VideoTranslationClient:
         返回:
             临时文件目录路径
         """
+        # 使用输入视频的文件名作为目录名
         video_name = Path(video_path).stem
         temp_dir = os.path.join("temp", video_name)
         os.makedirs(temp_dir, exist_ok=True)
@@ -84,8 +85,11 @@ class VideoTranslationClient:
         # 获取临时文件目录
         temp_dir = self._get_temp_dir(video_path)
         
+        # 计算文件哈希值
+        file_hash = self.audio_processor.get_file_hash(video_path)
+        
         # 初始化临时文件路径变量
-        audio_path = os.path.join(temp_dir, "audio.wav")
+        audio_path = os.path.join(temp_dir, f"{file_hash}_audio.wav")
         chinese_audio_path = os.path.join(temp_dir, "chinese_audio.wav")
         mixed_audio_path = os.path.join(temp_dir, "mixed_audio.wav")
         

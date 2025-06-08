@@ -37,11 +37,11 @@ class AudioProcessor:
         返回:
             音频文件路径
         """
-        try:
-            if output_path is None:
-                # 生成默认输出路径
-                video_name = os.path.splitext(os.path.basename(video_path))[0]
-                output_path = os.path.join("temp", video_name, "audio.wav")
+        try:            
+            # 检查是否已存在音频文件
+            if os.path.exists(output_path):
+                logger.info(f"Found existing audio file: {output_path}")
+                return output_path
             
             # 确保输出目录存在
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
