@@ -3,13 +3,14 @@ import argparse
 import logging
 import platform
 import asyncio
-from typing import Dict
+from typing import Dict, Optional
 from pathlib import Path
 
 from services.translation_service import TranslationService
 from processors.audio_processor import AudioProcessor
 from processors.subtitle_processor import SubtitleProcessor
 from processors.video_processor import VideoProcessor
+from utils.common import get_file_hash
 
 # 配置日志
 logging.basicConfig(
@@ -70,100 +71,43 @@ class VideoTranslationClient:
         os.makedirs(temp_dir, exist_ok=True)
         return temp_dir
     
-    async def process_video(self, video_path: str, output_path: str, speaker_name: str = None):
+    async def process_video(self, video_path: str, output_path: str = None):
         """
-        异步处理视频文件
+        处理视频
         
         参数:
-            video_path: 输入视频路径
-            output_path: 输出视频路径
-            speaker_name: 说话人名称
+            video_path: 视频文件路径
+            output_path: 输出文件路径，如果为 None 则自动生成
         """
-        # 获取视频文件名（不含扩展名）
-        video_name = Path(video_path).stem
-        
-        # 获取临时文件目录
-        temp_dir = self._get_temp_dir(video_path)
-        
-        # 计算文件哈希值
-        file_hash = self.audio_processor.get_file_hash(video_path)
-        
-        # 初始化临时文件路径变量
-        audio_path = os.path.join(temp_dir, f"{file_hash}_audio.wav")
-        chinese_audio_path = os.path.join(temp_dir, "chinese_audio.wav")
-        mixed_audio_path = os.path.join(temp_dir, "mixed_audio.wav")
-        
         try:
-            logger.info("\nProcessing Video...")
-            logger.info(f"Input Video: {video_path}")
-            logger.info(f"Output Video: {output_path}")
-            logger.info(f"Temp Directory: {temp_dir}")
+            # 获取视频文件名（不含扩展名）
+            video_name = os.path.splitext(os.path.basename(video_path))[0]
             
-            # 检查输入文件是否存在
-            if not os.path.exists(video_path):
-                raise FileNotFoundError(f"Input Video File Not Found: {video_path}")
-            
-            # 检查输出目录是否可写
-            output_dir = os.path.dirname(output_path)
-            if output_dir and not os.access(output_dir, os.W_OK):
-                raise PermissionError(f"Output Directory Not Writable: {output_dir}")
-            
-            # 1. 提取音频
+            # 提取音频
             logger.info("\n1. Extracting Audio...")
-            audio_path = self.audio_processor.extract_audio(video_path, audio_path)
+            audio_path = self.audio_processor.extract_audio(video_path, video_name)
             
-            # 2. 生成字幕
+            # 生成字幕
             logger.info("\n2. Generating Subtitles...")
-            subtitles = self.subtitle_processor.get_subtitles(audio_path)
+            subtitles = await self.subtitle_processor.get_subtitles(audio_path, video_name)
             
-            # 3. 翻译字幕
+            # 翻译字幕
             logger.info("\n3. Translating Subtitles...")
-            translated_subtitles = await self.translation_service.translate_batch_subtitles(subtitles, video_name)
+            translated_subtitles = await self.translation_service.translate_batch_subtitles(
+                subtitles, video_name
+            )
             
-            # 更新字幕
-            for subtitle, translated_subtitle in zip(subtitles, translated_subtitles):
-                subtitle["translated_text"] = translated_subtitle["text"]
+            # 保存翻译后的字幕
+            if output_path is None:
+                # 使用文件哈希值生成输出路径
+                file_hash = get_file_hash(video_path)
+                output_path = os.path.join("temp", video_name, f"{file_hash}_subtitles_zh.srt")
             
-            # # 4. 生成中文语音
-            # logger.info("\n4. Generating Chinese Audio...")
-            # chinese_audio_path = self.audio_processor.generate_chinese_audio(subtitles, self.speaker)
-            
-            # # 5. 混合音频
-            # logger.info("\n5. Mixing Audio...")
-            # mixed_audio_path = self.audio_processor.mix_audio(audio_path, chinese_audio_path, subtitles)
-            
-            # # 6. 生成最终视频
-            # logger.info("\n6. Generating Final Video...")
-            # self.video_processor.create_final_video(video_path, mixed_audio_path, subtitles, output_path)
-            
-            # 清理临时文件
-            logger.info("\nCleaning Up Temporary Files...")
-            for temp_file in [audio_path, chinese_audio_path, mixed_audio_path]:
-                try:
-                    if temp_file and os.path.exists(temp_file):
-                        os.remove(temp_file)
-                except Exception as e:
-                    logger.warning(f"Error Cleaning Up Temporary File {temp_file}: {str(e)}")
-            
-            logger.info("\nProcessing Completed!")
-            logger.info(f"Output Video Saved to: {output_path}")
-            
-            return {
-                "status": "success",
-                "output_video": output_path,
-                "speaker_count": len(set(sub["speaker"] for sub in subtitles if sub["speaker"])),
-                "subtitle_count": len(subtitles)
-            }
+            self.subtitle_processor.save_subtitles_to_srt(translated_subtitles, output_path)
+            logger.info(f"\nTranslation completed, output saved to {output_path}")
             
         except Exception as e:
             logger.error(f"\nError During Processing: {str(e)}")
-            # 确保清理所有临时文件
-            for temp_file in [audio_path, chinese_audio_path, mixed_audio_path]:
-                try:
-                    if temp_file and os.path.exists(temp_file):
-                        os.remove(temp_file)
-                except:
-                    pass
             raise
 
 if __name__ == "__main__":

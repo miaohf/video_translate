@@ -11,6 +11,7 @@ import asyncio
 from pathlib import Path
 import re
 from config import settings
+from utils.common import get_file_hash
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,48 @@ class TranslationService:
         self.model = settings.OLLAMA_MODEL
         self.llm = OllamaLLM(model=self.model)
         self._session = None
-        self.batch_size = 5  # 批量翻译的大小
+        self.batch_size = 30  # 批量翻译的大小
+        
+        # 初始化提示词模板
+        self.translation_prompt = PromptTemplate(
+            input_variables=["segments", "segment_count"],
+            template="""You are a professional translator specializing in English to Chinese translation.
+
+CRITICAL REQUIREMENTS:
+1. You MUST translate EXACTLY {segment_count} segments
+2. You MUST maintain the exact order of segments
+3. You MUST use the provided segment IDs
+4. You MUST return ALL segments, even if some are difficult to translate
+5. If you cannot translate a segment perfectly, provide the best possible translation
+
+Task in JSON format:
+{{
+    "task": "translation",
+    "source_language": "English",
+    "target_language": "Chinese",
+    "format": "json",
+    "requirements": [
+        "保持原文的段落数量（必须返回{segment_count}个段落）",
+        "保持原文的段落顺序",
+        "翻译要自然流畅",
+        "不要添加任何解释或注释",
+        "如果某段难以翻译，也要提供最佳翻译"
+    ],
+    "segments": {segments}
+}}
+
+Please respond in JSON format with the following structure:
+{{
+    "translations": [
+        {{"id": 1, "text": "翻译后的文本1"}},
+        {{"id": 2, "text": "翻译后的文本2"}},
+        ...
+    ]
+}}
+
+IMPORTANT: Your response MUST contain EXACTLY {segment_count} translations, no more and no less. Each translation MUST have a matching ID from the input segments."""
+        )
+        
         logger.info("Translation service initialized")
 
     async def _get_session(self) -> aiohttp.ClientSession:
@@ -97,9 +139,14 @@ class TranslationService:
         try:
             session = await self._get_session()
             
-            # 构建批量翻译提示
-            combined_text = "\n---\n".join(texts)
-            prompt = f"Translate these English texts to Chinese, keep the same number of segments:\n{combined_text}"
+            # 准备段落数据
+            segments = [{"id": i+1, "text": text} for i, text in enumerate(texts)]
+            
+            # 使用PromptTemplate格式化提示词
+            prompt = self.translation_prompt.format(
+                segments=json.dumps(segments, ensure_ascii=False),
+                segment_count=len(texts)
+            )
             
             # 构建请求数据
             data = {
@@ -107,7 +154,7 @@ class TranslationService:
                 "prompt": prompt,
                 "stream": False,
                 "options": {
-                    "temperature": 0.1,
+                    "temperature": 0.1,  # 降低温度以获得更稳定的输出
                     "top_p": 0.95,
                     "top_k": 50,
                     "num_ctx": 4096,
@@ -132,14 +179,31 @@ class TranslationService:
                 # 清理翻译结果中的思考过程
                 translated_text = self._clean_translation(translated_text)
                 
-                # 分割翻译结果
-                translated_segments = translated_text.split("\n---\n")
+                try:
+                    # 尝试解析JSON响应
+                    response_data = json.loads(translated_text)
+                    if "translations" in response_data:
+                        # 按ID排序并提取翻译文本
+                        translations = sorted(response_data["translations"], key=lambda x: x["id"])
+                        translated_segments = [t["text"] for t in translations]
+                    else:
+                        raise ValueError("Invalid response format: missing 'translations' field")
+                except json.JSONDecodeError:
+                    # 如果JSON解析失败，回退到原来的分割方法
+                    logger.warning("Failed to parse JSON response, falling back to text splitting")
+                    translated_segments = [s.strip() for s in translated_text.split("---")]
+                    translated_segments = [s for s in translated_segments if s]  # 移除空段落
                 
                 # 确保返回的段落数量与输入相同
                 if len(translated_segments) != len(texts):
                     logger.warning(f"Translation segment count mismatch: got {len(translated_segments)}, expected {len(texts)}")
-                    # 如果段落数量不匹配，返回原始文本
-                    return texts
+                    # 如果段落数量不匹配，尝试修复
+                    if len(translated_segments) < len(texts):
+                        # 如果返回的段落太少，用原始文本补充
+                        translated_segments.extend(texts[len(translated_segments):])
+                    else:
+                        # 如果返回的段落太多，只取需要的数量
+                        translated_segments = translated_segments[:len(texts)]
                 
                 return translated_segments
                 
@@ -169,11 +233,14 @@ class TranslationService:
             temp_dir = os.path.join("temp", video_name)
             os.makedirs(temp_dir, exist_ok=True)
             
+            # 计算文件哈希值
+            file_hash = get_file_hash(video_name)
+            
             # 设置输出路径
             if output_path is None:
-                output_path = os.path.join(temp_dir, "subtitles_zh.srt")
+                output_path = os.path.join(temp_dir, f"{file_hash}_subtitles_zh.srt")
             if original_path is None:
-                original_path = os.path.join(temp_dir, "subtitles_en.srt")
+                original_path = os.path.join(temp_dir, f"{file_hash}_subtitles_en.srt")
             
             translated_subtitles = []
             total = len(subtitles)

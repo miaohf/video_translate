@@ -5,12 +5,13 @@ import numpy as np
 import librosa
 from pydub import AudioSegment
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import json
 from tqdm import tqdm
 import subprocess
 from pathlib import Path
 from config import STT_SERVER_URL, TTS_SERVER_URL, AUDIO_SAMPLE_RATE, AUDIO_CHANNELS
+from utils.common import get_file_hash
 
 logger = logging.getLogger("video-translation-client")
 
@@ -26,42 +27,42 @@ class AudioProcessor:
         self.stt_server_url = stt_server_url or STT_SERVER_URL
         self.tts_server_url = tts_server_url or TTS_SERVER_URL
         
-    def extract_audio(self, video_path: str, output_path: str = None) -> str:
+    def extract_audio(self, video_path: str, video_name: str) -> str:
         """
         从视频中提取音频
         
         参数:
             video_path: 视频文件路径
-            output_path: 输出音频文件路径，如果为 None 则自动生成
+            video_name: 视频文件名（不含扩展名）
             
         返回:
             音频文件路径
         """
-        try:            
-            # 检查是否已存在音频文件
-            if os.path.exists(output_path):
-                logger.info(f"Found existing audio file: {output_path}")
-                return output_path
+        try:
+            # 创建临时目录
+            temp_dir = os.path.join("temp", video_name)
+            os.makedirs(temp_dir, exist_ok=True)
             
-            # 确保输出目录存在
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            # 生成音频文件路径
+            file_hash = get_file_hash(video_path)
+            audio_path = os.path.join(temp_dir, f"{file_hash}_audio.wav")
             
-            # 使用 ffmpeg 提取音频
-            command = [
-                "ffmpeg",
-                "-i", video_path,
-                "-vn",  # 不处理视频
-                "-acodec", "pcm_s16le",  # 音频编码
-                "-ar", str(AUDIO_SAMPLE_RATE),  # 采样率
-                "-ac", str(AUDIO_CHANNELS),  # 声道数
-                "-y",  # 覆盖已存在的文件
-                output_path
-            ]
+            # 检查是否已存在
+            if os.path.exists(audio_path):
+                logger.info("Using existing audio file")
+                return audio_path
             
-            subprocess.run(command, check=True, capture_output=True)
-            logger.info(f"Audio extracted to: {output_path}")
+            # 提取音频
+            logger.info("Extracting audio from video")
+            video = AudioSegment.from_file(video_path)
             
-            return output_path
+            # 转换为单声道，16kHz采样率
+            audio = video.set_channels(1).set_frame_rate(16000)
+            
+            # 导出为WAV格式
+            audio.export(audio_path, format="wav")
+            
+            return audio_path
             
         except Exception as e:
             logger.error(f"Error extracting audio: {str(e)}")

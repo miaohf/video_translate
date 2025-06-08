@@ -1,167 +1,153 @@
 import os
 import json
-import requests
 import logging
-from typing import List, Dict
+import aiohttp
+from typing import List, Dict, Any, Optional
+from utils.common import get_file_hash
+from config import STT_SERVER_URL
 
-logger = logging.getLogger("video-translation-client")
+logger = logging.getLogger(__name__)
 
 class SubtitleProcessor:
-    def __init__(self, stt_server_url: str):
+    def __init__(self, stt_server_url: str = None):
         """
         初始化字幕处理器
         
         参数:
             stt_server_url: 语音识别服务器地址
         """
-        self.stt_server_url = stt_server_url
-    
-    def get_file_hash(self, text: str, length: int = 20) -> str:
-        """
-        生成文本的短哈希值
+        self.stt_server_url = stt_server_url or STT_SERVER_URL
+        self._session = None
+        logger.info("Subtitle processor initialized")
         
-        参数:
-            text: 要哈希的文本
-            length: 哈希值长度
-            
-        返回:
-            哈希值字符串
+    async def get_session(self) -> aiohttp.ClientSession:
         """
-        import hashlib
-        return hashlib.md5(text.encode()).hexdigest()[:length]
-    
-    def get_subtitles(self, audio_path: str) -> List[Dict]:
+        获取或创建 aiohttp session
         """
-        获取音频的字幕
+        if self._session is None or self._session.closed:
+            self._session = aiohttp.ClientSession()
+        return self._session
+        
+    async def close(self):
+        """
+        关闭 aiohttp session
+        """
+        if self._session and not self._session.closed:
+            await self._session.close()
+            self._session = None
+        
+    async def get_subtitles(self, audio_path: str, video_name: str) -> List[Dict[str, Any]]:
+        """
+        从音频文件生成字幕
         
         参数:
             audio_path: 音频文件路径
+            video_name: 视频文件名（不含扩展名）
             
         返回:
-            字幕列表
+            字幕列表，每个元素为包含 start, end, text, speaker 的字典
         """
         try:
-            # 计算文件哈希值
-            file_hash = self.get_file_hash(audio_path)
+            # 检查缓存
+            file_hash = get_file_hash(audio_path)
             
-            # 从音频路径中获取视频目录名
             # 音频路径格式：temp/{video_name}/{file_hash}_audio.wav
-            video_name = os.path.basename(os.path.dirname(audio_path))
-            
+            # 缓存文件格式：temp/{video_name}/{file_hash}_subtitles.json
             cache_file = os.path.join("temp", video_name, f"{file_hash}_subtitles.json")
             speaker_cache_file = os.path.join("temp", video_name, f"{file_hash}_speaker_segments.json")
             
-            # 检查缓存
-            if os.path.exists(cache_file):
-                logger.info(f"Using cached subtitle file: {cache_file}")
+            if os.path.exists(cache_file) and os.path.exists(speaker_cache_file):
+                logger.info("Using cached subtitles")
                 with open(cache_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            
-            # 检查说话人识别缓存
-            speaker_segments = []
-            if os.path.exists(speaker_cache_file):
-                logger.info(f"Using cached speaker recognition results: {speaker_cache_file}")
+                    subtitles = json.load(f)
                 with open(speaker_cache_file, 'r', encoding='utf-8') as f:
                     speaker_segments = json.load(f)
-            else:
-                # 进行说话人识别
-                logger.info("Starting speaker recognition...")
-                with open(audio_path, 'rb') as f:
-                    diarization_response = requests.post(
-                        f"{self.stt_server_url}/diarize/",
-                        files={"file": f},
-                        timeout=600  # 延长超时时间到10分钟
-                    )
-                
-                if diarization_response.status_code != 200:
-                    logger.warning(f"Speaker recognition failed: {diarization_response.text}")
-                    logger.info("Continuing with default speaker")
-                    speaker_segments = []
-                else:
-                    speaker_segments = diarization_response.json().get("segments", [])
-                    logger.info(f"Identified {len(speaker_segments)} speaker segments")
                     
-                    # 保存说话人识别结果到缓存
-                    with open(speaker_cache_file, 'w', encoding='utf-8') as f:
-                        json.dump(speaker_segments, f, ensure_ascii=False, indent=2)
-                    logger.info(f"Speaker recognition results saved to: {speaker_cache_file}")
-            
-            # 进行音频转录
-            logger.info("Starting audio transcription...")
-            with open(audio_path, 'rb') as f:
-                response = requests.post(
-                    f"{self.stt_server_url}/transcribe/",
-                    files={"file": f},
-                    timeout=600  # 延长超时时间到10分钟
-                )
-            
-            if response.status_code != 200:
-                raise Exception(f"Transcription failed: {response.text}")
-            
-            # 处理转录结果
-            result = response.json()
-            segments = result.get("segments", [])
-            
-            # 合并说话人信息
-            if speaker_segments:
-                logger.info("Merging speaker information...")
-                for segment in segments:
-                    # 找到对应的说话人
-                    segment_start = segment["start"]
-                    segment_end = segment["end"]
-                    
-                    # 查找重叠的说话人片段
-                    for speaker_segment in speaker_segments:
-                        if (segment_start >= speaker_segment["start"] and 
-                            segment_end <= speaker_segment["end"]):
-                            segment["speaker"] = speaker_segment["speaker"]
+                # 合并说话人信息
+                for subtitle in subtitles:
+                    subtitle["speaker"] = "Unknown"
+                    for segment in speaker_segments:
+                        if (subtitle["start"] >= segment["start"] and 
+                            subtitle["end"] <= segment["end"]):
+                            subtitle["speaker"] = segment["speaker"]
                             break
-                    else:
-                        # 如果没有找到对应的说话人，使用默认值
-                        segment["speaker"] = "SPEAKER_0"
+                            
+                return subtitles
             
-            # 保存到缓存
+            # 生成字幕
+            logger.info("Generating subtitles")
+            session = await self.get_session()
+            
+            # 准备音频文件
+            with open(audio_path, 'rb') as f:
+                audio_data = f.read()
+            
+            # 发送请求到语音识别服务器
+            async with session.post(
+                f"{self.stt_server_url}/transcribe",
+                data={'file': audio_data}
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    raise Exception(f"STT API error: {error_text}")
+                    
+                result = await response.json()
+                
+            # 转换为字幕格式
+            subtitles = []
+            for segment in result['segments']:
+                subtitle = {
+                    "start": segment['start'],
+                    "end": segment['end'],
+                    "text": segment['text'].strip(),
+                    "speaker": "Unknown"  # 默认说话人
+                }
+                subtitles.append(subtitle)
+            
+            # 保存字幕
+            os.makedirs(os.path.dirname(cache_file), exist_ok=True)
             with open(cache_file, 'w', encoding='utf-8') as f:
-                json.dump(segments, f, ensure_ascii=False, indent=2)
-            logger.info(f"Subtitles saved to: {cache_file}")
+                json.dump(subtitles, f, ensure_ascii=False, indent=2)
             
-            return segments
+            return subtitles
             
         except Exception as e:
-            logger.error(f"Failed to get subtitles: {str(e)}")
+            logger.error(f"Error generating subtitles: {str(e)}")
             raise
-    
-    def save_subtitles_to_srt(self, subtitles: List[Dict], output_path: str):
+        finally:
+            # 确保关闭session
+            await self.close()
+            
+    def save_subtitles_to_srt(self, subtitles: List[Dict[str, Any]], output_path: str):
         """
-        将字幕保存为 SRT 格式
+        将字幕保存为SRT格式
         
         参数:
             subtitles: 字幕列表
             output_path: 输出文件路径
         """
         try:
-            logger.info(f"Saving SRT file: {output_path}")
             with open(output_path, 'w', encoding='utf-8') as f:
                 for i, subtitle in enumerate(subtitles, 1):
-                    # 写入序号
-                    f.write(f"{i}\n")
-                    
-                    # 写入时间戳
+                    # 格式化时间
                     start_time = self.format_time(subtitle["start"])
                     end_time = self.format_time(subtitle["end"])
-                    f.write(f"{start_time} --> {end_time}\n")
                     
-                    # 写入说话人信息和文本
-                    speaker = subtitle.get("speaker", "SPEAKER_0")
-                    text = subtitle["text"]
-                    f.write(f"[{speaker}] {text}\n\n")
-            
-            logger.info(f"SRT file saved: {output_path}")
+                    # 写入字幕
+                    f.write(f"{i}\n")
+                    f.write(f"{start_time} --> {end_time}\n")
+                    if subtitle["speaker"] != "Unknown":
+                        f.write(f"[{subtitle['speaker']}] {subtitle['text']}\n")
+                    else:
+                        f.write(f"{subtitle['text']}\n")
+                    f.write("\n")
+                    
+            logger.info(f"Subtitles saved to {output_path}")
             
         except Exception as e:
-            logger.error(f"Failed to save SRT file: {str(e)}")
+            logger.error(f"Error saving subtitles: {str(e)}")
             raise
-    
+            
     def format_time(self, seconds: float) -> str:
         """
         将秒数格式化为SRT时间格式
@@ -170,7 +156,7 @@ class SubtitleProcessor:
             seconds: 秒数
             
         返回:
-            格式化的时间字符串
+            格式化的时间字符串 (HH:MM:SS,mmm)
         """
         hours = int(seconds // 3600)
         minutes = int((seconds % 3600) // 60)
