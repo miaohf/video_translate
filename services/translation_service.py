@@ -10,7 +10,7 @@ import aiohttp
 import asyncio
 from pathlib import Path
 import re
-from config import STT_SERVER_URL, MODEL_NAME, OLLAMA_SERVER_URL
+from config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -19,27 +19,23 @@ class TranslationService:
         """
         初始化翻译服务
         """
-        self.api_url = OLLAMA_SERVER_URL  # 使用Ollama API URL
-        self.model = MODEL_NAME
+        self.api_url = settings.OLLAMA_API_URL
+        self.model = settings.OLLAMA_MODEL
         self.llm = OllamaLLM(model=self.model)
-        self.session = None  # aiohttp session
+        self._session = None
         self.batch_size = 5  # 批量翻译的大小
         logger.info("Translation service initialized")
 
-    async def _get_session(self):
-        """
-        获取或创建 aiohttp session
-        """
-        if self.session is None or self.session.closed:
-            self.session = aiohttp.ClientSession()
-        return self.session
+    async def _get_session(self) -> aiohttp.ClientSession:
+        """获取或创建 aiohttp 会话"""
+        if self._session is None or self._session.closed:
+            self._session = aiohttp.ClientSession()
+        return self._session
 
     async def close(self):
-        """
-        关闭 aiohttp session
-        """
-        if self.session and not self.session.closed:
-            await self.session.close()
+        """关闭 aiohttp 会话"""
+        if self._session and not self._session.closed:
+            await self._session.close()
 
     def save_subtitles(self, subtitles: List[Dict[str, Any]], 
                       output_path: str, original_path: str) -> None:
@@ -73,7 +69,7 @@ class TranslationService:
 
     def _clean_translation(self, text: str) -> str:
         """
-        清理翻译结果，移除 think 标签内容
+        清理翻译结果，移除 think 标签内容和多余的空行
         
         参数:
             text: 原始翻译文本
@@ -120,15 +116,24 @@ class TranslationService:
             }
             
             # 发送请求
-            async with session.post(self.api_url, json=data) as response:
+            async with session.post(f"{self.api_url}/api/generate", json=data) as response:
                 if response.status != 200:
-                    raise Exception(f"API request failed with status {response.status}")
+                    error_text = await response.text()
+                    raise Exception(f"API request failed with status {response.status}: {error_text}")
                 
                 result = await response.json()
+                if "error" in result:
+                    raise Exception(f"API error: {result['error']}")
+                    
                 translated_text = result.get("response", "").strip()
+                if not translated_text:
+                    raise Exception("Empty response from API")
+                
+                # 清理翻译结果中的思考过程
+                translated_text = self._clean_translation(translated_text)
                 
                 # 分割翻译结果
-                translated_segments = [self._clean_translation(seg) for seg in translated_text.split("\n---\n")]
+                translated_segments = translated_text.split("\n---\n")
                 
                 # 确保返回的段落数量与输入相同
                 if len(translated_segments) != len(texts):

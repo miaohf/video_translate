@@ -118,7 +118,7 @@ class VideoTranslationClient:
             
             # 3. 翻译字幕
             logger.info("\n3. Translating Subtitles...")
-            translated_subtitles = await self.translation_service.translate_batch(subtitles, video_name)
+            translated_subtitles = await self.translation_service.translate_batch_subtitles(subtitles, video_name)
             
             # 更新字幕
             for subtitle, translated_subtitle in zip(subtitles, translated_subtitles):
