@@ -10,7 +10,7 @@ import aiohttp
 import asyncio
 from pathlib import Path
 import re
-from config import STT_SERVER_URL, MODEL_NAME
+from config import STT_SERVER_URL, MODEL_NAME, OLLAMA_SERVER_URL
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +19,27 @@ class TranslationService:
         """
         初始化翻译服务
         """
-        self.api_url = STT_SERVER_URL
+        self.api_url = OLLAMA_SERVER_URL  # 使用Ollama API URL
         self.model = MODEL_NAME
         self.llm = OllamaLLM(model=self.model)
+        self.session = None  # aiohttp session
+        self.batch_size = 5  # 批量翻译的大小
         logger.info("Translation service initialized")
+
+    async def _get_session(self):
+        """
+        获取或创建 aiohttp session
+        """
+        if self.session is None or self.session.closed:
+            self.session = aiohttp.ClientSession()
+        return self.session
+
+    async def close(self):
+        """
+        关闭 aiohttp session
+        """
+        if self.session and not self.session.closed:
+            await self.session.close()
 
     def save_subtitles(self, subtitles: List[Dict[str, Any]], 
                       output_path: str, original_path: str) -> None:
@@ -46,14 +63,14 @@ class TranslationService:
                 for i, subtitle in enumerate(subtitles, 1):
                     start_time = self.format_time(subtitle["start"])
                     end_time = self.format_time(subtitle["end"])
-                    f.write(f"{i}\n{start_time} --> {end_time}\n{subtitle['translated_text']}\n\n")
+                    f.write(f"{i}\n{start_time} --> {end_time}\n{subtitle['text']}\n\n")
                     
             # 保存原始字幕（英文）
             with open(original_path, "w", encoding="utf-8") as f:
                 for i, subtitle in enumerate(subtitles, 1):
                     start_time = self.format_time(subtitle["start"])
                     end_time = self.format_time(subtitle["end"])
-                    f.write(f"{i}\n{start_time} --> {end_time}\n{subtitle['text']}\n\n")
+                    f.write(f"{i}\n{start_time} --> {end_time}\n{subtitle['original_text']}\n\n")
                     
             logger.info(f"Subtitles saved to {output_path} and {original_path}")
             
@@ -78,23 +95,22 @@ class TranslationService:
         # 移除首尾空白
         return text.strip()
 
-    async def translate(self, text: str, source_lang: str = "en", target_lang: str = "zh") -> str:
+    async def translate_batch(self, texts: List[str]) -> List[str]:
         """
-        使用 Ollama 进行翻译
+        批量翻译文本
         
         参数:
-            text: 要翻译的文本
-            source_lang: 源语言
-            target_lang: 目标语言
+            texts: 要翻译的文本列表
             
         返回:
-            翻译后的文本
+            翻译后的文本列表
         """
         try:
-            logger.debug(f"Translating text: {text[:100]}...")
+            session = await self._get_session()
             
-            # 构建翻译提示
-            prompt = f"Translate this English text to Chinese: {text}"
+            # 构建批量翻译提示
+            combined_text = "\n---\n".join(texts)
+            prompt = f"Translate these English texts to Chinese, keep the same number of segments:\n{combined_text}"
             
             # 构建请求数据
             data = {
@@ -111,33 +127,33 @@ class TranslationService:
             }
             
             # 发送请求
-            async with aiohttp.ClientSession() as session:
-                async with session.post(self.api_url, json=data) as response:
-                    if response.status != 200:
-                        raise Exception(f"API request failed with status {response.status}")
-                    
-                    result = await response.json()
-                    translated_text = result.get("response", "").strip()
-                    
-                    # 清理翻译结果
-                    translated_text = self._clean_translation(translated_text)
-                    
-                    logger.debug(f"Translation result: {translated_text[:100]}...")
-                    
-                    if not translated_text:
-                        logger.warning("Empty translation result")
-                        return f"[Translation error: Empty result]"
-                    
-                    return translated_text
-                    
+            async with session.post(self.api_url, json=data) as response:
+                if response.status != 200:
+                    raise Exception(f"API request failed with status {response.status}")
+                
+                result = await response.json()
+                translated_text = result.get("response", "").strip()
+                
+                # 分割翻译结果
+                translated_segments = [self._clean_translation(seg) for seg in translated_text.split("\n---\n")]
+                
+                # 确保返回的段落数量与输入相同
+                if len(translated_segments) != len(texts):
+                    logger.warning(f"Translation segment count mismatch: got {len(translated_segments)}, expected {len(texts)}")
+                    # 如果段落数量不匹配，返回原始文本
+                    return texts
+                
+                return translated_segments
+                
         except Exception as e:
-            logger.error(f"Translation error: {str(e)}")
-            raise
+            logger.error(f"Batch translation error: {str(e)}")
+            # 发生错误时返回原始文本
+            return texts
 
-    async def translate_batch(self, subtitles: List[Dict[str, Any]], 
-                            video_name: str,
-                            output_path: str = None,
-                            original_path: str = None) -> List[Dict[str, Any]]:
+    async def translate_batch_subtitles(self, subtitles: List[Dict[str, Any]], 
+                                      video_name: str,
+                                      output_path: str = None,
+                                      original_path: str = None) -> List[Dict[str, Any]]:
         """
         批量翻译字幕
         
@@ -166,16 +182,23 @@ class TranslationService:
             
             # 创建进度条
             with tqdm(total=total, desc="Translation progress", unit="subtitle") as pbar:
-                for subtitle in subtitles:
-                    translated_text = await self.translate(subtitle["text"])
+                # 按批次处理字幕
+                for i in range(0, total, self.batch_size):
+                    batch = subtitles[i:i + self.batch_size]
+                    batch_texts = [sub["text"] for sub in batch]
                     
-                    # 创建新的字幕条目
-                    translated_subtitle = subtitle.copy()
-                    translated_subtitle["text"] = translated_text
-                    translated_subtitles.append(translated_subtitle)
+                    # 批量翻译
+                    translated_texts = await self.translate_batch(batch_texts)
                     
-                    # 更新进度条
-                    pbar.update(1)
+                    # 更新字幕
+                    for subtitle, translated_text in zip(batch, translated_texts):
+                        translated_subtitle = subtitle.copy()
+                        translated_subtitle["text"] = translated_text
+                        translated_subtitle["original_text"] = subtitle["text"]
+                        translated_subtitles.append(translated_subtitle)
+                        
+                        # 更新进度条
+                        pbar.update(1)
                     
                     # 每翻译10个字幕保存一次
                     if len(translated_subtitles) % 10 == 0:
@@ -185,10 +208,15 @@ class TranslationService:
             self.save_subtitles(translated_subtitles, output_path, original_path)
             logger.info("Translation completed, saving subtitle files")
             
+            # 关闭 session
+            await self.close()
+            
             return translated_subtitles
             
         except Exception as e:
             logger.error(f"Batch translation error: {str(e)}")
+            # 确保关闭 session
+            await self.close()
             raise
 
     def format_time(self, seconds: float) -> str:

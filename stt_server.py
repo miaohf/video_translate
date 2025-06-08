@@ -255,9 +255,9 @@ def process_transcription(audio_path: str) -> List[Dict]:
                         }
         
         # 添加最后一个片段
-                if current_segment is not None:
+        if current_segment is not None:
             results.append(current_segment)
-                
+        
         logger.info(f"Transcription completed, generated {len(results)} segments")
         return results
         

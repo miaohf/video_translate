@@ -4,8 +4,8 @@
 """
 
 # API 配置
-STT_SERVER_URL = "http://127.0.0.1:11434/api/generate"  # 语音识别服务器地址
-TTS_SERVER_URL = "http://127.0.0.1:11434/api/generate"  # 语音合成服务器地址
+STT_SERVER_URL = "http://127.0.0.1:8001/api/generate"  # 语音识别服务器地址
+TTS_SERVER_URL = "http://127.0.0.1:8000/api/generate"  # 语音合成服务器地址
 
 # 模型配置
 MODEL_NAME = "qwen3:8b"  # 使用的模型名称
