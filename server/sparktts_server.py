@@ -7,7 +7,7 @@ import torch
 import torchaudio
 import logging
 import soundfile as sf
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 from typing import List, Generator, Optional
@@ -28,9 +28,6 @@ app = FastAPI()
 
 # 定义请求模型
 class TextToSpeechRequest(BaseModel):
-    """
-    文本转语音请求模型
-    """
     text: str
     prompt_speech_path: Optional[str] = None
     prompt_text: Optional[str] = None
@@ -39,15 +36,12 @@ class TextToSpeechRequest(BaseModel):
     pitch: Optional[str] = None
     speed: Optional[str] = None
     temperature: float = 0.8
-    top_k: float = 50
+    top_k: int = 50
     top_p: float = 0.95
     seed: int = 421
 
 # 新增流式处理请求模型
 class StreamTTSRequest(BaseModel):
-    """
-    流式文本转语音请求模型
-    """
     text: str
     prompt_speech_path: Optional[str] = None
     prompt_text: Optional[str] = None
@@ -56,7 +50,7 @@ class StreamTTSRequest(BaseModel):
     pitch: Optional[str] = None
     speed: Optional[str] = None
     temperature: float = 0.8
-    top_k: float = 50
+    top_k: int = 50
     top_p: float = 0.95
     seed: int = 421
     max_segment_length: int = 100  # 最大分段长度
@@ -64,13 +58,6 @@ class StreamTTSRequest(BaseModel):
 # 初始化模型（全局变量，避免重复加载）
 class SparkTTSModel:
     def __init__(self, model_dir='pretrained_models/Spark-TTS-0.5B', device=None):
-        """
-        初始化SparkTTS模型
-        
-        参数:
-            model_dir: 模型目录路径
-            device: 运行设备（可选）
-        """
         # 确定设备
         if device is not None:
             self.device = device
@@ -110,25 +97,7 @@ class SparkTTSModel:
     def generate_speech(self, text, prompt_speech_path=None, prompt_text=None, 
                        speaker=None, gender=None, pitch=None, speed=None, 
                        temperature=0.8, top_k=50, top_p=0.95, seed=421):
-        """
-        生成语音
-        
-        参数:
-            text: 要转换的文本
-            prompt_speech_path: 提示音频文件路径
-            prompt_text: 提示文本
-            speaker: 说话人名称
-            gender: 性别
-            pitch: 音调
-            speed: 语速
-            temperature: 温度参数
-            top_k: top-k参数
-            top_p: top-p参数
-            seed: 随机种子
-            
-        返回:
-            (wav, sampling_rate): 音频数据和采样率
-        """
+        """生成语音"""
         logger.info(f"Generating speech for text: {text[:50]}...")
         
         # 设置随机种子
@@ -184,15 +153,7 @@ class SparkTTSModel:
             raise ValueError(f"Failed to generate speech: {str(e)}")
     
     def find_prompt_by_speaker(self, speaker_name):
-        """
-        查找音频提示文件，兼容indextts_api的speaker参数
-        
-        参数:
-            speaker_name: 说话人名称
-            
-        返回:
-            提示音频文件路径
-        """
+        """查找音频提示文件，兼容indextts_api的speaker参数"""
         if not os.path.exists(self.prompt_dir) or not os.listdir(self.prompt_dir):
             raise FileNotFoundError(f"提示音频目录不存在或为空: {self.prompt_dir}")
         
@@ -201,7 +162,7 @@ class SparkTTSModel:
         for ext in ['.wav', '.mp3']:
             exact_match = os.path.join(self.prompt_dir, f"{speaker_name}{ext}")
             if os.path.exists(exact_match):
-                logger.info(f"Found exact match for prompt audio: {exact_match}")
+                logger.info(f"找到精确匹配的提示音频: {exact_match}")
                 return exact_match
         
         # 2. 部分匹配 - 查找文件名包含speaker_name的文件
@@ -214,7 +175,7 @@ class SparkTTSModel:
             # 使用第一个匹配项
             matched_file = partial_matches[0]
             prompt_path = os.path.join(self.prompt_dir, matched_file)
-            logger.warning(f"No exact match found for '{speaker_name}', using partial match: {matched_file}")
+            logger.warning(f"未找到精确匹配'{speaker_name}'的音频，使用部分匹配: {matched_file}")
             return prompt_path
         
         # 3. 任意音频文件
@@ -223,22 +184,13 @@ class SparkTTSModel:
             # 按字母顺序排序，保证结果一致性
             audio_files.sort()
             prompt_path = os.path.join(self.prompt_dir, audio_files[0])
-            logger.warning(f"No audio found related to '{speaker_name}', using default audio: {audio_files[0]}")
+            logger.warning(f"未找到与'{speaker_name}'相关的音频，使用默认音频: {audio_files[0]}")
             return prompt_path
         
         # 如果没有找到任何音频文件
-        raise FileNotFoundError(f"No available prompt audio files found, please check {self.prompt_dir} directory")
+        raise FileNotFoundError(f"未找到任何可用的提示音频文件，请检查{self.prompt_dir}目录")
     
     def split_text_by_punctuation(self, text):
-        """
-        按标点符号分割文本
-        
-        参数:
-            text: 要分割的文本
-            
-        返回:
-            分割后的句子列表
-        """
         punctuation = ["!", "?", ".", ";", "！", "？", "。", "；"]
         pattern = r"(?<=[{0}])\s*".format("".join(punctuation))
         sentences = [i for i in re.split(pattern, text) if i.strip() != ""]
@@ -247,25 +199,7 @@ class SparkTTSModel:
     def generate_speech_segment(self, text_segment, prompt_speech_path=None, prompt_text=None,
                                speaker=None, gender=None, pitch=None, speed=None, 
                                temperature=0.8, top_k=50, top_p=0.95, seed=421):
-        """
-        为流式API生成单个段落的音频
-        
-        参数:
-            text_segment: 文本段落
-            prompt_speech_path: 提示音频文件路径
-            prompt_text: 提示文本
-            speaker: 说话人名称
-            gender: 性别
-            pitch: 音调
-            speed: 语速
-            temperature: 温度参数
-            top_k: top-k参数
-            top_p: top-p参数
-            seed: 随机种子
-            
-        返回:
-            包含音频数据和采样率的字典
-        """
+        """为流式API生成单个段落的音频"""
         logger.debug(f"Generating segment: {text_segment[:30]}...")
         
         try:
@@ -310,16 +244,6 @@ logger.info("Model initialization complete")
 
 # 文本分段函数
 def split_text(text: str, max_length: int = 100) -> List[str]:
-    """
-    将文本分割成指定最大长度的段落
-    
-    参数:
-        text: 要分割的文本
-        max_length: 最大段落长度
-        
-    返回:
-        分割后的文本段落列表
-    """
     # 如果文本长度小于max_length，直接返回
     if len(text) <= max_length:
         return [text]
@@ -517,6 +441,47 @@ async def stream_tts(request: Request):
         # 打印详细错误信息
         logger.error(f"Unexpected error in /tts_stream endpoint: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/upload_audio")
+async def upload_audio(file: UploadFile = File(...)):
+    """
+    上传音频文件到 assets 目录
+    
+    参数:
+        file: 上传的音频文件（支持 mp3 格式）
+        
+    返回:
+        上传结果信息
+    """
+    try:
+        # 检查文件扩展名
+        if not file.filename.lower().endswith('.mp3'):
+            raise HTTPException(status_code=400, detail="只支持 MP3 格式的音频文件")
+        
+        # 确保 assets 目录存在
+        os.makedirs(model.prompt_dir, exist_ok=True)
+        
+        # 构建保存路径
+        save_path = os.path.join(model.prompt_dir, file.filename)
+        
+        # 保存文件
+        content = await file.read()
+        with open(save_path, "wb") as f:
+            f.write(content)
+        
+        logger.info(f"成功保存音频文件: {save_path}")
+        
+        return {
+            "status": "success",
+            "message": "音频文件上传成功",
+            "file_path": save_path
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"上传音频文件失败: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"上传音频文件失败: {str(e)}")
 
 # 如果直接运行此文件
 if __name__ == "__main__":

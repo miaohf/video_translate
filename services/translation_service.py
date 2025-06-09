@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 from config import settings
 from utils.common import get_file_hash
+from services.translation_templates import TRANSLATION_TEMPLATE
 
 logger = logging.getLogger(__name__)
 
@@ -24,46 +25,12 @@ class TranslationService:
         self.model = settings.OLLAMA_MODEL
         self.llm = OllamaLLM(model=self.model)
         self._session = None
-        self.batch_size = 30  # 批量翻译的大小
+        self.batch_size = 10  # 批量翻译的大小
         
         # 初始化提示词模板
         self.translation_prompt = PromptTemplate(
             input_variables=["segments", "segment_count"],
-            template="""You are a professional translator specializing in English to Chinese translation.
-
-CRITICAL REQUIREMENTS:
-1. You MUST translate EXACTLY {segment_count} segments
-2. You MUST maintain the exact order of segments
-3. You MUST use the provided segment IDs
-4. You MUST return ALL segments, even if some are difficult to translate
-5. If you cannot translate a segment perfectly, provide the best possible translation
-
-Task in JSON format:
-{{
-    "task": "translation",
-    "source_language": "English",
-    "target_language": "Chinese",
-    "format": "json",
-    "requirements": [
-        "保持原文的段落数量（必须返回{segment_count}个段落）",
-        "保持原文的段落顺序",
-        "翻译要自然流畅",
-        "不要添加任何解释或注释",
-        "如果某段难以翻译，也要提供最佳翻译"
-    ],
-    "segments": {segments}
-}}
-
-Please respond in JSON format with the following structure:
-{{
-    "translations": [
-        {{"id": 1, "text": "翻译后的文本1"}},
-        {{"id": 2, "text": "翻译后的文本2"}},
-        ...
-    ]
-}}
-
-IMPORTANT: Your response MUST contain EXACTLY {segment_count} translations, no more and no less. Each translation MUST have a matching ID from the input segments."""
+            template=TRANSLATION_TEMPLATE
         )
         
         logger.info("Translation service initialized")
@@ -105,6 +72,12 @@ IMPORTANT: Your response MUST contain EXACTLY {segment_count} translations, no m
                     
             logger.info(f"Subtitles saved to {output_path}")
             
+            # 保存 JSON 格式的字幕数据
+            json_path = output_path.replace("_subtitles_zh.srt", "_subtitles_zh.json")
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(subtitles, f, ensure_ascii=False, indent=2)
+            logger.info(f"JSON subtitles saved to {json_path}")
+            
         except Exception as e:
             logger.error(f"Error saving subtitles: {str(e)}")
             raise
@@ -136,81 +109,90 @@ IMPORTANT: Your response MUST contain EXACTLY {segment_count} translations, no m
         返回:
             翻译后的文本列表
         """
-        try:
-            session = await self._get_session()
-            
-            # 准备段落数据
-            segments = [{"id": i+1, "text": text} for i, text in enumerate(texts)]
-            
-            # 使用PromptTemplate格式化提示词
-            prompt = self.translation_prompt.format(
-                segments=json.dumps(segments, ensure_ascii=False),
-                segment_count=len(texts)
-            )
-            
-            # 构建请求数据
-            data = {
-                "model": self.model,
-                "prompt": prompt,
-                "stream": False,
-                "options": {
-                    "temperature": 0.1,  # 降低温度以获得更稳定的输出
-                    "top_p": 0.95,
-                    "top_k": 50,
-                    "num_ctx": 4096,
-                    "repeat_penalty": 1.1
+        max_retries = 6
+        retry_count = 0
+        
+        while retry_count < max_retries:
+            try:
+                session = await self._get_session()
+                
+                # 准备段落数据
+                segments = [{"id": i+1, "text": text} for i, text in enumerate(texts)]
+                
+                # 使用PromptTemplate格式化提示词
+                prompt = self.translation_prompt.format(
+                    segments=json.dumps(segments, ensure_ascii=False),
+                    segment_count=len(texts)
+                )
+                
+                # 构建请求数据
+                data = {
+                    "model": self.model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.1,  # 降低温度以获得更稳定的输出
+                        "top_p": 0.95,
+                        "top_k": 50,
+                        "num_ctx": 4096,
+                        "repeat_penalty": 1.1
+                    }
                 }
-            }
-            
-            # 发送请求
-            async with session.post(f"{self.api_url}/api/generate", json=data) as response:
-                if response.status != 200:
-                    error_text = await response.text()
-                    raise Exception(f"API request failed with status {response.status}: {error_text}")
                 
-                result = await response.json()
-                if "error" in result:
-                    raise Exception(f"API error: {result['error']}")
+                # 发送请求
+                async with session.post(f"{self.api_url}/api/generate", json=data) as response:
+                    if response.status != 200:
+                        error_text = await response.text()
+                        raise Exception(f"API request failed with status {response.status}: {error_text}")
                     
-                translated_text = result.get("response", "").strip()
-                if not translated_text:
-                    raise Exception("Empty response from API")
-                
-                # 清理翻译结果中的思考过程
-                translated_text = self._clean_translation(translated_text)
-                
-                try:
-                    # 尝试解析JSON响应
-                    response_data = json.loads(translated_text)
-                    if "translations" in response_data:
-                        # 按ID排序并提取翻译文本
-                        translations = sorted(response_data["translations"], key=lambda x: x["id"])
-                        translated_segments = [t["text"] for t in translations]
-                    else:
-                        raise ValueError("Invalid response format: missing 'translations' field")
-                except json.JSONDecodeError:
-                    # 如果JSON解析失败，回退到原来的分割方法
-                    logger.warning("Failed to parse JSON response, falling back to text splitting")
-                    translated_segments = [s.strip() for s in translated_text.split("---")]
-                    translated_segments = [s for s in translated_segments if s]  # 移除空段落
-                
-                # 确保返回的段落数量与输入相同
-                if len(translated_segments) != len(texts):
-                    logger.warning(f"Translation segment count mismatch: got {len(translated_segments)}, expected {len(texts)}")
-                    # 如果段落数量不匹配，尝试修复
-                    if len(translated_segments) < len(texts):
-                        # 如果返回的段落太少，用原始文本补充
-                        translated_segments.extend(texts[len(translated_segments):])
-                    else:
-                        # 如果返回的段落太多，只取需要的数量
-                        translated_segments = translated_segments[:len(texts)]
-                
-                return translated_segments
-                
-        except Exception as e:
-            logger.error(f"Batch translation error: {str(e)}")
-            # 发生错误时返回原始文本
-            return texts
+                    result = await response.json()
+                    if "error" in result:
+                        raise Exception(f"API error: {result['error']}")
+                        
+                    translated_text = result.get("response", "").strip()
+                    if not translated_text:
+                        raise Exception("Empty response from API")
+                    
+                    # 清理翻译结果中的思考过程
+                    translated_text = self._clean_translation(translated_text)
+                    
+                    try:
+                        # 尝试解析JSON响应
+                        response_data = json.loads(translated_text)
+                        if "translations" in response_data:
+                            # 按ID排序并提取翻译文本
+                            translations = sorted(response_data["translations"], key=lambda x: x["id"])
+                            translated_segments = [t["text"] for t in translations]
+                        else:
+                            raise ValueError("Invalid response format: missing 'translations' field")
+                    except json.JSONDecodeError:
+                        # 如果JSON解析失败，回退到原来的分割方法
+                        logger.warning("Failed to parse JSON response, falling back to text splitting")
+                        translated_segments = [s.strip() for s in translated_text.split("---")]
+                        translated_segments = [s for s in translated_segments if s]  # 移除空段落
+                    
+                    # 检查段落数量是否匹配
+                    if len(translated_segments) != len(texts):
+                        logger.warning(f"Translation segment count mismatch: got {len(translated_segments)}, expected {len(texts)}")
+                        retry_count += 1
+                        if retry_count < max_retries:
+                            logger.info(f"Retrying translation (attempt {retry_count + 1}/{max_retries})")
+                            continue
+                        else:
+                            raise Exception(f"Failed to get correct number of segments after {max_retries} attempts")
+                    
+                    return translated_segments
+                    
+            except Exception as e:
+                logger.error(f"Batch translation error: {str(e)}")
+                retry_count += 1
+                if retry_count < max_retries:
+                    logger.info(f"Retrying translation after error (attempt {retry_count + 1}/{max_retries})")
+                    continue
+                else:
+                    # 所有重试都失败后，返回原始文本
+                    logger.error(f"All retry attempts failed, returning original texts")
+                    return texts
 
     async def translate_batch_subtitles(self, subtitles: List[Dict[str, Any]], 
                                       video_name: str,
@@ -250,13 +232,25 @@ IMPORTANT: Your response MUST contain EXACTLY {segment_count} translations, no m
                 # 按批次处理字幕
                 for i in range(0, total, self.batch_size):
                     batch = subtitles[i:i + self.batch_size]
-                    batch_texts = [sub["text"] for sub in batch]
+                    # 检查每个字幕是否包含必要的字段
+                    valid_batch = []
+                    for sub in batch:
+                        if "text" not in sub:
+                            logger.warning(f"字幕缺少 text 字段: {sub}")
+                            continue
+                        valid_batch.append(sub)
+                    
+                    if not valid_batch:
+                        logger.warning("当前批次没有有效的字幕，跳过")
+                        continue
+                        
+                    batch_texts = [sub["text"] for sub in valid_batch]
                     
                     # 批量翻译
                     translated_texts = await self.translate_batch(batch_texts)
                     
                     # 更新字幕
-                    for subtitle, translated_text in zip(batch, translated_texts):
+                    for subtitle, translated_text in zip(valid_batch, translated_texts):
                         translated_subtitle = subtitle.copy()
                         translated_subtitle["text"] = translated_text
                         translated_subtitle["original_text"] = subtitle["text"]

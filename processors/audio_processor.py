@@ -13,7 +13,7 @@ from pathlib import Path
 from config import STT_SERVER_URL, TTS_SERVER_URL, AUDIO_SAMPLE_RATE, AUDIO_CHANNELS
 from utils.common import get_file_hash
 
-logger = logging.getLogger("video-translation-client")
+logger = logging.getLogger(__name__)
 
 class AudioProcessor:
     def __init__(self, stt_server_url: str = None, tts_server_url: str = None):
@@ -44,7 +44,7 @@ class AudioProcessor:
             os.makedirs(temp_dir, exist_ok=True)
             
             # 生成音频文件路径
-            file_hash = get_file_hash(video_path)
+            file_hash = get_file_hash(video_name)
             audio_path = os.path.join(temp_dir, f"{file_hash}_audio.wav")
             
             # 检查是否已存在

@@ -3,7 +3,7 @@ import subprocess
 import logging
 from typing import List, Dict
 
-logger = logging.getLogger("video-translation-client")
+logger = logging.getLogger(__name__)
 
 class VideoProcessor:
     def create_final_video(self, video_path: str, audio_path: str, subtitles: List[Dict], output_path: str) -> str:
