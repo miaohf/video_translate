@@ -1,28 +1,21 @@
 import os
 import io
-import re
 import time
 import json
 import torch
 import torchaudio
-import sentencepiece as spm
 import logging
-import numpy as np
+import soundfile as sf
+import re
 from fastapi import FastAPI, HTTPException, Request, UploadFile, File
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
-from omegaconf import OmegaConf
-from torch.nn.utils.rnn import pad_sequence
 from typing import List, Generator, Optional
-import tempfile
+import platform
+from pathlib import Path
+from datetime import datetime
 
-from indextts.BigVGAN.models import BigVGAN as Generator
-from indextts.gpt.model import UnifiedVoice
-from indextts.utils.checkpoint import load_checkpoint
-from indextts.utils.feature_extractors import MelSpectrogramFeatures
-from indextts.utils.common import tokenize_by_CJK_char
-from indextts.vqvae.xtts_dvae import DiscreteVAE
-from indextts.utils.front import TextNormalizer
+from indextts.infer import IndexTTS
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, 
@@ -36,74 +29,73 @@ app = FastAPI()
 class TextToSpeechRequest(BaseModel):
     text: str
     prompt_speech_path: Optional[str] = None
-    prompt_text: Optional[str] = None
-    speaker: Optional[str] = None  # 兼容indextts_api的speaker参数
-    gender: Optional[str] = None
-    pitch: Optional[str] = None
-    speed: Optional[str] = None
+    speaker: Optional[str] = None
     temperature: float = 0.8
-    top_k: int = 50
-    top_p: float = 0.95
+    top_k: int = 30
+    top_p: float = 0.8
     seed: int = 421
+    max_text_tokens_per_sentence: int = 100
+    sentences_bucket_max_size: int = 4
+    max_mel_tokens: int = 600
+    num_beams: int = 3
+    length_penalty: float = 0.0
+    repetition_penalty: float = 10.0
 
 # 新增流式处理请求模型
 class StreamTTSRequest(BaseModel):
     text: str
     prompt_speech_path: Optional[str] = None
-    prompt_text: Optional[str] = None
-    speaker: Optional[str] = None  # 兼容indextts_api的speaker参数
-    gender: Optional[str] = None
-    pitch: Optional[str] = None
-    speed: Optional[str] = None
+    speaker: Optional[str] = None
     temperature: float = 0.8
-    top_k: int = 50
-    top_p: float = 0.95
+    top_k: int = 30
+    top_p: float = 0.8
     seed: int = 421
+    max_text_tokens_per_sentence: int = 100
+    sentences_bucket_max_size: int = 4
+    max_mel_tokens: int = 600
+    num_beams: int = 3
+    length_penalty: float = 0.0
+    repetition_penalty: float = 10.0
     max_segment_length: int = 100  # 最大分段长度
 
 # 初始化模型（全局变量，避免重复加载）
 class IndexTTSModel:
-    def __init__(self, cfg_path='checkpoints/config.yaml', model_dir='checkpoints', is_fp16=True, device=None):
+    def __init__(self, model_dir='checkpoints', device=None):
+        # 确定设备
         if device is not None:
             self.device = device
-            self.is_fp16 = False if device == 'cpu' else is_fp16
+        elif platform.system() == "Darwin" and torch.backends.mps.is_available():
+            # macOS with MPS support (Apple Silicon)
+            self.device = torch.device("mps")
+            logger.info(f"Using MPS device: {self.device}")
         elif torch.cuda.is_available():
-            self.device = 'cuda:0'
-            self.is_fp16 = is_fp16
-        elif torch.mps.is_available():
-            self.device = 'mps'
-            self.is_fp16 = is_fp16
+            # System with CUDA support
+            self.device = torch.device("cuda:0")
+            logger.info(f"Using CUDA device: {self.device}")
         else:
-            self.device = 'cpu'
-            self.is_fp16 = False
-            logger.info(">> Be patient, it may take a while to run in CPU mode.")
-
-        self.cfg = OmegaConf.load(cfg_path)
+            # Fall back to CPU
+            self.device = torch.device("cpu")
+            logger.info("GPU acceleration not available, using CPU")
+        
         self.model_dir = model_dir
-        self.dtype = torch.float16 if self.is_fp16 else None
-        self.stop_mel_token = self.cfg.gpt.stop_mel_token
-
-        # 加载模型组件
-        self._load_dvae()
-        self._load_gpt()
-        self._load_bigvgan()
         
-        # 加载文本处理工具
-        self.bpe_path = os.path.join(self.model_dir, self.cfg.dataset['bpe_model'])
-        self.normalizer = TextNormalizer()
-        self.normalizer.load()
-        logger.info(">> TextNormalizer loaded")
+        # 初始化IndexTTS模型
+        logger.info(f"Initializing IndexTTS model from {model_dir}")
+        self.tts_model = IndexTTS(
+            cfg_path=os.path.join(model_dir, "config.yaml"),
+            model_dir=model_dir,
+            is_fp16=True,
+            device=str(self.device),
+            use_cuda_kernel=True
+        )
+        logger.info("IndexTTS model initialized")
         
-        # 初始化分词器
-        self.tokenizer = spm.SentencePieceProcessor()
-        self.tokenizer.load(self.bpe_path)
+        # 获取采样率
+        self.sampling_rate = 24000  # IndexTTS固定采样率
+        logger.info(f"Model sample rate: {self.sampling_rate}")
         
-        # 预定义参数
-        self.sampling_rate = 24000
-        self.max_mel_tokens = 600
-        self.autoregressive_batch_size = 1
-        self.length_penalty = 0.0
-        self.num_beams = 3
+        # 确保输出目录存在
+        os.makedirs("outputs", exist_ok=True)
         
         # 音频提示文件目录
         self.prompt_dir = "assets/speakers"
@@ -111,171 +103,11 @@ class IndexTTSModel:
             os.makedirs(self.prompt_dir, exist_ok=True)
             logger.info(f"Created prompt directory: {self.prompt_dir}")
         
-        # 存储处理过的音频提示缓存
-        self.prompt_cache = {}
-        
-        logger.info(f"Model initialized with device: {self.device}, fp16: {self.is_fp16}")
-    
-    def _load_dvae(self):
-        self.dvae = DiscreteVAE(**self.cfg.vqvae)
-        self.dvae_path = os.path.join(self.model_dir, self.cfg.dvae_checkpoint)
-        load_checkpoint(self.dvae, self.dvae_path)
-        self.dvae = self.dvae.to(self.device)
-        if self.is_fp16:
-            self.dvae.eval().half()
-        else:
-            self.dvae.eval()
-        logger.info(">> vqvae weights restored from: " + self.dvae_path)
-    
-    def _load_gpt(self):
-        self.gpt = UnifiedVoice(**self.cfg.gpt)
-        self.gpt_path = os.path.join(self.model_dir, self.cfg.gpt_checkpoint)
-        load_checkpoint(self.gpt, self.gpt_path)
-        self.gpt = self.gpt.to(self.device)
-        if self.is_fp16:
-            self.gpt.eval().half()
-        else:
-            self.gpt.eval()
-        logger.info(">> GPT weights restored from: " + self.gpt_path)
-        if self.is_fp16:
-            self.gpt.post_init_gpt2_config(use_deepspeed=True, kv_cache=True, half=True)
-        else:
-            self.gpt.post_init_gpt2_config(use_deepspeed=False, kv_cache=False, half=False)
-    
-    def _load_bigvgan(self):
-        self.bigvgan = Generator(self.cfg.bigvgan)
-        self.bigvgan_path = os.path.join(self.model_dir, self.cfg.bigvgan_checkpoint)
-        vocoder_dict = torch.load(self.bigvgan_path, map_location='cpu')
-        self.bigvgan.load_state_dict(vocoder_dict['generator'])
-        self.bigvgan = self.bigvgan.to(self.device)
-        self.bigvgan.eval()
-        logger.info(">> bigvgan weights restored from: " + self.bigvgan_path)
-    
-    def preprocess_text(self, text):
-        return self.normalizer.normalize(text)
-    
-    def remove_long_silence(self, codes: torch.Tensor, silent_token=52, max_consecutive=30):
-        code_lens = []
-        codes_list = []
-        device = codes.device
-        dtype = codes.dtype
-        isfix = False
-        for i in range(0, codes.shape[0]):
-            code = codes[i]
-            if self.stop_mel_token not in code:
-                code_lens.append(len(code))
-                len_ = len(code)
-            else:
-                len_ = (code == self.stop_mel_token).nonzero(as_tuple=False)[0] + 1
-                len_ = len_ - 2
-
-            count = torch.sum(code == silent_token).item()
-            if count > max_consecutive:
-                code = code.cpu().tolist()
-                ncode = []
-                n = 0
-                for k in range(0, len_):
-                    if code[k] != silent_token:
-                        ncode.append(code[k])
-                        n = 0
-                    elif code[k] == silent_token and n < 10:
-                        ncode.append(code[k])
-                        n += 1
-                len_ = len(ncode)
-                ncode = torch.LongTensor(ncode)
-                codes_list.append(ncode.to(device, dtype=dtype))
-                isfix = True
-            else:
-                codes_list.append(codes[i])
-            code_lens.append(len_)
-
-        codes = pad_sequence(codes_list, batch_first=True) if isfix else codes[:, :-2]
-        code_lens = torch.LongTensor(code_lens).to(device, dtype=dtype)
-        return codes, code_lens
-    
-    def process_audio_prompt(self, speaker_name):
-        """处理音频提示文件，兼容indextts_api的speaker参数"""
-        # 如果已经处理过，直接返回缓存
-        if speaker_name in self.prompt_cache:
-            logger.info(f"Using cached audio prompt for speaker: {speaker_name}")
-            return self.prompt_cache[speaker_name]
-        
-        # 确保提示目录存在
-        if not os.path.exists(self.prompt_dir):
-            os.makedirs(self.prompt_dir, exist_ok=True)
-            logger.info(f"Created prompt directory: {self.prompt_dir}")
-        
-        # 按优先级搜索：精确匹配 > 部分匹配 > 任意音频文件
-        # 1. 精确匹配
-        for ext in ['.wav', '.mp3']:
-            exact_match = os.path.join(self.prompt_dir, f"{speaker_name}{ext}")
-            if os.path.exists(exact_match):
-                logger.info(f"找到精确匹配的提示音频: {exact_match}")
-                prompt_path = exact_match
-                break
-        else:
-            # 2. 部分匹配 - 查找文件名包含speaker_name的文件
-            partial_matches = []
-            for file in os.listdir(self.prompt_dir):
-                if file.endswith(('.wav', '.mp3')) and speaker_name.lower() in file.lower():
-                    partial_matches.append(file)
-            
-            if partial_matches:
-                # 使用第一个匹配项
-                matched_file = partial_matches[0]
-                prompt_path = os.path.join(self.prompt_dir, matched_file)
-                logger.warning(f"未找到精确匹配'{speaker_name}'的音频，使用部分匹配: {matched_file}")
-            else:
-                # 3. 任意音频文件
-                audio_files = [f for f in os.listdir(self.prompt_dir) if f.endswith(('.wav', '.mp3'))]
-                if audio_files:
-                    # 按字母顺序排序，保证结果一致性
-                    audio_files.sort()
-                    prompt_path = os.path.join(self.prompt_dir, audio_files[0])
-                    logger.warning(f"未找到与'{speaker_name}'相关的音频，使用默认音频: {audio_files[0]}")
-                else:
-                    raise FileNotFoundError(f"未找到任何可用的提示音频文件，请检查{self.prompt_dir}目录")
-        
-        # 记录使用的提示文件
-        logger.info(f"Using audio prompt: {prompt_path}")
-        
-        # 加载和处理音频
-        try:
-            audio, sr = torchaudio.load(prompt_path)
-            audio = torch.mean(audio, dim=0, keepdim=True)
-            if audio.shape[0] > 1:
-                audio = audio[0].unsqueeze(0)
-            
-            # 调整音频长度，防止超出位置编码的最大长度
-            max_samples = 5 * self.sampling_rate
-            if audio.shape[1] > max_samples:
-                logger.warning(f"Audio prompt too long ({audio.shape[1]/self.sampling_rate:.2f}s), trimming to 5s")
-                audio = audio[:, :max_samples]
-            
-            # 重采样到目标采样率
-            audio = torchaudio.transforms.Resample(sr, self.sampling_rate)(audio)
-            
-            # 提取mel特征
-            cond_mel = MelSpectrogramFeatures()(audio).to(self.device)
-            logger.info(f"Processed audio prompt shape: {cond_mel.shape}")
-            
-            # 缓存结果以备后用
-            self.prompt_cache[speaker_name] = cond_mel
-            
-            return cond_mel
-        except Exception as e:
-            logger.error(f"Error processing audio file {prompt_path}: {e}", exc_info=True)
-            raise ValueError(f"Failed to process audio file: {str(e)}")
-    
-    def split_text_by_punctuation(self, text):
-        punctuation = ["!", "?", ".", ";", "！", "？", "。", "；"]
-        pattern = r"(?<=[{0}])\s*".format("".join(punctuation))
-        sentences = [i for i in re.split(pattern, text) if i.strip() != ""]
-        return sentences
-    
-    def generate_speech(self, text, prompt_speech_path=None, prompt_text=None, 
-                       speaker=None, gender=None, pitch=None, speed=None, 
-                       temperature=0.8, top_k=50, top_p=0.95, seed=421):
+    def generate_speech(self, text, prompt_speech_path=None, speaker=None,
+                       temperature=0.8, top_k=30, top_p=0.8, seed=421,
+                       max_text_tokens_per_sentence=100, sentences_bucket_max_size=4,
+                       max_mel_tokens=600, num_beams=3, length_penalty=0.0,
+                       repetition_penalty=10.0):
         """生成语音"""
         logger.info(f"Generating speech for text: {text[:50]}...")
         
@@ -285,9 +117,15 @@ class IndexTTSModel:
         try:
             # 处理speaker参数(优先使用prompt_speech_path)
             if speaker and not prompt_speech_path:
-                auto_conditioning = self.process_audio_prompt(speaker)
-                logger.info(f"Using speaker audio prompt: {speaker}")
-            elif prompt_speech_path:
+                prompt_speech_path = self.find_prompt_by_speaker(speaker)
+                logger.info(f"Using speaker audio prompt: {prompt_speech_path}")
+            
+            # 验证参数
+            if not prompt_speech_path:
+                raise ValueError("必须提供prompt_speech_path或speaker参数")
+            
+            # 处理音频提示路径
+            if prompt_speech_path:
                 # 统一处理路径
                 if not os.path.isabs(prompt_speech_path):
                     # 提取纯文件名（移除可能的路径前缀）
@@ -298,147 +136,139 @@ class IndexTTSModel:
                 if not os.path.exists(prompt_speech_path):
                     logger.warning(f"Prompt audio file not found: {prompt_speech_path}")
                     raise ValueError(f"提示音频文件不存在: {prompt_speech_path}")
-                
-                # 加载音频提示
-                audio, sr = torchaudio.load(prompt_speech_path)
-                audio = torch.mean(audio, dim=0, keepdim=True)
-                if audio.shape[0] > 1:
-                    audio = audio[0].unsqueeze(0)
-                
-                # 调整音频长度
-                max_samples = 5 * self.sampling_rate
-                if audio.shape[1] > max_samples:
-                    logger.warning(f"Audio prompt too long ({audio.shape[1]/self.sampling_rate:.2f}s), trimming to 5s")
-                    audio = audio[:, :max_samples]
-                
-                # 重采样到目标采样率
-                audio = torchaudio.transforms.Resample(sr, self.sampling_rate)(audio)
-                
-                # 提取mel特征
-                auto_conditioning = MelSpectrogramFeatures()(audio).to(self.device)
-            else:
-                raise ValueError("必须提供speaker参数或prompt_speech_path参数中的至少一个")
             
-            # 分割文本为句子
-            sentences = self.split_text_by_punctuation(text)
-            logger.info(f"Text split into {len(sentences)} sentences")
+            # 分割文本
+            segments = split_text(text, max_length=100)  # 使用较小的max_length以确保安全
+            logger.info(f"Text split into {len(segments)} segments")
             
-            wavs = []
+            # 存储所有生成的音频段
+            all_wav_data = []
+            sample_rate = None
             
-            for idx, sent in enumerate(sentences):
-                logger.debug(f"Processing sentence {idx+1}/{len(sentences)}: {sent[:30]}...")
-                # 处理文本
-                cleand_text = tokenize_by_CJK_char(sent)
-                text_tokens = torch.IntTensor(self.tokenizer.encode(cleand_text)).unsqueeze(0).to(self.device)
+            # 为每个段落生成语音
+            for i, segment in enumerate(segments):
+                logger.info(f"Generating segment {i+1}/{len(segments)}: {segment[:30]}...")
+                segment_seed = seed + i  # 为每段使用不同的种子
                 
-                try:
-                    with torch.no_grad():
-                        with torch.amp.autocast(self.device, enabled=self.dtype is not None, dtype=self.dtype):
-                            # 生成mel编码
-                            logger.debug(f"Starting inference_speech for text: {sent[:30]}...")
-                            codes = self.gpt.inference_speech(
-                                auto_conditioning, 
-                                text_tokens,
-                                cond_mel_lengths=torch.tensor([auto_conditioning.shape[-1]], device=text_tokens.device),
-                                do_sample=True,
-                                top_p=top_p,
-                                top_k=top_k,
-                                temperature=temperature,
-                                num_return_sequences=self.autoregressive_batch_size,
-                                length_penalty=self.length_penalty,
-                                num_beams=self.num_beams,
-                                repetition_penalty=10.0,
-                                max_generate_length=self.max_mel_tokens
-                            )
-                            logger.debug(f"Finished inference_speech, codes shape: {codes.shape}")
-                            
-                            # 处理生成的编码
-                            code_lens = torch.tensor([codes.shape[-1]], device=codes.device, dtype=codes.dtype)
-                            codes, code_lens = self.remove_long_silence(codes, silent_token=52, max_consecutive=30)
-                            
-                            # 生成音频波形
-                            logger.debug(f"Starting waveform generation...")
-                            with torch.amp.autocast(self.device, enabled=self.dtype is not None, dtype=self.dtype):
-                                latent = self.gpt(
-                                    auto_conditioning, 
-                                    text_tokens,
-                                    torch.tensor([text_tokens.shape[-1]], device=text_tokens.device), 
-                                    codes,
-                                    code_lens*self.gpt.mel_length_compression,
-                                    cond_mel_lengths=torch.tensor([auto_conditioning.shape[-1]], device=text_tokens.device),
-                                    return_latent=True, 
-                                    clip_inputs=False
-                                )
-                                latent = latent.transpose(1, 2)
-                                wav, _ = self.bigvgan(latent.transpose(1, 2), auto_conditioning.transpose(1, 2))
-                                wav = wav.squeeze(1).cpu()
-                            logger.debug(f"Finished waveform generation, wav shape: {wav.shape}")
-                            
-                            # 标准化波形
-                            wav = 32767 * wav
-                            torch.clip(wav, -32767.0, 32767.0)
-                            wavs.append(wav)
-                except Exception as e:
-                    logger.error(f"Error processing sentence {idx+1}: {e}", exc_info=True)
-                    # 如果处理单个句子失败，继续处理下一个
-                    continue
-            
-            if not wavs:
-                raise ValueError("Failed to generate any audio")
+                with torch.no_grad():
+                    wav = self.tts_model.infer_fast(
+                        audio_prompt=prompt_speech_path,
+                        text=segment,
+                        output_path=None,
+                        verbose=False,
+                        max_text_tokens_per_sentence=max_text_tokens_per_sentence,
+                        sentences_bucket_max_size=sentences_bucket_max_size,
+                        temperature=temperature,
+                        top_k=top_k,
+                        top_p=top_p,
+                        num_beams=num_beams,
+                        length_penalty=length_penalty,
+                        repetition_penalty=repetition_penalty,
+                        max_mel_tokens=max_mel_tokens
+                    )
                 
-            # 合并所有音频片段 - 确保所有数据都是Tensor类型
-            tensor_wavs = []
-            for i, wav_item in enumerate(wavs):
-                if isinstance(wav_item, torch.Tensor):
-                    tensor_wavs.append(wav_item)
-                elif isinstance(wav_item, (list, tuple, np.ndarray)):
-                    # 转换为Tensor
-                    tensor_wavs.append(torch.tensor(wav_item, dtype=torch.float32))
+                # 获取采样率和音频数据
+                segment_sample_rate, segment_wav_data = wav
+                if sample_rate is None:
+                    sample_rate = segment_sample_rate
+                
+                # 确保音频数据是torch张量
+                if isinstance(segment_wav_data, torch.Tensor):
+                    all_wav_data.append(segment_wav_data)
                 else:
-                    logger.warning(f"Unexpected wav type at index {i}: {type(wav_item)}")
-                    tensor_wavs.append(torch.tensor(wav_item, dtype=torch.float32))
+                    # 如果是numpy数组，转换为torch张量
+                    all_wav_data.append(torch.from_numpy(segment_wav_data))
             
-            wav = torch.cat(tensor_wavs, dim=1)
-            logger.info(f"Generated audio of length: {wav.shape[1]/self.sampling_rate:.2f} seconds")
-            return wav, self.sampling_rate
+            # 合并所有音频段
+            if len(all_wav_data) > 1:
+                # 使用torch.cat合并音频数据
+                combined_wav = torch.cat(all_wav_data, dim=0)
+                logger.info(f"Combined {len(all_wav_data)} audio segments")
+            else:
+                combined_wav = all_wav_data[0]
             
+            logger.info(f"Generated audio of length: {len(combined_wav)/sample_rate:.2f} seconds")
+            return combined_wav, sample_rate
+        
         except Exception as e:
             logger.error(f"Error generating speech: {e}", exc_info=True)
             raise ValueError(f"Failed to generate speech: {str(e)}")
-
-    def generate_speech_segment(self, text_segment, prompt_speech_path=None, prompt_text=None,
-                               speaker=None, gender=None, pitch=None, speed=None, 
-                               temperature=0.8, top_k=50, top_p=0.95, seed=421):
+    
+    def find_prompt_by_speaker(self, speaker_name):
+        """查找音频提示文件"""
+        if not os.path.exists(self.prompt_dir) or not os.listdir(self.prompt_dir):
+            raise FileNotFoundError(f"提示音频目录不存在或为空: {self.prompt_dir}")
+        
+        # 按优先级搜索：精确匹配 > 部分匹配 > 任意音频文件
+        # 1. 精确匹配
+        for ext in ['.wav', '.mp3']:
+            exact_match = os.path.join(self.prompt_dir, f"{speaker_name}{ext}")
+            if os.path.exists(exact_match):
+                logger.info(f"找到精确匹配的提示音频: {exact_match}")
+                return exact_match
+        
+        # 2. 部分匹配 - 查找文件名包含speaker_name的文件
+        partial_matches = []
+        for file in os.listdir(self.prompt_dir):
+            if file.endswith(('.wav', '.mp3')) and speaker_name.lower() in file.lower():
+                partial_matches.append(file)
+        
+        if partial_matches:
+            # 使用第一个匹配项
+            matched_file = partial_matches[0]
+            prompt_path = os.path.join(self.prompt_dir, matched_file)
+            logger.warning(f"未找到精确匹配'{speaker_name}'的音频，使用部分匹配: {matched_file}")
+            return prompt_path
+        
+        # 3. 任意音频文件
+        audio_files = [f for f in os.listdir(self.prompt_dir) if f.endswith(('.wav', '.mp3'))]
+        if audio_files:
+            # 按字母顺序排序，保证结果一致性
+            audio_files.sort()
+            prompt_path = os.path.join(self.prompt_dir, audio_files[0])
+            logger.warning(f"未找到与'{speaker_name}'相关的音频，使用默认音频: {audio_files[0]}")
+            return prompt_path
+        
+        # 如果没有找到任何音频文件
+        raise FileNotFoundError(f"未找到任何可用的提示音频文件，请检查{self.prompt_dir}目录")
+    
+    def split_text_by_punctuation(self, text):
+        """按标点符号分割文本"""
+        punctuation = ["!", "?", ".", ";", "！", "？", "。", "；"]
+        pattern = r"(?<=[{0}])\s*".format("".join(punctuation))
+        sentences = [i for i in re.split(pattern, text) if i.strip() != ""]
+        return sentences
+    
+    def generate_speech_segment(self, text_segment, prompt_speech_path=None, speaker=None,
+                              temperature=0.8, top_k=30, top_p=0.8, seed=421,
+                              max_text_tokens_per_sentence=100, sentences_bucket_max_size=4,
+                              max_mel_tokens=600, num_beams=3, length_penalty=0.0,
+                              repetition_penalty=10.0):
         """为流式API生成单个段落的音频"""
         logger.debug(f"Generating segment: {text_segment[:30]}...")
         
         try:
             # 生成语音
-            wav, sample_rate = self.generate_speech(
+            wav_data, sample_rate = self.generate_speech(
                 text=text_segment,
                 prompt_speech_path=prompt_speech_path,
-                prompt_text=prompt_text,
                 speaker=speaker,
-                gender=gender,
-                pitch=pitch,
-                speed=speed,
                 temperature=temperature,
                 top_k=top_k,
                 top_p=top_p,
-                seed=seed
+                seed=seed,
+                max_text_tokens_per_sentence=max_text_tokens_per_sentence,
+                sentences_bucket_max_size=sentences_bucket_max_size,
+                max_mel_tokens=max_mel_tokens,
+                num_beams=num_beams,
+                length_penalty=length_penalty,
+                repetition_penalty=repetition_penalty
             )
-            
-            # 将张量转换为列表
-            if isinstance(wav, torch.Tensor):
-                audio_array = wav.cpu().numpy().tolist()
-            else:
-                # 已经是numpy数组
-                audio_array = wav.tolist()
             
             # 创建包含音频数据和采样率的字典
             audio_data = {
                 "text": text_segment,
-                "audio": audio_array,
+                "audio": wav_data.tolist(),
                 "sample_rate": sample_rate
             }
             
@@ -449,11 +279,8 @@ class IndexTTSModel:
 
 # 初始化模型
 logger.info("Initializing IndexTTS model...")
-model = IndexTTSModel(cfg_path="checkpoints/config.yaml", model_dir="checkpoints", is_fp16=True)
+model = IndexTTSModel(model_dir="checkpoints")
 logger.info("Model initialization complete")
-
-# 确保输出目录存在
-os.makedirs("outputs", exist_ok=True)
 
 # 文本分段函数
 def split_text(text: str, max_length: int = 100) -> List[str]:
@@ -512,28 +339,39 @@ async def generate_speech(request: Request):
             logger.error(f"Request parsing error: {e}")
             raise HTTPException(status_code=422, detail=f"Invalid request format: {str(e)}")
         
+        # 验证请求参数
+        if not req.prompt_speech_path and not req.speaker:
+            error_message = "必须提供prompt_speech_path或speaker参数"
+            logger.error(f"Parameter validation error: {error_message}")
+            raise HTTPException(status_code=400, detail=error_message)
+        
         # 生成语音
         try:
-            wav, sample_rate = model.generate_speech(
+            wav_data, sample_rate = model.generate_speech(
                 text=req.text,
                 prompt_speech_path=req.prompt_speech_path,
-                prompt_text=req.prompt_text,
                 speaker=req.speaker,
-                gender=req.gender,
-                pitch=req.pitch,
-                speed=req.speed,
                 temperature=req.temperature,
                 top_k=req.top_k,
                 top_p=req.top_p,
-                seed=req.seed
+                seed=req.seed,
+                max_text_tokens_per_sentence=req.max_text_tokens_per_sentence,
+                sentences_bucket_max_size=req.sentences_bucket_max_size,
+                max_mel_tokens=req.max_mel_tokens,
+                num_beams=req.num_beams,
+                length_penalty=req.length_penalty,
+                repetition_penalty=req.repetition_penalty
             )
+        except ValueError as e:
+            logger.error(f"Speech generation error: {e}")
+            raise HTTPException(status_code=400, detail=str(e))
         except Exception as e:
             logger.error(f"Speech generation error: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail=f"Error generating speech: {str(e)}")
         
         # 将音频数据写入内存缓冲区
         buffer = io.BytesIO()
-        torchaudio.save(buffer, wav.type(torch.int16), sample_rate, format="wav")
+        sf.write(buffer, wav_data, sample_rate, format="wav")
         buffer.seek(0)
         
         # 返回音频数据
@@ -543,6 +381,9 @@ async def generate_speech(request: Request):
             media_type="audio/wav"
         )
     
+    except HTTPException:
+        # 重新抛出HTTP异常
+        raise
     except Exception as e:
         # 打印详细错误信息
         logger.error(f"Unexpected error in /tts endpoint: {e}", exc_info=True)
@@ -563,11 +404,14 @@ async def stream_tts(request: Request):
             logger.error(f"Stream request parsing error: {e}")
             raise HTTPException(status_code=422, detail=f"Invalid request format: {str(e)}")
         
-        # 预处理文本
-        normalized_text = model.preprocess_text(req.text)
+        # 验证请求参数
+        if not req.prompt_speech_path and not req.speaker:
+            error_message = "必须提供prompt_speech_path或speaker参数"
+            logger.error(f"Parameter validation error: {error_message}")
+            raise HTTPException(status_code=400, detail=error_message)
         
         # 分割文本
-        segments = split_text(normalized_text, req.max_segment_length)
+        segments = split_text(req.text, req.max_segment_length)
         logger.info(f"Text split into {len(segments)} segments for streaming")
         
         async def generate_stream():
@@ -579,11 +423,18 @@ async def stream_tts(request: Request):
                 try:
                     audio_data = model.generate_speech_segment(
                         text_segment=segment, 
+                        prompt_speech_path=req.prompt_speech_path,
                         speaker=req.speaker,
                         temperature=req.temperature,
                         top_k=req.top_k,
                         top_p=req.top_p,
-                        seed=segment_seed
+                        seed=segment_seed,
+                        max_text_tokens_per_sentence=req.max_text_tokens_per_sentence,
+                        sentences_bucket_max_size=req.sentences_bucket_max_size,
+                        max_mel_tokens=req.max_mel_tokens,
+                        num_beams=req.num_beams,
+                        length_penalty=req.length_penalty,
+                        repetition_penalty=req.repetition_penalty
                     )
                     
                     # 添加段落索引信息
@@ -609,6 +460,9 @@ async def stream_tts(request: Request):
             media_type="application/x-ndjson"  # 使用换行分隔的JSON格式
         )
     
+    except HTTPException:
+        # 重新抛出HTTP异常
+        raise
     except Exception as e:
         # 打印详细错误信息
         logger.error(f"Unexpected error in /tts_stream endpoint: {e}", exc_info=True)
@@ -617,20 +471,20 @@ async def stream_tts(request: Request):
 @app.post("/upload_audio")
 async def upload_audio(file: UploadFile = File(...)):
     """
-    上传音频文件到 assets/speakers 目录
+    上传音频文件到 assets 目录
     
     参数:
-        file: 上传的音频文件（支持 mp3 格式）
+        file: 上传的音频文件（支持 wav 和 mp3 格式）
         
     返回:
         上传结果信息
     """
     try:
         # 检查文件扩展名
-        if not file.filename.lower().endswith('.mp3'):
-            raise HTTPException(status_code=400, detail="只支持 MP3 格式的音频文件")
+        if not file.filename.lower().endswith(('.wav', '.mp3')):
+            raise HTTPException(status_code=400, detail="只支持 WAV 和 MP3 格式的音频文件")
         
-        # 确保 assets/speakers 目录存在
+        # 确保 assets 目录存在
         os.makedirs(model.prompt_dir, exist_ok=True)
         
         # 构建保存路径
@@ -661,14 +515,12 @@ if __name__ == "__main__":
     logger.info("Starting IndexTTS API server")
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
-
-# curl -X POST "http://localhost:8001/generate_speech" \
+# 示例请求:
+# curl -X POST "http://localhost:8000/tts" \
 #      -H "Content-Type: application/json" \
-#      -d '{"text": "Hello, world!", "speaker": "Scarlett"}'
+#      -d '{"text": "你好，这是一个测试。", "prompt_speech_path": "prompt.wav"}'
 
-
-# curl -X POST "http://localhost:8001/generate_speech" \
+# curl -X POST "http://localhost:8000/tts" \
 #      -H "Content-Type: application/json" \
-#      -d '{"text": "Hello, world!", "speaker": "Scarlett"}' \
-#      --output output.wav
-
+#      -d '{"text": "你好，这是一个测试。", "speaker": "Scarlett"}' \
+#      --output output.wav 

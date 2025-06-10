@@ -78,6 +78,25 @@ class VideoTranslationClient:
                 with open(translated_subtitle_path, 'r', encoding='utf-8') as f:
                     subtitles = json.load(f)
                 logger.info(f"已加载 {len(subtitles)} 条字幕")
+                
+                # 检查是否需要创建音频切片
+                audio_path = os.path.join("temp", video_name, f"{file_hash}_audio.mp3")
+                if os.path.exists(audio_path):
+                    # 检查字幕是否已包含reference_audio字段
+                    if not any('reference_audio' in subtitle for subtitle in subtitles):
+                        logger.info("为已有字幕创建参考音频切片...")
+                        subtitles = self.audio_processor.create_audio_segments(audio_path, subtitles, video_name)
+                        logger.info("参考音频切片创建完成")
+                        
+                        # 上传参考音频到TTS服务器
+                        logger.info("上传参考音频...")
+                        subtitles = await self.audio_processor.upload_reference_audio(subtitles)
+                        logger.info("参考音频上传完成")
+                        
+                        # 保存更新后的字幕文件
+                        with open(translated_subtitle_path, 'w', encoding='utf-8') as f:
+                            json.dump(subtitles, f, ensure_ascii=False, indent=2)
+                        logger.info("已更新字幕文件，添加参考音频信息")
             else:
                 # 处理说话人分离
                 logger.info("\n1. Extracting Audio...")
@@ -101,9 +120,19 @@ class VideoTranslationClient:
                 logger.info("\n3. Translating Subtitles...")
                 subtitles = await self.translation_service.translate_batch_subtitles(subtitles, video_name)
                 logger.info("字幕翻译完成")
+
+                # 创建音频切片作为参考音频
+                logger.info("\n4. Creating Reference Audio Segments...")
+                subtitles = self.audio_processor.create_audio_segments(audio_path, subtitles, video_name)
+                logger.info("参考音频切片创建完成")
+
+                # 上传参考音频到TTS服务器
+                logger.info("\n5. Uploading Reference Audio...")
+                subtitles = await self.audio_processor.upload_reference_audio(subtitles)
+                logger.info("参考音频上传完成")
             
             # 生成 TTS 音频
-            logger.info("开始生成 TTS 音频...")
+            logger.info("\n6. 开始生成 TTS 音频...")
             tts_audio_path = await self._generate_tts_audio(subtitles, video_name)
             logger.info("TTS 音频生成完成")
             
