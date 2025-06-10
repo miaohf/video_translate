@@ -5,7 +5,6 @@ import logging
 from typing import List, Dict, Optional
 from datetime import datetime
 from utils.common import get_file_hash
-from pydub import AudioSegment
 
 logger = logging.getLogger(__name__)
 
@@ -59,12 +58,6 @@ class SubtitleProcessor:
             try:
                 with open(speaker_cache_file, 'r', encoding='utf-8') as f:
                     speaker_segments = json.load(f)
-                    # 合并连续的相同说话人片段
-                    speaker_segments = self._merge_consecutive_speakers(video_name, file_hash, speaker_segments)
-                    # 提取参考音频
-                    self._extract_reference_audio(audio_path, speaker_segments)
-                    # 上传参考音频到 TTS 服务器
-                    await self._upload_reference_audio(audio_path, file_hash, speaker_segments)
                     return speaker_segments
             except Exception as e:
                 logger.warning(f"读取说话人识别缓存失败: {str(e)}")
@@ -86,12 +79,6 @@ class SubtitleProcessor:
                     
                     result = await response.json()
                     speaker_segments = result.get("segments", [])
-                    # 合并连续的相同说话人片段
-                    speaker_segments = self._merge_consecutive_speakers(video_name, file_hash, speaker_segments)
-                    # 提取参考音频
-                    self._extract_reference_audio(audio_path, speaker_segments)
-                    # 上传参考音频到 TTS 服务器
-                    await self._upload_reference_audio(audio_path, file_hash, speaker_segments)
                     logger.info(f"识别出 {len(speaker_segments)} 个说话人片段")
             
             # 保存到缓存
@@ -107,111 +94,6 @@ class SubtitleProcessor:
         except Exception as e:
             logger.error(f"说话人识别过程出错: {str(e)}")
             return None
-    
-    def _merge_consecutive_speakers(self, video_name: str, file_hash: str, speaker_segments: List[Dict]) -> List[Dict]:
-        """
-        合并连续的相同说话人片段，并为每个说话人选择参考音频
-        
-        参数:
-            speaker_segments: 原始说话人片段列表
-            
-        返回:
-            合并后的说话人片段列表
-        """
-        if not speaker_segments:
-            return []
-            
-        merged_segments = []
-        current_segment = speaker_segments[0].copy()
-        
-        for next_segment in speaker_segments[1:]:
-            # 如果当前片段和下一个片段的说话人相同，且时间连续
-            if (next_segment["speaker"] == current_segment["speaker"] and 
-                next_segment["start"] - current_segment["end"] < 1):  # 允许1秒的间隔
-                # 更新当前片段的结束时间
-                current_segment["end"] = next_segment["end"]
-            else:
-                # 如果说话人不同或时间不连续，保存当前片段并开始新片段
-                merged_segments.append(current_segment)
-                current_segment = next_segment.copy()
-        
-        # 添加最后一个片段
-        merged_segments.append(current_segment)
-        
-        # 为每个片段添加参考音频信息
-        for i, segment in enumerate(merged_segments):
-            # 保存参考音频信息
-            reference_path = os.path.join("temp", video_name, "reference_audio", f"{file_hash}_{i}_{segment['speaker']}.mp3")
-            os.makedirs(os.path.dirname(reference_path), exist_ok=True)
-            segment["reference_audio"] = reference_path
-        
-        return merged_segments
-    
-    async def _upload_reference_audio(self, audio_path: str, file_hash: str, speaker_segments: List[Dict]) -> None:
-        """
-        上传参考音频文件到 TTS 服务器
-        
-        参数:
-            audio_path: 原始音频文件路径
-            file_hash: 文件哈希值
-            speaker_segments: 说话人片段列表
-        """
-        try:
-            # 获取 TTS 服务器地址
-            tts_server_url = os.getenv("TTS_SERVER_URL", "http://localhost:8000")
-            
-            # 为每个说话人上传参考音频
-            for segment in speaker_segments:
-                if "reference_audio" in segment:
-                    speaker = segment["speaker"]
-                    
-                    # 上传到 TTS 服务器
-                    session = await self.get_session()
-                    with open(segment["reference_audio"], "rb") as f:
-                        data = aiohttp.FormData()
-                        data.add_field('file',
-                                     f,
-                                     filename=os.path.basename(segment["reference_audio"]),
-                                     content_type="audio/mp3")
-                        async with session.post(f"{tts_server_url}/upload_audio", data=data) as response:
-                            if response.status != 200:
-                                error_text = await response.text()
-                                logger.error(f"上传参考音频失败: {error_text}")
-                            else:
-                                result = await response.json()
-                                logger.info(f"成功上传说话人 {speaker} 的参考音频: {result['file_path']}")
-                    
-        except Exception as e:
-            logger.error(f"上传参考音频失败: {str(e)}")
-            raise
-    
-    def _extract_reference_audio(self, audio_path: str, speaker_segments: List[Dict]) -> None:
-        """
-        从原始音频中提取每个说话人的参考音频片段
-        
-        参数:
-            audio_path: 原始音频文件路径
-            speaker_segments: 说话人片段列表
-        """
-        try:
-            # 加载原始音频
-            audio = AudioSegment.from_file(audio_path)
-            
-            # 为每个说话人提取参考音频
-            for segment in speaker_segments:
-                if "reference_audio" in segment:
-                    # 提取音频片段（时间单位：毫秒）
-                    start_ms = int(segment["start"] * 1000)
-                    end_ms = int(segment["end"] * 1000)
-                    audio_segment = audio[start_ms:end_ms]
-                    
-                    # 保存参考音频为MP3格式
-                    audio_segment.export(segment["reference_audio"], format="mp3", bitrate="192k")
-                    logger.info(f"已保存说话人 {segment['speaker']} 的参考音频到: {segment['reference_audio']}")
-                    
-        except Exception as e:
-            logger.error(f"提取参考音频失败: {str(e)}")
-            raise
     
     def merge_speaker_info(self, segments: List[Dict], speaker_segments: Optional[List[Dict]]) -> List[Dict]:
         """
@@ -239,7 +121,7 @@ class SubtitleProcessor:
             speaker_found = False
             max_overlap = 0
             best_speaker = "Unknown"
-            best_reference_audio = None
+            best_audio_path = None
             
             for speaker_segment in speaker_segments:
                 speaker_start = speaker_segment["start"]
@@ -254,13 +136,13 @@ class SubtitleProcessor:
                 if overlap_duration > max_overlap:
                     max_overlap = overlap_duration
                     best_speaker = speaker_segment["speaker"]
-                    best_reference_audio = speaker_segment.get("reference_audio")
+                    best_audio_path = speaker_segment.get("audio_path")
                     speaker_found = True
             
             # 设置说话人信息
             segment["speaker"] = best_speaker if speaker_found else "Unknown"
-            if best_reference_audio:
-                segment["reference_audio"] = best_reference_audio
+            if best_audio_path:
+                segment["reference_audio"] = best_audio_path
             
             # 记录日志
             if speaker_found:
@@ -270,6 +152,113 @@ class SubtitleProcessor:
         
         return segments
     
+    def merge_speaker_segments(self, segments: List[Dict]) -> List[Dict]:
+        """
+        合并同一说话人的连续字幕片段
+        
+        Args:
+            segments: 包含speaker信息的字幕片段列表
+            
+        Returns:
+            合并后的字幕片段列表
+        """
+        if not segments:
+            return []
+        
+        logger.info(f"Merging speaker segments: {len(segments)} input segments")
+        
+        merged = []
+        current_merged = None
+        
+        # 合并参数
+        max_merged_duration = 60.0   # 最大合并片段时长（秒）
+        max_gap_duration = 3.0       # 最大间隔时长（秒）
+        max_chars_per_merged = 500   # 每个合并片段最大字符数
+        
+        for segment in segments:
+            if not segment.get("text", "").strip():
+                continue
+                
+            current_speaker = segment.get("speaker", "UNKNOWN")
+            current_text = segment["text"].strip()
+            current_start = segment["start"]
+            current_end = segment["end"]
+            
+            if current_merged is None:
+                # 开始新的合并片段
+                current_merged = {
+                    "start": current_start,
+                    "end": current_end,
+                    "text": current_text,
+                    "speaker": current_speaker
+                }
+                # 保留其他字段
+                for key, value in segment.items():
+                    if key not in current_merged:
+                        current_merged[key] = value
+            else:
+                # 检查是否可以与当前合并片段合并
+                same_speaker = current_merged["speaker"] == current_speaker
+                gap_duration = current_start - current_merged["end"]
+                merged_duration = current_end - current_merged["start"]
+                merged_text_length = len(current_merged["text"] + " " + current_text)
+                
+                should_merge = (
+                    same_speaker and
+                    gap_duration <= max_gap_duration and
+                    merged_duration <= max_merged_duration and
+                    merged_text_length <= max_chars_per_merged
+                )
+                
+                if should_merge:
+                    # 合并到当前片段
+                    current_merged["end"] = current_end
+                    # 智能连接文本
+                    merged_text = current_merged["text"]
+                    if merged_text and current_text:
+                        # 检查是否需要添加标点
+                        if merged_text[-1] in '.!?':
+                            current_merged["text"] = merged_text + " " + current_text
+                        elif merged_text[-1] in ',;:':
+                            current_merged["text"] = merged_text + " " + current_text
+                        elif not merged_text.endswith(' ') and current_text[0].isupper():
+                            # 如果下一句开头是大写字母，可能是新句子
+                            if gap_duration > 1.0:  # 如果间隔较长，添加句号
+                                current_merged["text"] = merged_text + ". " + current_text
+                            else:
+                                current_merged["text"] = merged_text + " " + current_text
+                        else:
+                            current_merged["text"] = merged_text + " " + current_text
+                    else:
+                        current_merged["text"] = merged_text + " " + current_text
+                else:
+                    # 不能合并，保存当前合并片段并开始新的
+                    merged.append(current_merged)
+                    current_merged = {
+                        "start": current_start,
+                        "end": current_end,
+                        "text": current_text,
+                        "speaker": current_speaker
+                    }
+                    # 保留其他字段
+                    for key, value in segment.items():
+                        if key not in current_merged:
+                            current_merged[key] = value
+        
+        # 添加最后一个合并片段
+        if current_merged:
+            merged.append(current_merged)
+        
+        logger.info(f"Merged speaker segments: {len(segments)} -> {len(merged)} segments")
+        
+        # 打印合并统计
+        for i, seg in enumerate(merged):
+            duration = seg["end"] - seg["start"]
+            char_count = len(seg["text"])
+            logger.debug(f"Merged {i+1}: {seg['speaker']} ({duration:.1f}s, {char_count} chars): '{seg['text'][:80]}{'...' if char_count > 80 else ''}'")
+        
+        return merged
+
     async def get_subtitles(self, audio_path: str, video_name: str) -> List[Dict]:
         """
         获取音频的字幕
@@ -295,9 +284,19 @@ class SubtitleProcessor:
                 logger.info(f"使用缓存的字幕文件: {cache_file}")
                 with open(cache_file, 'r', encoding='utf-8') as f:
                     subtitles = json.load(f)
-                    # 如果存在缓存但不存在 SRT 文件，则生成 SRT 文件
-                    if not os.path.exists(english_srt_file):
-                        self.save_subtitles_to_srt(subtitles, english_srt_file)
+                    
+                    # 对缓存的字幕进行说话人合并处理
+                    logger.info("对缓存字幕进行说话人合并处理...")
+                    subtitles = self.merge_speaker_segments(subtitles)
+                    
+                    # 更新缓存文件
+                    with open(cache_file, 'w', encoding='utf-8') as f:
+                        json.dump(subtitles, f, ensure_ascii=False, indent=2)
+                    logger.info(f"合并后的字幕已更新到缓存: {cache_file}")
+                    
+                    # 重新生成 SRT 文件
+                    self.save_subtitles_to_srt(subtitles, english_srt_file)
+                    
                 return subtitles
             
             # 进行说话人识别
@@ -321,12 +320,10 @@ class SubtitleProcessor:
             
             # 合并说话人信息
             segments = self.merge_speaker_info(segments, speaker_segments)
-
-            logger.info(segments[0])
             
-            # 合并连续的相同说话人片段, 避免断句
-            segments = self._merge_consecutive_subtitles(segments)
-            logger.info(segments[0])
+            # 对字幕进行说话人合并处理
+            logger.info("对转录字幕进行说话人合并处理...")
+            segments = self.merge_speaker_segments(segments)
             
             # 保存到缓存
             with open(cache_file, 'w', encoding='utf-8') as f:
@@ -344,46 +341,6 @@ class SubtitleProcessor:
         finally:
             # 确保关闭session
             await self.close()
-            
-    def _is_sentence_end(self, text: str) -> bool:
-        """
-        检查文本是否以句子结束标点符号结尾
-        """
-        sentence_end_punctuations = {'.', '。', '!', '！', '?', '？', ';', '；'}
-        return text.strip()[-1] in sentence_end_punctuations if text.strip() else False
-
-    def _merge_consecutive_subtitles(self, segments: List[Dict]) -> List[Dict]:
-        """
-        合并连续的相同说话人字幕片段，根据标点符号判断是否合并
-        避免合并跨越不同说话人时间段的字幕
-        """
-        if not segments:
-            return []
-        merged_segments = []
-        current_segment = segments[0].copy()
-        
-        for next_segment in segments[1:]:
-            # 检查是否应该合并
-            should_merge = (
-                next_segment["speaker"] == current_segment["speaker"] and  # 说话人相同
-                next_segment["start"] - current_segment["end"] < 0.5 and   # 时间间隔小于0.5秒
-                not self._is_sentence_end(current_segment["text"]) and     # 当前文本不以句子结束标点结尾
-                # 检查合并后的时间段是否都在当前说话人的时间段内
-                next_segment["start"] >= current_segment["start"] and
-                next_segment["end"] <= current_segment["end"]
-            )
-            
-            if should_merge:
-                current_segment["end"] = next_segment["end"]
-                current_segment["text"] = current_segment["text"] + " " + next_segment["text"]
-            else:
-                merged_segments.append(current_segment)
-                current_segment = next_segment.copy()
-        
-        merged_segments.append(current_segment)
-        if len(merged_segments) != len(segments):
-            logger.info(f"合并字幕片段: {len(segments)} -> {len(merged_segments)}")
-        return merged_segments
     
     def save_subtitles_to_srt(self, subtitles: List[Dict], output_path: str):
         """

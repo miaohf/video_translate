@@ -7,6 +7,7 @@ import torch
 import torchaudio
 import sentencepiece as spm
 import logging
+import numpy as np
 from fastapi import FastAPI, HTTPException, Request, UploadFile, File
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
@@ -385,8 +386,19 @@ class IndexTTSModel:
             if not wavs:
                 raise ValueError("Failed to generate any audio")
                 
-            # 合并所有音频片段
-            wav = torch.cat(wavs, dim=1)
+            # 合并所有音频片段 - 确保所有数据都是Tensor类型
+            tensor_wavs = []
+            for i, wav_item in enumerate(wavs):
+                if isinstance(wav_item, torch.Tensor):
+                    tensor_wavs.append(wav_item)
+                elif isinstance(wav_item, (list, tuple, np.ndarray)):
+                    # 转换为Tensor
+                    tensor_wavs.append(torch.tensor(wav_item, dtype=torch.float32))
+                else:
+                    logger.warning(f"Unexpected wav type at index {i}: {type(wav_item)}")
+                    tensor_wavs.append(torch.tensor(wav_item, dtype=torch.float32))
+            
+            wav = torch.cat(tensor_wavs, dim=1)
             logger.info(f"Generated audio of length: {wav.shape[1]/self.sampling_rate:.2f} seconds")
             return wav, self.sampling_rate
             
@@ -568,12 +580,10 @@ async def stream_tts(request: Request):
                     audio_data = model.generate_speech_segment(
                         text_segment=segment, 
                         speaker=req.speaker,
-                        top_p=0.8,  # 使用默认值
-                        top_k=30,
-                        temperature=1.0,
-                        repetition_penalty=10.0,
-                        seed=segment_seed,
-                        language=req.language
+                        temperature=req.temperature,
+                        top_k=req.top_k,
+                        top_p=req.top_p,
+                        seed=segment_seed
                     )
                     
                     # 添加段落索引信息
