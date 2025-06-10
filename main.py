@@ -5,12 +5,14 @@ import platform
 import asyncio
 from typing import Dict, Optional, List
 from pathlib import Path
+import json
 
 from services.translation_service import TranslationService
 from processors.audio_processor import AudioProcessor
 from processors.subtitle_processor import SubtitleProcessor
 from processors.video_processor import VideoProcessor
 from utils.common import get_file_hash
+from config import settings
 
 # 配置日志
 logging.basicConfig(
@@ -20,25 +22,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class VideoTranslationClient:
-    def __init__(self, stt_server_url: str, tts_server_url: str, speaker: str = None, speaker_mapping: Dict[str, str] = None):
+    def __init__(self):
         """
         初始化视频翻译客户端
         
-        参数:
-            stt_server_url: 语音识别服务器地址
-            tts_server_url: 语音合成服务器地址
-            speaker: 默认说话人
-            speaker_mapping: 说话人映射配置
-        """
-        self.stt_server_url = stt_server_url
-        self.tts_server_url = tts_server_url
-        self.speaker = speaker
-        self.speaker_mapping = speaker_mapping or {}  # 说话人映射配置
-        
+        """      
         # 初始化各个处理器
         self.translation_service = TranslationService()
-        self.audio_processor = AudioProcessor(stt_server_url, tts_server_url)
-        self.subtitle_processor = SubtitleProcessor(stt_server_url)
+        self.audio_processor = AudioProcessor(settings.STT_SERVER_URL, settings.TTS_SERVER_URL)
+        self.subtitle_processor = SubtitleProcessor(settings.STT_SERVER_URL)
         self.video_processor = VideoProcessor()
         
         # 打印环境信息
@@ -48,12 +40,6 @@ class VideoTranslationClient:
         
         # 确保temp目录存在
         os.makedirs("temp", exist_ok=True)
-        
-        # 打印说话人映射配置
-        if self.speaker_mapping:
-            logger.info("Speaker Mapping:")
-            for original_speaker, target_speaker in self.speaker_mapping.items():
-                logger.info(f"- {original_speaker} -> {target_speaker}")
     
     def _get_temp_dir(self, video_path: str) -> str:
         """
@@ -85,31 +71,12 @@ class VideoTranslationClient:
             
             # 检查翻译后的字幕文件是否存在
             file_hash = get_file_hash(video_name)
-            translated_subtitle_path = os.path.join("temp", video_name, f"{file_hash}_subtitles_zh.srt")
+            translated_subtitle_path = os.path.join("temp", video_name, f"{file_hash}_subtitles_zh.json")
             if os.path.exists(translated_subtitle_path):
                 logger.info(f"发现已存在的翻译字幕文件: {translated_subtitle_path}")
                 # 读取已存在的字幕文件
                 with open(translated_subtitle_path, 'r', encoding='utf-8') as f:
-                    srt_content = f.read()
-                    # 解析 SRT 格式字幕
-                    subtitles = []
-                    for block in srt_content.strip().split('\n\n'):
-                        lines = block.split('\n')
-                        if len(lines) >= 3:
-                            # 解析时间戳
-                            time_line = lines[1]
-                            start_time, end_time = time_line.split(' --> ')
-                            # 转换时间格式为秒
-                            start_seconds = self._srt_time_to_seconds(start_time)
-                            end_seconds = self._srt_time_to_seconds(end_time)
-                            # 获取文本内容
-                            text = '\n'.join(lines[2:])
-                            subtitles.append({
-                                "start": start_seconds,
-                                "end": end_seconds,
-                                "text": text,
-                                "translated_text": text  # 因为已经是翻译后的字幕，所以直接使用
-                            })
+                    subtitles = json.load(f)
                 logger.info(f"已加载 {len(subtitles)} 条字幕")
             else:
                 # 处理说话人分离
@@ -120,7 +87,15 @@ class VideoTranslationClient:
                 
                 # 获取字幕
                 logger.info("\n2. Generating Subtitles...")
-                subtitles = await self.subtitle_processor.get_subtitles(audio_path, video_name)
+                # 检查是否存在翻译后的字幕文件
+                subtitle_json_path = os.path.join("temp", video_name, f"{file_hash}_subtitles.json")
+                if os.path.exists(subtitle_json_path):
+                    logger.info(f"使用已存在的翻译字幕文件: {subtitle_json_path}")
+                    with open(subtitle_json_path, "r", encoding="utf-8") as f:
+                        subtitles = json.load(f)
+                else:
+                    # 生成字幕
+                    subtitles = await self.subtitle_processor.get_subtitles(audio_path, video_name)
 
                 # 翻译字幕
                 logger.info("\n3. Translating Subtitles...")
@@ -136,9 +111,9 @@ class VideoTranslationClient:
             if output_path is None:
                 # 使用文件哈希值生成输出路径
                 file_hash = get_file_hash(video_path)
-                output_path = os.path.join("temp", video_name, f"{file_hash}_subtitles_zh.srt")
+                output_path = os.path.join("temp", video_name, f"{file_hash}_subtitles_zh.json")
             
-            self.subtitle_processor.save_subtitles_to_srt(subtitles, output_path)
+            self.subtitle_processor.save_subtitles_to_json(subtitles, output_path)
             logger.info(f"\nTranslation completed, output saved to {output_path}")
             
             return tts_audio_path
@@ -173,7 +148,7 @@ class VideoTranslationClient:
         """
         try:
             # 检查最终音频文件是否已存在
-            final_audio_path = os.path.join("temp", video_name, "final_audio.wav")
+            final_audio_path = os.path.join("temp", video_name, "final_audio.mp3")
             if os.path.exists(final_audio_path):
                 logger.info(f"发现已存在的音频文件: {final_audio_path}")
                 return final_audio_path
@@ -206,10 +181,19 @@ class VideoTranslationClient:
                         logger.warning(f"第 {i+1} 个字幕没有文本内容，跳过")
                         continue
                     
+                    # 从reference_audio字段中提取说话人信息
+                    # logger.info(f"subtitle: {subtitle}")
+                    reference_audio = subtitle.get("reference_audio", "")
+                    if reference_audio:
+                        # 从文件路径中提取说话人信息，格式为：file_hash_index_SPEAKER_XX.mp3
+                        speaker = Path(reference_audio).stem
+                    else:
+                        speaker = "Unknown"
+                    
                     # 准备请求数据
                     data = {
                         "text": text_to_convert,
-                        "speaker": subtitle.get("speaker", "Unknown"),
+                        "speaker": speaker,
                         "temperature": 0.8,
                         "top_k": 50,  # 确保是整数
                         "top_p": 0.95,
@@ -284,32 +268,8 @@ class VideoTranslationClient:
 if __name__ == "__main__":
     # 创建命令行参数解析器
     parser = argparse.ArgumentParser(description="Video Translation Program")
-    parser.add_argument("--input_video", required=True, help="Input Video File Path")
-    parser.add_argument("--output_video", required=True, help="Output Video File Path")
-    parser.add_argument("--stt_server", default="http://localhost:8001", help="STT Server Address")
-    parser.add_argument("--tts_server", default="http://localhost:8000", help="TTS Server Address")
-    parser.add_argument("--speaker", help="Default TTS Speaker Name")
-    parser.add_argument("--speaker_mapping", help="Speaker Mapping Configuration, Format: 'speaker1:voice1,speaker2:voice2'")
-    
+    parser.add_argument("--input_video", required=True, help="Input Video File Path")   
     args = parser.parse_args()
     
-    # 解析说话人映射配置
-    speaker_mapping = {}
-    if args.speaker_mapping:
-        try:
-            mappings = args.speaker_mapping.split(',')
-            for mapping in mappings:
-                original, target = mapping.split(':')
-                speaker_mapping[original.strip()] = target.strip()
-        except Exception as e:
-            logger.error(f"Failed to Parse Speaker Mapping Configuration: {str(e)}")
-            raise ValueError("Speaker Mapping Configuration Format Error, Please Use 'speaker1:voice1,speaker2:voice2' Format")
-    
-    video_translation_client = VideoTranslationClient(
-        stt_server_url=args.stt_server,
-        tts_server_url=args.tts_server,
-        speaker=args.speaker,
-        speaker_mapping=speaker_mapping
-    )
-    
-    asyncio.run(video_translation_client.process_video(args.input_video, args.output_video))
+    video_translation_client = VideoTranslationClient()
+    asyncio.run(video_translation_client.process_video(args.input_video))

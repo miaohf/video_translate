@@ -51,8 +51,6 @@ class SubtitleProcessor:
             说话人片段列表
         """
         # 从音频路径中提取视频名称目录
-        video_dir = os.path.dirname(audio_path)
-        speaker_cache_file = os.path.join(video_dir, f"{file_hash}_speaker_segments.json")
         speaker_cache_file = os.path.join("temp", video_name, f"{file_hash}_speaker_segments.json")
         
         # 检查缓存
@@ -62,11 +60,11 @@ class SubtitleProcessor:
                 with open(speaker_cache_file, 'r', encoding='utf-8') as f:
                     speaker_segments = json.load(f)
                     # 合并连续的相同说话人片段
-                    speaker_segments = self._merge_consecutive_speakers(speaker_segments)
+                    speaker_segments = self._merge_consecutive_speakers(video_name, file_hash, speaker_segments)
                     # 提取参考音频
                     self._extract_reference_audio(audio_path, speaker_segments)
                     # 上传参考音频到 TTS 服务器
-                    await self._upload_reference_audio(audio_path, speaker_segments)
+                    await self._upload_reference_audio(audio_path, file_hash, speaker_segments)
                     return speaker_segments
             except Exception as e:
                 logger.warning(f"读取说话人识别缓存失败: {str(e)}")
@@ -89,11 +87,11 @@ class SubtitleProcessor:
                     result = await response.json()
                     speaker_segments = result.get("segments", [])
                     # 合并连续的相同说话人片段
-                    speaker_segments = self._merge_consecutive_speakers(speaker_segments)
+                    speaker_segments = self._merge_consecutive_speakers(video_name, file_hash, speaker_segments)
                     # 提取参考音频
                     self._extract_reference_audio(audio_path, speaker_segments)
                     # 上传参考音频到 TTS 服务器
-                    await self._upload_reference_audio(audio_path, speaker_segments)
+                    await self._upload_reference_audio(audio_path, file_hash, speaker_segments)
                     logger.info(f"识别出 {len(speaker_segments)} 个说话人片段")
             
             # 保存到缓存
@@ -110,7 +108,7 @@ class SubtitleProcessor:
             logger.error(f"说话人识别过程出错: {str(e)}")
             return None
     
-    def _merge_consecutive_speakers(self, speaker_segments: List[Dict]) -> List[Dict]:
+    def _merge_consecutive_speakers(self, video_name: str, file_hash: str, speaker_segments: List[Dict]) -> List[Dict]:
         """
         合并连续的相同说话人片段，并为每个说话人选择参考音频
         
@@ -126,11 +124,6 @@ class SubtitleProcessor:
         merged_segments = []
         current_segment = speaker_segments[0].copy()
         
-        # 用于存储每个说话人的参考音频信息
-        speaker_references = {}
-        # 用于存储每个说话人的所有片段
-        speaker_segments_dict = {}
-        
         for next_segment in speaker_segments[1:]:
             # 如果当前片段和下一个片段的说话人相同，且时间连续
             if (next_segment["speaker"] == current_segment["speaker"] and 
@@ -140,119 +133,53 @@ class SubtitleProcessor:
             else:
                 # 如果说话人不同或时间不连续，保存当前片段并开始新片段
                 merged_segments.append(current_segment)
-                
-                # 收集当前说话人的片段
-                speaker = current_segment["speaker"]
-                if speaker not in speaker_segments_dict:
-                    speaker_segments_dict[speaker] = []
-                speaker_segments_dict[speaker].append(current_segment)
-                
                 current_segment = next_segment.copy()
         
         # 添加最后一个片段
         merged_segments.append(current_segment)
         
-        # 收集最后一个说话人的片段
-        speaker = current_segment["speaker"]
-        if speaker not in speaker_segments_dict:
-            speaker_segments_dict[speaker] = []
-        speaker_segments_dict[speaker].append(current_segment)
-        
-        # 记录合并前后的片段数量
-        if len(merged_segments) != len(speaker_segments):
-            logger.info(f"合并说话人片段: {len(speaker_segments)} -> {len(merged_segments)}")
-        
-        # 为每个说话人选择参考音频
-        for speaker, segments in speaker_segments_dict.items():
-            # 按时长排序
-            segments.sort(key=lambda x: x["end"] - x["start"], reverse=True)
-            
-            # 选择最长的且不超过60秒的片段
-            selected_segment = None
-            for segment in segments:
-                duration = segment["end"] - segment["start"]
-                if duration <= 60:
-                    selected_segment = segment
-                    break
-            
-            # 如果没有找到合适的片段，使用最长的片段并截取前60秒
-            if not selected_segment:
-                selected_segment = segments[0]
-                selected_segment = {
-                    "start": selected_segment["start"],
-                    "end": selected_segment["start"] + 60,
-                    "speaker": speaker
-                }
-            
+        # 为每个片段添加参考音频信息
+        for i, segment in enumerate(merged_segments):
             # 保存参考音频信息
-            reference_path = os.path.join("temp", "my_input_video", f"my_input_video_{speaker}.mp3")
+            reference_path = os.path.join("temp", video_name, "reference_audio", f"{file_hash}_{i}_{segment['speaker']}.mp3")
             os.makedirs(os.path.dirname(reference_path), exist_ok=True)
-            
-            speaker_references[speaker] = {
-                "path": reference_path,
-                "start": selected_segment["start"],
-                "end": selected_segment["end"]
-            }
-            
-            # 将参考音频信息添加到对应的片段中
-            for segment in merged_segments:
-                if segment["speaker"] == speaker:
-                    segment["reference_audio"] = speaker_references[speaker]
-                    break
-            
+            segment["reference_audio"] = reference_path
+        
         return merged_segments
     
-    async def _upload_reference_audio(self, audio_path: str, speaker_segments: List[Dict]) -> None:
+    async def _upload_reference_audio(self, audio_path: str, file_hash: str, speaker_segments: List[Dict]) -> None:
         """
         上传参考音频文件到 TTS 服务器
         
         参数:
             audio_path: 原始音频文件路径
+            file_hash: 文件哈希值
             speaker_segments: 说话人片段列表
         """
         try:
-            # 加载原始音频
-            audio = AudioSegment.from_file(audio_path)
-            
             # 获取 TTS 服务器地址
             tts_server_url = os.getenv("TTS_SERVER_URL", "http://localhost:8000")
             
-            # 为每个说话人提取并上传参考音频
+            # 为每个说话人上传参考音频
             for segment in speaker_segments:
                 if "reference_audio" in segment:
-                    ref = segment["reference_audio"]
                     speaker = segment["speaker"]
                     
-                    # 提取音频片段（时间单位：毫秒）
-                    start_ms = int(ref["start"] * 1000)
-                    end_ms = int(ref["end"] * 1000)
-                    audio_segment = audio[start_ms:end_ms]
-                    
-                    # 保存为临时文件
-                    temp_path = os.path.join("temp", f"{speaker}_temp.mp3")
-                    audio_segment.export(temp_path, format="mp3", bitrate="192k")
-                    
-                    try:
-                        # 上传到 TTS 服务器
-                        session = await self.get_session()
-                        with open(temp_path, "rb") as f:
-                            data = aiohttp.FormData()
-                            data.add_field('file',
-                                         f,
-                                         filename=f"my_input_video-{speaker}.mp3",
-                                         content_type="audio/mp3")
-                            async with session.post(f"{tts_server_url}/upload_audio", data=data) as response:
-                                if response.status != 200:
-                                    error_text = await response.text()
-                                    logger.error(f"上传参考音频失败: {error_text}")
-                                else:
-                                    result = await response.json()
-                                    logger.info(f"成功上传说话人 {speaker} 的参考音频: {result['file_path']}")
-                    
-                    finally:
-                        # 清理临时文件
-                        if os.path.exists(temp_path):
-                            os.remove(temp_path)
+                    # 上传到 TTS 服务器
+                    session = await self.get_session()
+                    with open(segment["reference_audio"], "rb") as f:
+                        data = aiohttp.FormData()
+                        data.add_field('file',
+                                     f,
+                                     filename=os.path.basename(segment["reference_audio"]),
+                                     content_type="audio/mp3")
+                        async with session.post(f"{tts_server_url}/upload_audio", data=data) as response:
+                            if response.status != 200:
+                                error_text = await response.text()
+                                logger.error(f"上传参考音频失败: {error_text}")
+                            else:
+                                result = await response.json()
+                                logger.info(f"成功上传说话人 {speaker} 的参考音频: {result['file_path']}")
                     
         except Exception as e:
             logger.error(f"上传参考音频失败: {str(e)}")
@@ -273,15 +200,14 @@ class SubtitleProcessor:
             # 为每个说话人提取参考音频
             for segment in speaker_segments:
                 if "reference_audio" in segment:
-                    ref = segment["reference_audio"]
                     # 提取音频片段（时间单位：毫秒）
-                    start_ms = int(ref["start"] * 1000)
-                    end_ms = int(ref["end"] * 1000)
+                    start_ms = int(segment["start"] * 1000)
+                    end_ms = int(segment["end"] * 1000)
                     audio_segment = audio[start_ms:end_ms]
                     
                     # 保存参考音频为MP3格式
-                    audio_segment.export(ref["path"], format="mp3", bitrate="192k")
-                    logger.info(f"已保存说话人 {segment['speaker']} 的参考音频到: {ref['path']}")
+                    audio_segment.export(segment["reference_audio"], format="mp3", bitrate="192k")
+                    logger.info(f"已保存说话人 {segment['speaker']} 的参考音频到: {segment['reference_audio']}")
                     
         except Exception as e:
             logger.error(f"提取参考音频失败: {str(e)}")
@@ -313,6 +239,7 @@ class SubtitleProcessor:
             speaker_found = False
             max_overlap = 0
             best_speaker = "Unknown"
+            best_reference_audio = None
             
             for speaker_segment in speaker_segments:
                 speaker_start = speaker_segment["start"]
@@ -327,10 +254,13 @@ class SubtitleProcessor:
                 if overlap_duration > max_overlap:
                     max_overlap = overlap_duration
                     best_speaker = speaker_segment["speaker"]
+                    best_reference_audio = speaker_segment.get("reference_audio")
                     speaker_found = True
             
             # 设置说话人信息
             segment["speaker"] = best_speaker if speaker_found else "Unknown"
+            if best_reference_audio:
+                segment["reference_audio"] = best_reference_audio
             
             # 记录日志
             if speaker_found:
@@ -425,23 +355,31 @@ class SubtitleProcessor:
     def _merge_consecutive_subtitles(self, segments: List[Dict]) -> List[Dict]:
         """
         合并连续的相同说话人字幕片段，根据标点符号判断是否合并
+        避免合并跨越不同说话人时间段的字幕
         """
         if not segments:
             return []
         merged_segments = []
         current_segment = segments[0].copy()
+        
         for next_segment in segments[1:]:
-            if (next_segment["speaker"] == current_segment["speaker"] and 
-                next_segment["start"] - current_segment["end"] < 0.5):
-                if not self._is_sentence_end(current_segment["text"]):
-                    current_segment["end"] = next_segment["end"]
-                    current_segment["text"] = current_segment["text"] + " " + next_segment["text"]
-                else:
-                    merged_segments.append(current_segment)
-                    current_segment = next_segment.copy()
+            # 检查是否应该合并
+            should_merge = (
+                next_segment["speaker"] == current_segment["speaker"] and  # 说话人相同
+                next_segment["start"] - current_segment["end"] < 0.5 and   # 时间间隔小于0.5秒
+                not self._is_sentence_end(current_segment["text"]) and     # 当前文本不以句子结束标点结尾
+                # 检查合并后的时间段是否都在当前说话人的时间段内
+                next_segment["start"] >= current_segment["start"] and
+                next_segment["end"] <= current_segment["end"]
+            )
+            
+            if should_merge:
+                current_segment["end"] = next_segment["end"]
+                current_segment["text"] = current_segment["text"] + " " + next_segment["text"]
             else:
                 merged_segments.append(current_segment)
                 current_segment = next_segment.copy()
+        
         merged_segments.append(current_segment)
         if len(merged_segments) != len(segments):
             logger.info(f"合并字幕片段: {len(segments)} -> {len(merged_segments)}")
@@ -476,6 +414,28 @@ class SubtitleProcessor:
             
         except Exception as e:
             logger.error(f"保存 SRT 文件失败: {str(e)}")
+            raise
+            
+    def save_subtitles_to_json(self, subtitles: List[Dict], output_path: str):
+        """
+        将字幕保存为 JSON 格式
+        
+        参数:
+            subtitles: 字幕列表
+            output_path: 输出文件路径
+        """
+        try:
+            logger.info(f"保存 JSON 文件: {output_path}")
+            # 确保输出目录存在
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump(subtitles, f, ensure_ascii=False, indent=2)
+            
+            logger.info(f"JSON 文件已保存: {output_path}")
+            
+        except Exception as e:
+            logger.error(f"保存 JSON 文件失败: {str(e)}")
             raise
             
     def format_time(self, seconds: float) -> str:

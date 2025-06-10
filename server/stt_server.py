@@ -11,13 +11,13 @@ from typing import Optional, List, Dict
 import signal
 from contextlib import contextmanager
 import time
+import torch
 from pyannote.audio import Pipeline
 import numpy as np
 import soundfile as sf
 import torchaudio
 from speechbrain.pretrained import VAD
 from dotenv import load_dotenv
-import torch
 
 # Load environment variables from .env file
 load_dotenv()
@@ -191,7 +191,7 @@ def process_diarization(audio_path: str) -> List[Dict]:
 
 def process_transcription(audio_path: str) -> List[Dict]:
     """
-    Process audio transcription with improved sentence segmentation
+    Process audio transcription
     
     Args:
         audio_path: Path to audio file
@@ -214,17 +214,9 @@ def process_transcription(audio_path: str) -> List[Dict]:
         # Process results
         results = []
         current_segment = None
-        
-        # 断句参数配置
         min_segment_duration = 1.0  # 最小片段时长（秒）
         max_segment_duration = 10.0  # 最大片段时长（秒）
         max_pause_duration = 0.8  # 最大停顿时长（秒）
-        max_chars_per_segment = 100  # 每个片段最大字符数
-        
-        # 句子结束标记
-        sentence_endings = ['.', '!', '?']
-        # 自然断句标记
-        natural_breaks = [',', ';', ':', ' - ']
         
         for segment in segments:
             text = segment.text.strip()
@@ -242,62 +234,29 @@ def process_transcription(audio_path: str) -> List[Dict]:
                 # 检查是否需要合并片段
                 pause_duration = segment.start - current_segment["end"]
                 current_duration = current_segment["end"] - current_segment["start"]
-                current_text = current_segment["text"]
                 
-                # 检查是否在句子结束处
-                ends_with_sentence = any(current_text.rstrip().endswith(end) for end in sentence_endings)
-                # 检查是否在自然断句处
-                has_natural_break = any(break_mark in current_text for break_mark in natural_breaks)
-                
-                # 断句决策逻辑
-                should_split = False
-                
-                # 1. 如果当前片段太长，强制分割
-                if len(current_text) > max_chars_per_segment:
-                    should_split = True
-                
-                # 2. 如果当前片段时长超过最大限制，且不在句子中间，则分割
-                elif current_duration > max_segment_duration and (ends_with_sentence or has_natural_break):
-                    should_split = True
-                
-                # 3. 如果停顿时间较长，且当前片段已经形成完整语义，则分割
-                elif pause_duration > max_pause_duration and (ends_with_sentence or has_natural_break):
-                    should_split = True
-                
-                if should_split:
-                    # 保存当前片段并开始新片段
-                    results.append(current_segment)
-                    current_segment = {
-                        "start": segment.start,
-                        "end": segment.end,
-                        "text": text
-                    }
-                else:
-                    # 合并片段
+                # 如果停顿时间短且当前片段未超过最大时长，则合并
+                if (pause_duration < max_pause_duration and 
+                    current_duration < max_segment_duration):
                     current_segment["end"] = segment.end
-                    # 确保文本之间有空格
-                    if current_text and text and not current_text.endswith(' ') and not text.startswith(' '):
-                        current_segment["text"] = current_text + " " + text
+                    current_segment["text"] += " " + text
+                else:
+                    # 如果当前片段太短，尝试与下一个片段合并
+                    if current_duration < min_segment_duration:
+                        current_segment["end"] = segment.end
+                        current_segment["text"] += " " + text
                     else:
-                        current_segment["text"] = current_text + text
+                        # 保存当前片段并开始新片段
+                        results.append(current_segment)
+                        current_segment = {
+                            "start": segment.start,
+                            "end": segment.end,
+                            "text": text
+                        }
         
         # 添加最后一个片段
         if current_segment is not None:
-            # 如果最后一个片段太短，尝试与上一个片段合并
-            if len(results) > 0 and len(current_segment["text"]) < 20:
-                last_segment = results[-1]
-                last_segment["end"] = current_segment["end"]
-                last_segment["text"] += " " + current_segment["text"]
-            else:
-                results.append(current_segment)
-        
-        # 后处理：清理文本格式
-        for segment in results:
-            # 移除多余的空格
-            segment["text"] = " ".join(segment["text"].split())
-            # 确保句子结束有标点
-            if not any(segment["text"].rstrip().endswith(end) for end in sentence_endings):
-                segment["text"] = segment["text"].rstrip() + "."
+            results.append(current_segment)
         
         logger.info(f"Transcription completed, generated {len(results)} segments")
         return results

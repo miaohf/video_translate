@@ -45,7 +45,7 @@ class AudioProcessor:
             
             # 生成音频文件路径
             file_hash = get_file_hash(video_name)
-            audio_path = os.path.join(temp_dir, f"{file_hash}_audio.wav")
+            audio_path = os.path.join(temp_dir, f"{file_hash}_audio.mp3")
             
             # 检查是否已存在
             if os.path.exists(audio_path):
@@ -59,8 +59,8 @@ class AudioProcessor:
             # 转换为单声道，16kHz采样率
             audio = video.set_channels(1).set_frame_rate(16000)
             
-            # 导出为WAV格式
-            audio.export(audio_path, format="wav")
+            # 导出为mp3格式
+            audio.export(audio_path, format="mp3")
             
             return audio_path
             

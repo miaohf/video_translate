@@ -105,7 +105,7 @@ class IndexTTSModel:
         self.num_beams = 3
         
         # 音频提示文件目录
-        self.prompt_dir = "assets"
+        self.prompt_dir = "assets/speakers"
         if not os.path.exists(self.prompt_dir):
             os.makedirs(self.prompt_dir, exist_ok=True)
             logger.info(f"Created prompt directory: {self.prompt_dir}")
@@ -607,7 +607,7 @@ async def stream_tts(request: Request):
 @app.post("/upload_audio")
 async def upload_audio(file: UploadFile = File(...)):
     """
-    上传音频文件到 assets 目录
+    上传音频文件到 assets/speakers 目录
     
     参数:
         file: 上传的音频文件（支持 mp3 格式）
@@ -620,7 +620,7 @@ async def upload_audio(file: UploadFile = File(...)):
         if not file.filename.lower().endswith('.mp3'):
             raise HTTPException(status_code=400, detail="只支持 MP3 格式的音频文件")
         
-        # 确保 assets 目录存在
+        # 确保 assets/speakers 目录存在
         os.makedirs(model.prompt_dir, exist_ok=True)
         
         # 构建保存路径
