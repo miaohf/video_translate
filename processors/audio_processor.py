@@ -233,7 +233,7 @@ class AudioProcessor:
                     
         except Exception as e:
             logger.error(f"Error mixing audio: {str(e)}")
-            raise
+            raise 
 
     def create_audio_segments(self, audio_path: str, subtitles: List[Dict], video_name: str) -> List[Dict]:
         """

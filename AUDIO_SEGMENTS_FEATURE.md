@@ -1,8 +1,8 @@
-# 音频切片参考音频功能
+# 音频切片参考音频功能 + 背景音频混合
 
 ## 功能概述
 
-这个功能为视频翻译系统添加了音频切片和参考音频上传功能，用于提高TTS（文本转语音）的质量。
+这个功能为视频翻译系统添加了音频切片、参考音频上传和智能背景音频混合功能，用于提高TTS（文本转语音）的质量并保持原音频的时间轴和节奏感。
 
 ## 主要特性
 
@@ -21,6 +21,14 @@
 - 在TTS请求中使用参考音频文件名作为speaker参数
 - Speaker参数格式：`{file_hash}_{index:04d}_{speaker}`
 - 支持向后兼容，如果没有参考音频则使用默认设置
+
+### 4. 智能背景音频混合 ⭐ **核心创新**
+- **原音频作为背景**：保持完整的原始音频作为背景音轨
+- **精确时间插入**：TTS音频在原始字幕时间点精确插入
+- **动态音量控制**：背景音在TTS播放期间自动降低到5%音量
+- **平滑渐变效果**：150ms的淡入淡出确保自然过渡
+- **时长完全匹配**：最终音频时长与原视频完全一致
+- **保留环境音**：保持原音频中的背景音乐、环境声等元素
 
 ## 代码修改
 
@@ -81,8 +89,12 @@ python main.py --input_video your_video.mp4
 ```
 
 ### 测试功能
-运行测试脚本验证音频切片功能：
+运行测试脚本验证功能：
 ```bash
+# 测试背景音频混合功能（推荐）
+python test_background_mixing.py
+
+# 测试音频切片功能
 python test_audio_segments_simple.py
 ```
 
@@ -103,19 +115,26 @@ temp/
 
 ## 字幕JSON格式更新
 
-新的字幕JSON格式包含 `reference_audio` 字段：
+新的字幕JSON格式包含多个音频相关字段：
 ```json
 [
   {
     "start": 0.27,
     "end": 30.95,
-    "text": "原始文本",
-    "translated_text": "翻译文本",
+    "text": "原始英文文本",
+    "translated_text": "翻译后的中文文本",
     "speaker": "SPEAKER_01",
-    "reference_audio": "temp/video_name/audio_segments/hash_0000_SPEAKER_01.mp3"
+    "reference_audio": "temp/video_name/audio_segments/hash_0000_SPEAKER_01.mp3",
+    "generated_audio": "temp/video_name/tts_segments/segment_0000.wav",
+    "generated_duration": 2.8
   }
 ]
 ```
+
+**字段说明：**
+- `reference_audio`: 原音频切片路径（用于TTS参考）
+- `generated_audio`: 生成的TTS音频文件路径
+- `generated_duration`: TTS音频实际时长（秒）
 
 ## TTS服务器要求
 
