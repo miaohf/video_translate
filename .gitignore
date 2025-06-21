@@ -36,6 +36,7 @@ ENV/
 
 # Project specific
 cache/
+temp/
 *.wav
 *.mp3
 *.mp4
