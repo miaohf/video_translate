@@ -35,7 +35,7 @@ ENV/
 .DS_Store
 
 # Project specific
-temp/
+cache/
 *.wav
 *.mp3
 *.mp4

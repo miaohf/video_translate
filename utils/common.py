@@ -24,3 +24,19 @@ def get_file_hash(text: str, length: int = 20) -> str:
         哈希值字符串
     """
     return hashlib.md5(text.encode()).hexdigest()[:length]
+
+def format_time(seconds: float) -> str:
+    """
+    将秒数格式化为SRT时间格式
+    
+    参数:
+        seconds: 秒数
+        
+    返回:
+        格式化的时间字符串 (HH:MM:SS,mmm)
+    """
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    seconds = seconds % 60
+    milliseconds = int((seconds - int(seconds)) * 1000)
+    return f"{hours:02d}:{minutes:02d}:{int(seconds):02d},{milliseconds:03d}"

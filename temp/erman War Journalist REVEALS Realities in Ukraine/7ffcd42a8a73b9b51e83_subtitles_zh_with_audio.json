@@ -1,0 +1,1242 @@
+[
+  {
+    "start": 0.59,
+    "end": 41.47,
+    "text": "2022年，我在莫斯科与克里姆林宫代表进行了一次秘密会谈。他们问我一个问题：该如何处理那些脱离现实的狂热政客？他们完全不了解基层情况。我回答说：你们根本无法与这类人打交道。面对这种人，任何沟通都无意义。必须清除他们出政坛。我们需要新生代领导群体，这需要二十年乃至三十年的时间来实现。",
+    "speaker": "SPEAKER_00",
+    "original_text": "In 2022, I met representatives of the Kremlin for a secret talk in Moscow, and they asked me this question. They asked how to deal with crazy politicians who lost the ground of reality. Yes, no idea what really happens on the ground. And I answered, you cannot deal with those kind of people. With this kind of people, it's impossible. They have to be kicked out of the business. We need a new elite, and this is a project for 20, 25, 30 years.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0000_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0000.wav",
+    "generated_duration": 38.05866666666667
+  },
+  {
+    "start": 41.47,
+    "end": 78.25,
+    "text": "大家好，我是来自《中立研究》的帕斯卡。今天再次邀请到德国最具批判精神的国际记者之一——帕特里克·巴布先生。巴布先生所著的德语畅销书《战线两侧》（德文原版）/《前线彼岸》（中文译本）最初仅以德文出版，书中详述了他探访乌克兰东部顿巴斯地区的亲身经历。此外，他还曾长期任职于德国北德广播公司（NDR）担任编辑。",
+    "speaker": "SPEAKER_01",
+    "original_text": "Hello everybody, this is Pascal from Neutrality Studies, and today I'm talking once again to Patrick Barb, one of Germany's best and most critical international journalists. Mr. Barb is the author of the German language bestselling book on both sides of the front. It appeared only in German, but that would be the translated title, and in this book he shares his experiences travelling to the Donbass. He also worked for many years as an editor for the North German Broadcasting Company, NDR,",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0001_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0001.wav",
+    "generated_duration": 29.44
+  },
+  {
+    "start": 78.25,
+    "end": 84.65,
+    "text": "他以前在两所大学做过讲师。帕特里克，欢迎回来！",
+    "speaker": "SPEAKER_01",
+    "original_text": "and he used to work as a lecturer at two different universities. Patrick, welcome back.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0002_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0002.wav",
+    "generated_duration": 5.802666666666667
+  },
+  {
+    "start": 84.65,
+    "end": 89.97,
+    "text": "感谢您邀请我为贵刊撰稿，深感荣幸。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Hello Pascal, and thank you for inviting me to your journal. It's a great honour for me.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0003_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0003.wav",
+    "generated_duration": 3.6693333333333333
+  },
+  {
+    "start": 89.97,
+    "end": 119.61,
+    "text": "很高兴有你参与，更高兴能用英语直接交流。上次我们用德语讨论后需要翻译，这次我们决定换个方式——直接使用英语对话。正如我们在邮件中谈到的，我认为当前局势至少存在三个层面的冲突：在宏观层面，美国、北约与俄罗斯之间存在着结构性战争；而在顿巴斯地区以及地方层面，则涉及更具体的地缘政治斗争；除此之外，还存在第三个层面的冲突...",
+    "speaker": "SPEAKER_01",
+    "original_text": "It's great having you, and it's great having you in English. The last talk we did was in German, and then it was translated, but this time we said we do it the other way around, and we said we want to focus a bit on the Donbass and the local level within this conflict, because as we talked about via email, my interpretation is that we have at least three different conflicts going on. On one level we have a large structural war between USA, NATO and Russia, and then",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0004_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0004.wav",
+    "generated_duration": 31.445333333333334
+  },
+  {
+    "start": 119.61,
+    "end": 146.17,
+    "text": "我们看到俄乌之间爆发激烈武装冲突，但另一方面，在顿巴斯地区长期持续的内战也构成了另一个层面。您曾长期参与顿巴斯事务，并在邮件中提到至少存在五层多维度的冲突。能否请您详细解释这些层级的具体表现？",
+    "speaker": "SPEAKER_01",
+    "original_text": "we have a bilateral hot shooting war between Russia and Ukraine, but then on the third level we also had a civil war inside Ukraine in these Donbass regions that was going on for a long time, and you've been working a lot with the Donbass. You told me in the email exchange that you see at least five conflicts. Could you tell me how you see these levels?",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0005_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0005.wav",
+    "generated_duration": 21.333333333333332
+  },
+  {
+    "start": 146.73,
+    "end": 193.01,
+    "text": "是的，帕斯卡，我认为地区层面与地缘政治高度交织，当前乌克兰战争已演变为历史性的多重矛盾交汇。这场战争进入第四年，具体包含以下五重战争形态：首先是从2013年起爆发的乌克兰内战；其次是乌克兰与顿巴斯地区（Donetsk/Lugansk）分离势力的冲突；再到2022年后俄罗斯联邦正式介入成为交战方。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Yes, Pascal, I think the regional level is extremely combined with the geopolitical level, and I see five different levels of conflict that are culminating in a historical collusion in the Ukraine war. The war has now ended its fourth year, and I see five wars in one. Firstly, the Ukrainian civil war up from 2013. Then the war between Ukraine and the separist republics of Danetsk and Lugansk, and from 2022 the Russian Federation as well.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0006_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0006.wav",
+    "generated_duration": 37.80266666666667
+  },
+  {
+    "start": 193.01,
+    "end": 228.21,
+    "text": "第三点，美国、北约和欧盟对俄罗斯发起的代理人战争。第四点，因西方势力衰退而引发的全球经济博弈，例如以美国为主导的单极格局与新兴力量推动的多极化趋势之间的竞争态势。第五点，西方精英阶层与其本国民众间的阶层矛盾——归根结底，所有战争本质都是阶层矛盾的体现。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Thirdly, the proxy war of the United States, the NATO and the European Union against Russia. The fourth point is the global economic war over the decline of the West. For example, the Unipara world with the United States as a hegemon, and the emerging break states striving for a multipolar world. And fifthly, the war of the western elites against their own people, the class war. Every war is a class war as well.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0007_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0007.wav",
+    "generated_duration": 37.589333333333336
+  },
+  {
+    "start": 228.21,
+    "end": 265.25,
+    "text": "值得关注的是，第一个观点在西方媒体的宣传报道中被严重低估。乌克兰内战最早可追溯至马伊丹政变，该政变早有预谋，由美国、北约及欧盟蓄意策划并公然违反联合国宪章第2条禁止干涉他国内政的规定（联合国宪章第2条）。西方势力与乌克兰民族主义势力及法西斯团体沆瀣一气，最终促成该事件。",
+    "speaker": "SPEAKER_00",
+    "original_text": "If you wonder, I can explain that because the first point is very interesting and it is underestimated in western propaganda media and western politics. The civil war in Ukraine began at the latest with the coup on the Maidan. This coup was planned long in advance and orchestrated by the United States, by NATO and the European Union, and this violates the UN-Jardus ban on intervention. The West was in cahoots with Ukrainian Alpranationalists and fascists.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0008_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0008.wav",
+    "generated_duration": 36.437333333333335
+  },
+  {
+    "start": 265.25,
+    "end": 305.85,
+    "text": "加利西亚-阿尔普民族主义者（注：原文术语存疑，暂按音译处理）与法西斯分子不仅将武装示威者及数千件武器带往广场，更再度运抵现场。此前利沃夫、伊万诺-弗兰科夫斯克和特伦波尔的军火库及警局已遭洗劫。据其本人承认，若广场行动受挫，他们甚至计划发动内战——此点已被你熟悉的尼古拉·彼得鲁揭露。右翼势力被指应对此前广场惨案负责，造成约百人遇难。",
+    "speaker": "SPEAKER_00",
+    "original_text": "These Galician-Alpranationalists and fascists brought militant demonstrators and thousands of weapons on the Maidan, to the Maidan. Previously, arms depots and police stations in Lviv, Ivano-Frankivsk and Ternopil had been looted. According to their own statements, they wanted to start a civil war if the Maidan failed as Nikolai Petru, who you know very well, found out. The right sector was responsible for the murders on the Maidan. Around 100 people were killed.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0009_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0009.wav",
+    "generated_duration": 42.58133333333333
+  },
+  {
+    "start": 305.85,
+    "end": 337.85,
+    "text": "原因在于狙击手藏身于乌克兰右翼势力占领的建筑中，这一结论源自渥太华大学伊万·卡恰诺夫斯基教授对事件的详尽调查。政变后暴力浪潮席卷全国，东部地区尤甚——敖德萨、马里乌波尔、扎波罗热等城市接连爆发暴力事件，导致多人伤亡。",
+    "speaker": "SPEAKER_00",
+    "original_text": "This is because the snipers were in the buildings that the right sector had occupied. This is shown by the detailed investigations of Professor Ivan Kachanovsky from the University of Otava. Immediately after the coup, a wave of violence rolled through the whole country, particularly in eastern Ukraine, where people of Russian origin lived. There were violent attacks with many deaths in Odessa, Mariupol, Zavorogia and other cities.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0010_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0010.wav",
+    "generated_duration": 24.405333333333335
+  },
+  {
+    "start": 337.85,
+    "end": 373.33,
+    "text": "这促使乌克兰东部民间自卫组织迅速壮大，因警方与民兵联合行动、部分武装部队叛变，使这些组织得以获取武器。基辅中央政府始终依靠暴力手段，自2014年4月6日起发动所谓\"反恐军事行动\"围剿武装分子。此举标志着顿巴斯地区针对平民的镇压行动正式开始，至少造成...伤亡（原文数据缺失）",
+    "speaker": "SPEAKER_00",
+    "original_text": "This led to the formation of self-defense militias in eastern Ukraine, which obtained weapons because the police and militias showed solidarity with them and armed units defected. The central government in Kiev relied on violence from the outset and launched the so-called anti-terror operation against the insurgents up from April 6, 2014. This marked the beginning of a fight against the population in Donbas, in which at least",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0011_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0011.wav",
+    "generated_duration": 35.456
+  },
+  {
+    "start": 373.33,
+    "end": 416.97,
+    "text": "截至2022年俄罗斯发动攻击前，已有14,000人丧生，其中3,400人为平民。这一行为违反《联合国宪章》禁止使用武力的规定，被认定为种族灭绝的严重指控。反政府武装随后宣布成立顿涅茨克和卢甘斯克共和国，其分离事实通过2014年5月两次公投得以确认。根据国际法，即使中央政府反对，国家部分地区发生分离仍属可能。",
+    "speaker": "SPEAKER_00",
+    "original_text": "14,000 people, including 3,400 civilians, were killed by 2022 before the Russian attack. This violates the UN Charter's prohibition of the use of force and makes it possible to speak of an attempted genocide. The insurgents responded by proclaiming the republics of Donetsk and Lugansk, and these cessations were confirmed by two referendums in May 2014. Such a cessation of a part of a country is also possible under international law against the will of the central government.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0012_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0012.wav",
+    "generated_duration": 37.077333333333335
+  },
+  {
+    "start": 416.97,
+    "end": 453.17,
+    "text": "西方国家在科索沃问题上也表示认可。顿巴斯地区的独立共和国建立标志着这场内战进程的结束。2014年4月下旬，乌克兰与获得俄罗斯联邦经济、政治和军事（包括间接）支持的卢甘斯克和顿涅茨克共和国爆发冲突，战争进入第二阶段。",
+    "speaker": "SPEAKER_00",
+    "original_text": "The West had also accepted this in Kosovo. The establishment of the independent republics of Donetsk and Lugansk marks the end of the Civil War process. The second stage began at the end of April 2014, the face of the war between Ukraine as a warring party on the one side and the republics of Lugansk and Donetsk, which were supported economically, politically and indirectly, also militarily, by the Russian Federation.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0013_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0013.wav",
+    "generated_duration": 25.130666666666666
+  },
+  {
+    "start": 453.17,
+    "end": 488.29,
+    "text": "北约前秘书长延斯·斯托尔滕贝格于2023年9月7日在欧洲议会确认了这一点。但与斯托尔滕贝格的说法相反，直至2022年2月之前俄方并未出动正规部队。例如在伊戈尔·古琴身边就有名为\"斯特列尔科（Стрелко）\"的志愿者，当时行动主要由瓦格纳集团雇佣兵组成，而非正规部队。2014年明斯克协议旨在为乌克兰争取一定范围的地方自主管理权，因为乌克兰...",
+    "speaker": "SPEAKER_00",
+    "original_text": "Former NATO Secretary General Jens Stoltenberg also confirmed this to the European Parliament on September 7, 2023. By contrary to what Stoltenberg said, no Russian troops were involved until February 2022. There were volunteers around Igor Gurkin, for example, with the nickname Strelko. There were Wagner mercenaries, but no regular units. The Minsk Agreement was an attempt to give Ukraine some precinct space, because Ukraine",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0014_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0014.wav",
+    "generated_duration": 33.45066666666666
+  },
+  {
+    "start": 488.29,
+    "end": 517.81,
+    "text": "2014-2015年冬，乌军在德巴尔塔塞沃附近被武装分子包围。据默克尔和奥朗德表示，乌克兰方面从未履行相关方达成的明斯克协议（2014年），为基辅重整军备争取时间。2022年2月，俄罗斯放弃该协议并发动军事行动入侵乌克兰。",
+    "speaker": "SPEAKER_00",
+    "original_text": "units were encircled by insurgents near Debaltsevo in the winter 2014 to 2015, and to give Kiev time to rearm as former German Chancellor Merkel and former French President Hollande explained, it was never honored by the Ukrainian side. In February 2022, Russia also abandoned the Minsk Agreement and intervened directly by invading Ukraine.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0015_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0015.wav",
+    "generated_duration": 25.386666666666667
+  },
+  {
+    "start": 517.81,
+    "end": 551.41,
+    "text": "这标志着乌克兰与顿涅茨克、卢甘斯克共和国及俄罗斯联邦之间的战争进入第二阶段。此外，第三层级即为美国、北约和欧盟与俄罗斯之间展开的代理人战争。目前，美国国务卿马可·鲁比奥与特使基思·克洛格均提及这场代理人战争，英国前首相鲍里斯·约翰逊也曾如此表述。包括经济学家杰弗里·萨克斯在内的多位学者，如理查德·萨克瓦、尼古拉等，对此进行了分析。",
+    "speaker": "SPEAKER_00",
+    "original_text": "This marked the beginning of the second part of the war between Ukraine on the one hand and the Republics of Danijetsk and Lugansk and the Russian Federation on the other side. The third level is the proxy war between the United States, NATO and EU and Russia. U.S. Secretary of State Marco Rubio and trans-special envoy Keith Kellogg now speak of a proxy war, as did former British Prime Minister Boris Johnson. As economists, Jeffrey Sachs and many other historians such as Richard Sakva, Nikolai",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0016_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0016.wav",
+    "generated_duration": 38.22933333333334
+  },
+  {
+    "start": 551.41,
+    "end": 598.81,
+    "text": "彼得罗和基思基金申诉书确认，自1991年乌克兰独立以来，美国始终试图将乌克兰拉入西方经济圈，并通过军事武装构建为对抗俄罗斯的战略屏障。其意图在于掠夺乌克兰的自然资源并从战略上包围俄罗斯，以此巩固美国在全球单极格局中的霸权地位。在单极格局下，只能存在一个主导力量——华盛顿。主导力量制定规则，其余国家必须遵从。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Petro and Keith's fund appeal confirm, the United States has been trying to pull Ukraine into the western economic orbit and to arm it militarily as a bulwark against Russia since its independence in 1991. The aim was to exploit Ukraine's natural resources and to encircle Russia. This was intended to consolidate the United States' hegemonic position. Because in the unipolar world, there can only be one leading power, Washington. The leading power sets the rules, everybody else has to submit.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0017_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0017.wav",
+    "generated_duration": 35.968
+  },
+  {
+    "start": 598.81,
+    "end": 631.17,
+    "text": "美国在这场较量中败下阵来。2月25日，美国国务卿马可·鲁比奥承认我们正身处多极化世界。虽然目前谈判在利雅得进行，但其意义不仅限于乌克兰和平，而是全球性议题的集中反映。第四层面是西方与金砖国家（中俄领衔）之间的经济战争，西方在这场较量中同样失利。",
+    "speaker": "SPEAKER_00",
+    "original_text": "The United States has lost this battle. In February 25, U.S. Secretary of State Marco Rubio acknowledged that we live in a multipolar world. Negotiations are now taking place in Riyadh but not just for peace in Ukraine alone rather than the claims are being state out worldwide. The fourth level is the global economic war waged by the West against the Bricks states which are led by Russia and China. The West has also lost this battle.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0018_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0018.wav",
+    "generated_duration": 29.098666666666666
+  },
+  {
+    "start": 631.17,
+    "end": 670.77,
+    "text": "截至目前，针对俄罗斯实施的15轮制裁累计达3万项之多，原本旨在孤立俄方却适得其反。随着俄油气价格不再低廉，德国经济竞争力明显削弱。记者塞缪尔·赫希将\"北溪\"管道爆炸事件归咎于自己的国家——美国，德国能源困局随之全面收紧。制裁效果已显疲弱。",
+    "speaker": "SPEAKER_00",
+    "original_text": "The 15 sanctions packages, to date, with a total of 30,000 sanctions I think, were aimed at isolating Russia but they proved to be a boomerang. Not cheap Russian oil and gas, the German economy in particular is no longer competitive. With the blowing up of the North Stream Pipeline, for which the journalist Seymour Hirsch blames his own country, the United States, the energy trap has snapped shut for Germany. The sanctions are having no effect.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0019_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0019.wav",
+    "generated_duration": 29.610666666666667
+  },
+  {
+    "start": 670.77,
+    "end": 710.01,
+    "text": "俄罗斯经济出人意料地强劲。在193个联合国成员国中，仅40国参与对俄制裁，其余153国仍与俄罗斯保持合作。真正被孤立的是西方世界，而非俄罗斯。欧洲对外关系委员会指出，西方国家正与世界其他地区渐行渐远。与此同时，俄罗斯正在积极拓展与亚洲各国的经济合作——我曾实地见证，这些新型核动力破冰船正在圣彼得堡（俄罗斯）建造，用于开辟北极航运通道。",
+    "speaker": "SPEAKER_00",
+    "original_text": "The Russian economy is surprisingly robust and the 193 nations, in the United Nations General Assembly, only 40 have joined the sanctions, while 153 continue to cooperate with Russia. It is not Russia that is isolated, it is the West. The European Council on Foreign Relations wrote United West divided from the rest. Meanwhile, Russia is expanding its economic relations with Asia. New nuclear powered icebreakers are being built in St. Petersburg, I saw that, to make the",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0020_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0020.wav",
+    "generated_duration": 43.349333333333334
+  },
+  {
+    "start": 710.01,
+    "end": 745.85,
+    "text": "北极航道全年通航大型油轮，通往中国的输油管道及里海至波斯湾铁路干线正在同步建设。全球经济增长重心正从欧美向东南亚转移——该地区人口已超过30亿。美国和欧洲在全球价值链中的所占份额持续下降，而中国则呈现强劲增长势头。",
+    "speaker": "SPEAKER_00",
+    "original_text": "northern passage navigable for tankers all year round. New pipelines are being built to China. New railroad lines are being built between the Caspian and the Plexies. On a global scale, economic power is gradually shifting away from Europe and the United States to Southeast Asia. More than 3 billion people live there. The United States and Europe's share of values of value creation is declining, while China in particular is becoming even stronger economically.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0021_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0021.wav",
+    "generated_duration": 27.946666666666665
+  },
+  {
+    "start": 745.85,
+    "end": 784.45,
+    "text": "美国正以牺牲欧洲利益为代价稳定自身经济。结果，欧洲不仅沦为华盛顿的后院，更成为俄罗斯难以扭转其向亚洲倾斜趋势的舞台。第五层面的影响波及北约国家，尤其是欧洲的纳税人、企业主、员工及退休人员，整个中产阶级首当其冲。欧盟、美国和德国已为乌克兰战争拨款数百亿美元。",
+    "speaker": "SPEAKER_00",
+    "original_text": "The United States is trying to stabilize its economy at the expense of the Europeans. As a result, Europe is becoming a backyard of Washington, but also the backyard of Russia that will not be able to reverse its turn towards Asia. The fifth level affects the taxpayers in NATO countries, especially in Europe, employers, employees, and pensioners, and the middle class as a whole. The European Union, the United States and Germany have financed the war in Ukraine with hundreds of billions.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0022_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0022.wav",
+    "generated_duration": 29.909333333333333
+  },
+  {
+    "start": 784.45,
+    "end": 815.53,
+    "text": "重建也将耗费数以百亿计的美元，而越来越多的资金正被用于军事开支。这些资金正从消费、社会保障、养老金、教育和基础设施等领域流失。这并非凯恩斯主义的实践，因为约翰·梅纳德·凯恩斯的理念本质是通过扩大内需来拉动经济增长。归根结底，乌克兰战争是一场政府与资本集团针对本国人民发动的战争。",
+    "speaker": "SPEAKER_00",
+    "original_text": "The reconstruction will cost hundreds of billions as well, and more and more money is being spent on armaments. This money is missing from consumption, social security, pensions, educations, and infrastructure. This is not military Keynesianism, because John Maynard Keynes' ideas were aimed at strengthening the population's demand. As you can see, the war in Ukraine is also a war raged by governments and corporations against their own people.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0023_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0023.wav",
+    "generated_duration": 30.933333333333334
+  },
+  {
+    "start": 815.53,
+    "end": 834.53,
+    "text": "这场战争本质上是对中产阶级和穷人的侵袭，剥夺了数百亿美元，为美国军工复合体输血。这是一场阶级斗争，这就是我在乌克兰所见的战争五层。",
+    "speaker": "SPEAKER_00",
+    "original_text": "The war is a raid against the middle class and the poor, and it deprives of billions and feeds the military industrial complex in the United States. It's a class war. These are the five levels of war I see in Ukraine.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0024_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0024.wav",
+    "generated_duration": 14.592
+  },
+  {
+    "start": 834.53,
+    "end": 868.81,
+    "text": "非常感谢您为我们所做的这份详尽且精心准备的报告。我之前提到我们会重点讨论乌克兰顿巴斯地区，但考虑到您刚才谈到的内容，我想请教一个问题。让我真正震惊的是：在经历了对俄罗斯屡次受挫的制裁、目睹欧洲陷入重重困境后，如今我们却到了一个不惜以自身为代价的地步...",
+    "speaker": "SPEAKER_01",
+    "original_text": "Thank you very much for this comprehensive and also very well prepared overview that you're giving us. I know I said we're going to talk about the Donbass mostly, but because of what you just said, I just need to ask you. One of the things that really flabbergasts me now is that after all of this failed sanctioning of Russia, and after all this blot bath that we have seen, and Europe being willing and ready to ruin itself in the process, we are now at a point where the",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0025_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0025.wav",
+    "generated_duration": 24.832
+  },
+  {
+    "start": 868.81,
+    "end": 897.89,
+    "text": "美国不仅没有停止对欧洲的压榨，反而变本加厉地趁火打劫。在欧洲已失去俄罗斯能源命脉的情况下仍加征关税，更与乌克兰签订矿产协议——这种行径简直是在将欧洲国家当作殖民地对待！我们早已见惯欧洲人对非洲和亚洲的这类新殖民主义操作，但这次发生在欧洲身上，令人震惊。",
+    "speaker": "SPEAKER_01",
+    "original_text": "United States also tries to scavenge and to exploit Europe even more, putting tariffs also on the Europeans who already lost their energy lifeline to Russia, and of course the mineral deal with Ukraine, which is the most cruel thing and most neocolonial enterprise that I have seen in my life, like put on a European state, right? We've seen it with the Europeans doing it to Africa and doing it to Asia, I cannot",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0026_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0026.wav",
+    "generated_duration": 26.922666666666668
+  },
+  {
+    "start": 897.89,
+    "end": 925.41,
+    "text": "记得有人曾试图强行这么做，即迫使一个国家永久放弃所有财富并将其归于欧洲某大国。在我看来，这场战争不仅针对俄罗斯，某种程度上也针对整个欧洲，至少在美方看来。您怎么看？",
+    "speaker": "SPEAKER_01",
+    "original_text": "remember that somebody tried to do something like this, kind of forcing a state to give up all of its wealth in perpetuity to a great power in Europe. It seems to me that this war was not just directed against Russia, it's also directed against Europe, at least from the US side, or how do you see it?",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0027_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0027.wav",
+    "generated_duration": 16.72533333333333
+  },
+  {
+    "start": 925.41,
+    "end": 970.53,
+    "text": "这话说得一点没错。真正的问题在于那些跨大西洋的腐败精英，他们职业生涯的核心是为美国服务而非本国利益，其晋升之路始终由美国政府操控。比如德国绿党领导人安娜莱娜·贝尔伯克，必须先到华盛顿的某智库亮相，向美方阐明政策主张背后的深层逻辑，随后才被安排回国出任外长。",
+    "speaker": "SPEAKER_00",
+    "original_text": "This is absolutely correct. And responsible in Europe are transatlantic corrupted elites. They made their careers in serving the United States more than in serving their own countries. And they were promoted by the government of the United States. For example, Annalena Baerbock. She had to show up in Washington at a think tank and they had to provide their political position, explain their political position. And then she was sent back to get foreign minister in Germany.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0028_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0028.wav",
+    "generated_duration": 32.42666666666667
+  },
+  {
+    "start": 970.53,
+    "end": 984.05,
+    "text": "欧洲所有政治精英实际上都隶属于一个跨国政治精英群体，远未服务于本国。",
+    "speaker": "SPEAKER_00",
+    "original_text": "So all the political elites in Europe are part of a global political elite which are far from serving their own countries.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0029_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0029.wav",
+    "generated_duration": 11.221333333333334
+  },
+  {
+    "start": 984.05,
+    "end": 1017.25,
+    "text": "这是否源于欧洲大陆特殊的发展路径？随着欧盟这类超国家组织和北约等国际机构的出现，原本在国内政坛并不显眼的个人突然获得了前所未有的权力机会。这些跨国机构内部的精英群体，其影响力往往甚至超过他们在本国的地位——这种现象在欧洲的政治环境中特别明显。",
+    "speaker": "SPEAKER_01",
+    "original_text": "Is this a result of the way that Europe basically, the European Union kind of developed, you know, and the way that European continent started developing these supranational organizations like the EU and the international organizations like NATO, where suddenly positions become available, where individuals can be more powerful or more important, and the elites can be more important inside the institutions than inside their own countries, just as it",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0030_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0030.wav",
+    "generated_duration": 25.429333333333332
+  },
+  {
+    "start": 1017.25,
+    "end": 1036.13,
+    "text": "若没有欧盟的支持，任何一位爱沙尼亚前总理都不可能突然在欧洲事务中扮演重要角色。这些机构与美国紧密关联，最终权力始终掌握在美国手中。",
+    "speaker": "SPEAKER_01",
+    "original_text": "would be impossible for any kind of Estonian former prime minister to suddenly take a major role in European affairs if it wasn't for the EU. And that these institutions, though, are all tethered to the United States and controlled, of course, ultimately with power laying in Washington.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0031_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0031.wav",
+    "generated_duration": 13.354666666666667
+  },
+  {
+    "start": 1036.13,
+    "end": 1084.13,
+    "text": "对，我觉得是这样。这是其中一个层面，另一个层面就是美国的软实力。没错，许多德国和欧洲精英都曾在跨大西洋机构接受教育，比如德国马歇尔基金（German Marshall Fund）、青年全球领袖计划（Young Global Leaders），或是佐罗什复兴基金会（Zorosh Renaissance Foundation）。这类基金会多达数百家，他们并非被迫接受，而是获得邀请。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Yes, I think so. This is one level. And the other level is American soft power. Yeah, yeah. A lot of German elites and European elites as well were educated at transatlantic organizations and foundations like German Marshall Fund, Young Global Leaders, or the foundations of the billionaire Zorosh Renaissance Foundation. And there are hundreds of foundations of that kind. They were not forced. They get offers.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0032_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0032.wav",
+    "generated_duration": 41.13066666666667
+  },
+  {
+    "start": 1084.13,
+    "end": 1142.22,
+    "text": "他们频繁受邀参与欧美跨大西洋的学术会议和科研交流活动，被提拔至\"大西洋桥\"机构任职。这些组织与国家利益深度绑定，并通过智库及非政府组织间接获得政府资金支持。这种联动机制在欧盟、国家层面乃至基层治理体系中构建起庞大的意识形态传导网络。",
+    "speaker": "SPEAKER_00",
+    "original_text": "They get transatlantic invitations to scientific meetings, research journeys, and all that. They were promoted to jobs in Atlantic Brücke. And these organizations are aligned with state interests, think tanks, and non-government organizations who are financed indirectly by the government. And this forms a huge ideological apparatus of all levels, not only the EU level or the state level, under the state level.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0033_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0033.wav",
+    "generated_duration": 36.352
+  },
+  {
+    "start": 1142.22,
+    "end": 1161.6,
+    "text": "你们拥有众多非政府组织。其中由政府资助的那些，正在为青年学者提供就业机会。这就是关键所在，只要你看。",
+    "speaker": "SPEAKER_00",
+    "original_text": "You have a lot of non-government organizations. And those non-government organizations that are paid by the states are providing jobs for young academics. And that's the whole secret. It's open to your eyes. You just have to see it.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0034_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0034.wav",
+    "generated_duration": 12.202666666666667
+  },
+  {
+    "start": 1161.6,
+    "end": 1179.24,
+    "text": "数十年如一日地用资金维系这些世代，却将他们牢牢禁锢在意识形态体系中。一旦有人像乌尔里克·格罗阿那样试图挣脱框架，便永无可能重返此体制。",
+    "speaker": "SPEAKER_01",
+    "original_text": "It's ideological colonialism and fostering for 40, 50 years these generations and just distribute the money, but make sure that they ideologically remain online. And if people jump out like Ulrike Geroa and so on, they'll never see again within these structures.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0035_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0035.wav",
+    "generated_duration": 13.226666666666667
+  },
+  {
+    "start": 1179.24,
+    "end": 1199.08,
+    "text": "没错，我的朋友乌尔里克曾是意识形态部门的一员。但有一天她开始动摇，一夜之间就成了局外人，再也没有朋友了。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Right? Yes, my friend Ulrike was part of these ideological apparatus. But one day she began to doubt. And from one day to the other, she became an outsider from one day to the other. She had no friends anymore.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0036_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0036.wav",
+    "generated_duration": 11.946666666666667
+  },
+  {
+    "start": 1199.08,
+    "end": 1213.08,
+    "text": "她曾是德国各大热门访谈节目的常客，包括那些最具影响力的节目，后来却突然淡出了。如今已不再活跃于网络，在思想上也逐渐与公众脱节，甚至外卖订单也开始下滑。",
+    "speaker": "SPEAKER_01",
+    "original_text": "She used to be on all of these talk shows in Germany, right, in the biggest ones, in the most important ones, and gone. Those times are gone because not online anymore, ideologically, therefore, you drop takeout potato.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0037_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0037.wav",
+    "generated_duration": 15.445333333333334
+  },
+  {
+    "start": 1213.08,
+    "end": 1251.4,
+    "text": "这确实是一个耐人寻味的论点。主流媒体与宣传机构如今已完全融入北约的舆论框架及国家安全体系的话语体系，这是媒介研究领域早已证明的现象。这种现象比比皆是——德国议员乌尔里克就是极具代表性的案例之一。对我而言，最具关键意义的转折点发生在2003年伊拉克战争期间：当时任德国总理施罗德、法国总统希拉克与俄罗斯总统普京三方共同反对这场战争。",
+    "speaker": "SPEAKER_00",
+    "original_text": "And that's an interesting point because the propaganda media, the mainstream media are completely aligning with NATO propaganda and the narratives of the security apparatus. This is what media science shows. And you can see it everywhere. And Ulrike is just one very good example. And the crucial point, from my point of view, was the Second Iraq War in 2003, when the then Chancellor Gerhard Schröder, the French President Chirac and the Russian",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0038_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0038.wav",
+    "generated_duration": 37.76
+  },
+  {
+    "start": 1251.4,
+    "end": 1279.68,
+    "text": "普京总统曾拒绝与美国结盟并攻打伊拉克。随后，华盛顿分别从旧欧洲与新欧洲发声，这为美国精英发出警示——他们企图重塑欧洲精英的认知。此类事件不应重演，这才是真正的关键。",
+    "speaker": "SPEAKER_00",
+    "original_text": "President Putin, denied to align with the United States and to attack the Iraq. And then Washington spoke from the old Europe and the new Europe. And this was a warning signal for the American elites. See, they wanted to re-educate the European elites. This shouldn't happen anymore, again. That was the main part.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0039_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0039.wav",
+    "generated_duration": 20.437333333333335
+  },
+  {
+    "start": 1279.68,
+    "end": 1307.68,
+    "text": "嗯，这些因素相互交织，说明问题没有简单的解决办法。这种意识形态殖民主义（指思想领域的殖民控制）早已深入欧洲文化肌理，这也解释了为什么欧洲如今动荡，为什么人们至今无法理解自身处境。不过，也许我们应该重新聚焦顿巴斯地区——你在那里待了很久，对吧？而且你去的次数非常多。",
+    "speaker": "SPEAKER_01",
+    "original_text": "Well, this is, I mean, all of this plays together. It just means that there's no easy cure for it because this ideological colonialism is, of course, now deep in the bones of Europe. But that also explains why Europe is now so shaken, why all of these people do not understand what happened to them. But maybe, look, we should focus a little bit on the Donbass because you actually spend a lot of time there, right? And you went there many, many times.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0040_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0040.wav",
+    "generated_duration": 24.96
+  },
+  {
+    "start": 1307.68,
+    "end": 1319.88,
+    "text": "非常渴望了解您的经历，特别是顿巴斯过去的生活状况，以及现在的处境。您最后一次去顿巴斯地区是什么时候？",
+    "speaker": "SPEAKER_01",
+    "original_text": "And I really burned to know more about your experiences, how the Donbass was living before, how the Donbass is doing now. And when were you there for the last time?",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0041_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0041.wav",
+    "generated_duration": 10.197333333333333
+  },
+  {
+    "start": 1320.56,
+    "end": 1360.16,
+    "text": "去年十月，也就是2023年，我最后一次去那里。目前我正在撰写一本与此相关的书。除了多次前往顿巴斯和乌克兰，自1998年以来我还曾数十次访问俄罗斯。我写的《战争双方的视角》就是基于这两次实地考察经历。自1997年起我就在北德广播公司工作，当时还参与出版了一份聚焦波罗的海地区事务的刊物——《波罗的海报告》。",
+    "speaker": "SPEAKER_00",
+    "original_text": "The last time I was there last year in October. 2024. 24. And at the moment, I'm writing a book on that. And I've been in the Donbass several times and in the Ukraine several times. And I've been in Russia countless times since 1998. My book of both sides of a front is based on two of these trips. Well, this is a long story. I've been working for North German public broadcasters since 1997. And there was a magazine for events around the Baltic Sea, the so-called Baltic report.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0042_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0042.wav",
+    "generated_duration": 32.04266666666667
+  },
+  {
+    "start": 1360.16,
+    "end": 1399.16,
+    "text": "总编辑派我前往俄罗斯、波罗的海和斯堪的纳维亚执行采风任务。虽然名义上是旅游项目，但我拍摄了涉及俄罗斯极右翼势力、非法石油运输、欧盟护照非法交易市场以及库尔斯克号核潜艇沉没事件等纪录片。通过这些报道，我与俄罗斯及乌克兰的同行和业内人士建立了联系，并在俄罗斯逐步建立起自主情报网络。这为我后来在顿巴斯的深度调查奠定了基础。",
+    "speaker": "SPEAKER_00",
+    "original_text": "And for this program, the editor-in-chief sent me to Russia, among other places, the Baltic and Scandinavia. It was actually a touristic program. But I made films about Russian neonases, about illegal oil transports, about the illegal trade in EU passports, about the sinking of the Kursk and all that. That gave me contacts to Russian colleagues and to many people in Russia and in Ukraine. And so I learned to research in Russia to find sources of my own. And this made my work in Donbass possible.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0043_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0043.wav",
+    "generated_duration": 37.717333333333336
+  },
+  {
+    "start": 1399.16,
+    "end": 1434.16,
+    "text": "正因如此，我也深知西方媒体对乌克兰战争的报道本质是北约的宣传机器。需要铭记的是，这场战争在三个方面同步进行：首先是地面战场上的军事冲突；其次是针对俄罗斯的一场经济战；最后则是舆论战。在舆论战中，媒体并非中立——这点尤为关键。",
+    "speaker": "SPEAKER_00",
+    "original_text": "And that's why I also knew that the way the Western media portray the war in Ukraine is essentially NATO propaganda. And we have to keep in mind that this war is taking place on three levels. The first level is the military conflict on the ground. The second is the economic warfare against Russia. And the third point is the propaganda war. And the media are not neutral in this propaganda war, but a party of the war. That's an important point.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0044_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0044.wav",
+    "generated_duration": 27.861333333333334
+  },
+  {
+    "start": 1434.2,
+    "end": 1444.16,
+    "text": "我的感受和媒体呈现的完全不一样——老实说，他们连基本的内容都没交代清楚。",
+    "speaker": "SPEAKER_00",
+    "original_text": "And my main impressions are completely different from all that what the media provide on this information. I have to say they don't inform.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0045_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0045.wav",
+    "generated_duration": 7.082666666666666
+  },
+  {
+    "start": 1444.16,
+    "end": 1473.4,
+    "text": "在苏联时期，他们的宣传做得非常到位。要知道，在那个年代，苏联的宣传对老百姓来说很容易识别——从我读过的资料来看，当时民间笑话层出不穷就是明证。但西方的宣传则不同，几乎没人能清楚识别——比如看这节目或别的节目的人。",
+    "speaker": "SPEAKER_01",
+    "original_text": "But they did a very good job at doing their propaganda because, you know, propaganda in Soviet propaganda in the Soviet times was easy to pinpoint for Soviet citizens, at least as far as I know from the readings about those times and also the jokes that went around and so on. But Western propaganda is almost there's not a lot of people that identify it. I mean, anyone watching this program, anyone watching some of the other programs",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0046_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0046.wav",
+    "generated_duration": 20.608
+  },
+  {
+    "start": 1473.4,
+    "end": 1504.0,
+    "text": "我认为大约70%到80%的欧洲人信服我们数据所呈现的整体框架——德国主要广播机构提供的信息总体准确，但仍存在一定偏差。他们未能充分认识到虚假信息渗透的广度以及舆论操控的程度。比如顿巴斯地区，能否举例说明这类信息操控的具体表现？",
+    "speaker": "SPEAKER_01",
+    "original_text": "does, but I would say that probably around 80 percent, 70 to 80 percent in Europe, they believe that the general the general framework of what you get in our data, all of the German broadcasting companies, more or less, more or less is accurate with, you know, some some issues. They do not comprehend the how deep the misguiding went or the narrative control went. How does the Donbas, for instance, can you give us a few examples of how",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0047_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0047.wav",
+    "generated_duration": 28.117333333333335
+  },
+  {
+    "start": 1504.0,
+    "end": 1507.84,
+    "text": "西方媒体对顿巴斯地区的刻画与当地实际情况存在哪些差异？",
+    "speaker": "SPEAKER_01",
+    "original_text": "the Donbas was portrayed in the West versus what is actually reality there?",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0048_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0048.wav",
+    "generated_duration": 5.802666666666667
+  },
+  {
+    "start": 1509.98,
+    "end": 1539.9,
+    "text": "是的，80%的德国人更愿意相信这种说法。这正是问题的关键所在。但现实情况却与之相去甚远。我可以详细说明：主流媒体通过选择性忽视乌克兰 Maidan 政变、北约及美国的责任，对战争爆发前的历史背景及根本原因进行了淡化处理，长期忽视了乌克兰民众的真实社会状况。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Yes, 80 percent of the German population want to believe. That's the point. And this is far from reality. I can explain that in detail. The propaganda media omit the prehistory of the war and the actual reasons for the war by ignoring the coup of the Maidan and the responsibility of NATO and the United States. They do not look at the social situation of the population in Ukraine.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0049_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0049.wav",
+    "generated_duration": 30.592
+  },
+  {
+    "start": 1540.18,
+    "end": 1569.86,
+    "text": "他们扭曲军事局势，以道德虚伪掩盖其好战行径导致的数十万平民伤亡；误判乌克兰及顿巴斯地区民众的反战情绪；刻意隐瞒文化灭绝行为——包括对东正教会的报复性迫害、焚书、摧毁俄罗斯诗人纪念碑；同时将班德拉（斯捷潘·班德拉）神化为民族英雄，并推崇法西斯主义。",
+    "speaker": "SPEAKER_00",
+    "original_text": "They misrepresent the military situation and behave morally because their warmongering is responsible for hundreds of thousands of deaths. They misjudge the mood of the population in Ukraine and in Donbas. They concealed the cultural genocide, the reprisals against the Orthodox church, the book burnings, the destruction of monuments of Russian poets, the pronounced cult of bandera and fascism.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0050_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0050.wav",
+    "generated_duration": 28.714666666666666
+  },
+  {
+    "start": 1570.18,
+    "end": 1598.38,
+    "text": "他们未提制裁及对俄经济战或将引发的反噬效应，导致西方正面临失控的风险。作为长期主导欧洲与欧亚地区地缘政治格局的美国，其核心利益在于百年来持续分裂区域并阻断俄德深度合作。特别是近期美国试图通过北约东扩等手段强化对欧亚地区的影响力。",
+    "speaker": "SPEAKER_00",
+    "original_text": "They do not provide information about the boomerang effect of the sanctions and the economic war against Russia, which the West is in danger of losing. They do not provide information about the geopolitical interests of the United States, which has been dividing the European region, the Eurasian region for more than 100 years and wants to prevent close cooperation between Russia and Germany. In particular, the attempt by the U.S.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0051_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0051.wav",
+    "generated_duration": 26.026666666666667
+  },
+  {
+    "start": 1598.38,
+    "end": 1629.02,
+    "text": "新保守主义者与拜登政府试图维持以美国为中心的单极世界秩序，确立其霸权地位。他们通过乌克兰战争削弱俄罗斯，以此将战略重点转向中国。有意忽视核战争威胁，与政客们的末日幻想症如出一辙。北约各国主流媒体如同磁铁吸引铁屑般，无一不追随北约宣传口径。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Neocons and the Biden administration to preserve the unipolar world order with the U.S., with the United States as a hegemon and therefore to weaken Russia through a war in Ukraine in order to then turn to China as the main opponent. They play down the danger of nuclear conflict. They share the apocalypse blindness of our politicians. The mainstream media in all NATO countries aligned themselves with NATO propaganda like metal filings with a magnet.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0052_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0052.wav",
+    "generated_duration": 28.288
+  },
+  {
+    "start": 1629.7,
+    "end": 1666.98,
+    "text": "他们秉持新殖民主义的安全国家视角，鼓吹反俄及种族主义的战争言论。所有媒体研究都印证了这一点——他们不传递真实信息，反而散播虚假内容，甚至实施系统性误导。而我的实地经历却截然不同。自1999年起，我曾到访科索沃并曾在阿富汗工作，掌握了应对危险的技能。",
+    "speaker": "SPEAKER_00",
+    "original_text": "They share the neocolonial perspective of the security state and spread anti-Russian and racist warmongering. All media research show this. They don't inform, they misinform, they disinform them to a job. And my experiences on the ground are completely different. Well, it was, for me, it was not the first time I was in a war zone. Up from 1999, I was in the Balkans in Kosovo and I worked in Afghanistan and I learned how to deal with danger.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0053_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0053.wav",
+    "generated_duration": 28.117333333333335
+  },
+  {
+    "start": 1667.66,
+    "end": 1709.94,
+    "text": "在存在地雷风险的战区，你永远不能在沟渠里撒尿，得绕到车后面去，因为沟里可能有地雷。然而，这场战争惨烈程度远超以往任何战役。无人机、计算机控制火炮和人工智能彻底改变了战争形式。据士兵报告，巴赫穆特前线步兵的平均生存时间只有四小时——仅仅四小时。我在2002年9月见过一朵金盏花。",
+    "speaker": "SPEAKER_00",
+    "original_text": "For example, in a region where there is a risk of mines, you are never allowed to pee in the ditch. You have to go behind the car because in the ditch, there can be mines. But this war is much tougher than anything I've seen before. Drones, computer-controlled artillery and artificial intelligence have totally changed the war. The average survival time of an infantry man on the front line, as soldiers report, was only four hours in Bakhmut, only four hours. I saw a marigold in September 2002.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0054_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0054.wav",
+    "generated_duration": 32.384
+  },
+  {
+    "start": 1710.1,
+    "end": 1755.5,
+    "text": "这座城市估计有八成被摧毁，许多居民被迫躲进地下室。需要指出的是，俄罗斯并未针对平民发动战争。统计记录显示所有遇难者均无生还记录。与此同时，美国方面截至目前登记的平民伤亡人数已达到约2万人，实际数字可能更高——目前仍有大量遇难者身份信息仍未核实。但相较于1914年至今的所有重大冲突，这场战争造成的平民伤亡人数最少。",
+    "speaker": "SPEAKER_00",
+    "original_text": "The city was destroyed by, I estimate, 80 percent. Many people were living in basements. Nevertheless, Russia is not waging a war against the civilian population. The figures show that no one is alive from body count. But the United States has registered around 20,000 civilians, civilian victims so far. I think there are much more. Many are not identified so far. But this war, but this is the lowest number of civilian casualties compared to all major wars since 1914.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0055_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0055.wav",
+    "generated_duration": 40.192
+  },
+  {
+    "start": 1756.02,
+    "end": 1764.62,
+    "text": "尽管俄罗斯在这场战争中有着自己的意图，但并没有消灭乌克兰民众的打算。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Whatever Russia wants to achieve with this war, it does not intend to annihilate the Ukraine population.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0056_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0056.wav",
+    "generated_duration": 9.429333333333334
+  },
+  {
+    "start": 1765.1,
+    "end": 1799.78,
+    "text": "只需将你刚才提到的乌克兰和俄罗斯库尔斯克地区平民死亡人数与加沙地带的伤亡数字对比一下，就能看清其中的巨大差异了。这种情形简直是种族灭绝最典型的案例。更讽刺的是，欧洲人一方面宣称加沙不存在种族灭绝，另一方面却认为南非在国际法院（ICJ）起诉以色列的行为毫无意义。",
+    "speaker": "SPEAKER_01",
+    "original_text": "One just needs to compare the death count of civilians that you just gave in Ukraine and Russia as well, and in the Kursk region, and compare that to the deaths in Gaza. I mean, that one, to me, is as obviously genocidal as it gets. And the crazy thing is that the Europeans support a... The Europeans keep saying, oh no, there's no genocide going on in Gaza. And the ICJ case by South Africa against Israel is ludicrous, is what they're saying.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0057_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0057.wav",
+    "generated_duration": 28.074666666666666
+  },
+  {
+    "start": 1799.78,
+    "end": 1825.38,
+    "text": "另一方面，他们正支持乌克兰在国际法院对俄罗斯提出的种族灭绝案。这……说白了，这就是另一种手段。不过我同意你的看法——俄罗斯首当其冲就是乌克兰的军队，这些不同团体被整合进统一武装力量。",
+    "speaker": "SPEAKER_01",
+    "original_text": "And on the other hand, they are supporting a genocide case at the ICJ by Ukraine against Russia. This is... Yeah, it's another level of trying to make reality what you want it to be. But I agree with you. I mean, Russia is first and foremost fighting the military of Ukraine. The armed forces, these different groups that were integrated.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0058_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0058.wav",
+    "generated_duration": 19.882666666666665
+  },
+  {
+    "start": 1826.38,
+    "end": 1861.38,
+    "text": "数据显示，这是一场针对乌克兰政府和乌克兰境内北约力量的特别军事行动。正如关键所在——我必须指出的是，今天德国坦克再次出现在顿巴斯地区。我并未感受到任何针对德国人的敌意，恰恰相反。人民明确区分了民众与政府之间的界限：正如俗话所说，“政权更迭是常态”，而人民将永续存在。",
+    "speaker": "SPEAKER_00",
+    "original_text": "The figures show that. And this is really a special military operation against the Ukrainian government and against NATO on the ground of the Ukraine. That's the point. And I have to say also German tanks are rolling in the Donbas again today. I have not experienced any hostility towards Germans. Quite the opposite. The people make clear distinctions between the people and their governments. According to the motto, governments come and go. People will remain.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0059_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0059.wav",
+    "generated_duration": 32.21333333333333
+  },
+  {
+    "start": 1861.38,
+    "end": 1901.38,
+    "text": "战区检查点的情况截然不同。我多次在持枪威胁下被盘查，甚至数次遭逮捕羁押。德国护照导致士兵误认我为敌国国民，随后经历所谓\"甄别\"——俄军士兵以俄语实施数小时问询。截至目前一切尚可。",
+    "speaker": "SPEAKER_00",
+    "original_text": "But at the checkpoints in the war zone, this is completely different. I've been checked several times at gunpoint and arrested several times. I was detained. My German passport identifies me to the soldiers as a member of an enemy state. Then I was filtered, so-called filtered. It means I was detained and questioned for many hours. By Russians in Russian? Yes, absolutely. By Russian troops. And well, in front of the guns. And so far, this all went well.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0060_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0060.wav",
+    "generated_duration": 23.253333333333334
+  },
+  {
+    "start": 1901.38,
+    "end": 1943.38,
+    "text": "在数千人丧生的冲突地区，人命早已不再值钱。我不得不承认，在顿巴斯地区的多数民众并不认为自己被俄军占领，反而觉得是获得了解放——有些士兵甚至受到了当地人的热烈欢迎。这种现象与西方媒体及北约的宣传大相径庭，令人难以置信。但若深入了解，自2014年4月以来，顿涅茨克和卢甘斯克的居民就持续遭受乌军炮击，我亲历过无数次这样的场景。",
+    "speaker": "SPEAKER_00",
+    "original_text": "But in a war zone where thousands have died, a human life is no longer worth much. Then I had to realize that the majority of the people in Donbas do not feel occupied by the Russian army but liberated. Some of the soldiers were welcomed with open arms. It is hard to imagine in the West end contradicts NATO propaganda. But it is explainable. In Donetsk and Lugansk, the population has been shelled by the Ukrainian army since April 2014. I've experienced this many times.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0061_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0061.wav",
+    "generated_duration": 40.02133333333333
+  },
+  {
+    "start": 1943.38,
+    "end": 1980.38,
+    "text": "经过十年以上乌克兰炮火的持续轰炸，人们更愿意看到未来在俄罗斯一侧。俄罗斯工资水平达到此处的三倍，马里乌波尔、扎波罗热等城市的生活条件也明显优于这里。自冲突爆发以来，以伊尔索夫营为代表的法西斯武装力量持续对平民施暴、威胁及非法拘捕，多位目击者多次向我证实了这一情况。",
+    "speaker": "SPEAKER_00",
+    "original_text": "After more than ten years of shelling by Ukrainian artillery, it should come as no surprise that people see their future on the Russian side. Vages are three times higher in Russia. There are a higher, there is a higher standard of living in cities such as Mariupol or Saporizhia, fascist units such as the Yersov battalion have been harassing, beating, threatening and arresting the civilian population since 2014. Eyewitnesses have told me that many times.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0062_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0062.wav",
+    "generated_duration": 32.21333333333333
+  },
+  {
+    "start": 1980.38,
+    "end": 1993.38,
+    "text": "由于平民遭受报复，俄军被视为解放者——这合情合理。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Because the civilian population was subjected to reprisals, they welcomed the Russian army as liberators. That's easy to explain.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0063_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0063.wav",
+    "generated_duration": 5.461333333333333
+  },
+  {
+    "start": 1993.38,
+    "end": 2030.38,
+    "text": "我能否请教您一个问题？顿巴斯是这场可怕战争的基石，也是推动局势持续升级的关键力量。但我们的媒体始终忽视且从未报道的是：在2014年至2022年的八年间，顿涅茨克和卢甘斯克这两个地区曾多次宣称独立诉求，直至特别军事行动开始前三四天仍如此表态。俄罗斯的战略核心在于维持其现状。",
+    "speaker": "SPEAKER_01",
+    "original_text": "Can I ask you about something here? The Donbas is one of the essential building blocks of this horrible war or one of the things that kept the escalation spiraled and turning. But something that our media always forgets and never mentions is that for eight years between 2014, Donetsk and Lugansk, these two regions or blasts first said we want to be independent until 2022, until like three or four days before the special military operation. The whole strategy of Russia was to keep them in there.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0064_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0064.wav",
+    "generated_duration": 27.733333333333334
+  },
+  {
+    "start": 2030.38,
+    "end": 2062.38,
+    "text": "俄罗斯始终拒绝承认这些地区的独立宣言。根据明斯克协议的最终目标，乌克兰需通过联邦化改革维护领土完整（不含克里米亚），这一立场充分展现了俄罗斯的战略智慧。您曾在2022年前后两次访问该地区。",
+    "speaker": "SPEAKER_01",
+    "original_text": "Russia did not recognize these regions' declarations of independence. They said like no. The final goal as stated in the Minsk agreements is to keep you inside Ukraine and federalize Ukraine and make sure that Ukraine without Crimea remains as it is. That was the whole strategy, which is a smart strategy from Russia. And you've visited the place before that, before 2022, and then after it.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0065_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0065.wav",
+    "generated_duration": 19.24266666666667
+  },
+  {
+    "start": 2062.38,
+    "end": 2076.38,
+    "text": "请问您能告诉我，来自卢甘斯克和顿涅茨克的人们如何看待自己的身份、未来以及他们的未来目标是否有所改变？",
+    "speaker": "SPEAKER_01",
+    "original_text": "Can you tell me if something changed on the ground of how people also thought about their future and themselves as people of Lugansk, people of Donetsk and what they were aiming for?",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0066_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0066.wav",
+    "generated_duration": 10.069333333333333
+  },
+  {
+    "start": 2076.38,
+    "end": 2129.49,
+    "text": "说到底，局势并没有改变。长达八年、持续不断的炮击最终让顿巴斯民众逐渐倒向俄罗斯阵营。普遍看法认为克里姆林宫存在战略误判——他们本应在2014年而非2022年提供援助。我们等待了太久，直到普京出手已为时过晚。",
+    "speaker": "SPEAKER_00",
+    "original_text": "So I think nothing changed. The outcome of the Ukrainian shelling, of the shelling by the Ukrainian army for years over years, for eight years as a whole, drew the people in Donbass closer to the Russian side. And the general opinion I heard is the Kremlin came too late. They had to help us in 2014 and not in 2022. We waited too long. Putin came too late. This was a mistake.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0067_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0067.wav",
+    "generated_duration": 32.08533333333333
+  },
+  {
+    "start": 2129.49,
+    "end": 2133.49,
+    "text": "你听到的，就是顿巴斯地区的情绪。",
+    "speaker": "SPEAKER_01",
+    "original_text": "That's what you're hearing about the feeling of Donbass.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0068_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0068.wav",
+    "generated_duration": 3.925333333333333
+  },
+  {
+    "start": 2133.49,
+    "end": 2186.49,
+    "text": "很多时候，确实是这样。因为人们常说眼睁睁看着孩子死去，而唯一可能的援助只能来自俄罗斯。俄罗斯的生活水平远高于乌克兰，且没有语言差异。不少俄罗斯人与顿巴斯地区存在亲属联系，因为那里曾是苏联时期的重工业基地；同样，顿巴斯地区的许多人也在俄罗斯各地——圣彼得堡、喀山、莫斯科、罗斯托夫-顿河等城市拥有亲友。所以双方的关系非常紧密。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Many times, yes, many times. Because people say we see our children die and the only possible help can come from Russia. And the living standard in Russia is much higher as in Ukraine. And there is no language difference. Many people in Russia have relatives in Donbass because this was an important industrial region in the Soviet Union. And many people in the Donbass have relatives in Russia, in St. Petersburg, in Kazan, in Moscow, in Rostov-Nadonu. So the relationships are very close.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0069_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0069.wav",
+    "generated_duration": 37.16266666666667
+  },
+  {
+    "start": 2186.49,
+    "end": 2246.49,
+    "text": "他们对彼此的生活方式了如指掌，边境两侧的居民都深知这一点。1922年，第聂伯河以东地区并入乌克兰苏维埃共和国，这正是苏共中央政府有计划地创建行政特区的背景——为实现第聂伯河通航，并在扎波罗热附近建造大型水电站（该电站自1932年便已投入运营）。",
+    "speaker": "SPEAKER_00",
+    "original_text": "And they know each other, how they live, they know how they live on both sides of the border. And you have to understand, all the regions, Eastward from the Dnieper came to the Ukrainian Soviet Republic in 1922. Because the central government of the Bolshevists in Moscow wanted to create a unique zone of administration for making the Dnieper navigable and for building a great hydraulic power plant near Zaporizhzhia, which worked up from 1932. And this was the background.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0070_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0070.wav",
+    "generated_duration": 34.432
+  },
+  {
+    "start": 2246.49,
+    "end": 2251.49,
+    "text": "这些人是俄国人，而不是乌克兰人。",
+    "speaker": "SPEAKER_00",
+    "original_text": "So these were Russian people, not Ukrainians.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0071_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0071.wav",
+    "generated_duration": 3.328
+  },
+  {
+    "start": 2251.49,
+    "end": 2269.57,
+    "text": "但你在2022年前在那儿的时候，有没有问过他们会不会说乌克兰语或俄语？其实这场战争期间这种情况也有变化吧？应该是吧。",
+    "speaker": "SPEAKER_01",
+    "original_text": "But when you were there before 2022, did you ever ask them whether they failed Ukrainian or Russian or whether they failed both? And did that change also through the war? I suppose it must have.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0072_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0072.wav",
+    "generated_duration": 10.581333333333333
+  },
+  {
+    "start": 2269.57,
+    "end": 2314.57,
+    "text": "不，早在战争之前，事情就已经发生了变化。马伊丹政变后，2014到2016年这几年里，事情是逐渐变化的。有位女士对我说：\"我们也是乌克兰人啊，为什么偏偏要对我们开火？\"我现在希望与俄罗斯达成和平。唯一的办法就是与俄罗斯结盟。这才是关键。",
+    "speaker": "SPEAKER_00",
+    "original_text": "No. It changed long before the war. In the time after the Maidan coup and it changed step by step in the years 2014 to 2015 and 2016. A woman told me, we were Ukrainians as well. Why did they shoot us? Why shoot us? Why did they shoot us and our children? Now I hope for peace with Russia on aligning with Russia. That's the point.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0073_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0073.wav",
+    "generated_duration": 28.88533333333333
+  },
+  {
+    "start": 2314.57,
+    "end": 2330.57,
+    "text": "若对当地民众动用如此暴行，便永远无法赢取人心。更令人遗憾的是，这一道理反过来同样适用：俄罗斯根本不可能指望加利西亚地区居民和乌克兰西部居民对其产生任何好感。",
+    "speaker": "SPEAKER_01",
+    "original_text": "If you use that much violence against the local population, you cannot hope to win their hearts. The same thing is unfortunately true in reverse. There's no way that Russia can hope that the Galicians and the Western Ukrainians will ever love them.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0074_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0074.wav",
+    "generated_duration": 15.445333333333334
+  },
+  {
+    "start": 2330.57,
+    "end": 2383.3,
+    "text": "是的，俄罗斯根本就没有这个意图。在我看来，乌克兰很可能会被一分为二，甚至分裂为三个部分——第聂伯河以东地区将属于俄罗斯，其余部分则会成为中立国。波兰有可能收复加利西亚，因为在两次世界大战之间（1919-1939年），这片土地曾属于波兰。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Yes. And Russia don't want to conquer the Western Ukraine. They don't want that. And from my point of view, the Ukraine will be divided in two, probably in three parts. The region's eastward of the Dnipro will be Russian territory and the rest will be a neutral country. There is a possibility that Poland will occupy Galicia because Galicia belonged to Poland between the Great Wars up from 1919 to 1939.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0075_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0075.wav",
+    "generated_duration": 28.970666666666666
+  },
+  {
+    "start": 2383.3,
+    "end": 2404.3,
+    "text": "传来消息称，波兰当前边境地区内乌克兰人数引发担忧。现任政府似乎并不热衷于将其纳入他们对波兰应成为何种国家的民族主义框架中。",
+    "speaker": "SPEAKER_01",
+    "original_text": "Although what we are recently hearing from Poland is that they are rather worried about the number of Ukrainians in their current borders. So it seems that the current government is not keen on actually integrating even more Ukrainians into their nationalistic view of what Poland should be.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0076_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0076.wav",
+    "generated_duration": 11.989333333333333
+  },
+  {
+    "start": 2404.3,
+    "end": 2447.3,
+    "text": "没错。波兰和西乌克兰之间既有深厚的友谊，也有历史上的敌对关系——1943年至1944年期间，乌克兰法西斯势力以极其残忍的方式杀害了高达10万波兰人。因此在波兰民众心中始终存在矛盾心理。我曾听波兰人这样说道：\"我们现在在帮助乌克兰人，他们当年也帮过我们——让我们赴死。\"",
+    "speaker": "SPEAKER_00",
+    "original_text": "That's right. But there are strong relations between Poland and Western Ukraine, many friendships, but also historic hostilities because Ukrainian fascists killed in the years 43 and 44 up to 100,000 Poles in a very crucial way. So there are mixed feelings in Poland. I heard in Poland people say, we are helping the Ukrainians. They helped us as well. They helped us to die.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0077_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0077.wav",
+    "generated_duration": 33.70666666666666
+  },
+  {
+    "start": 2450.92,
+    "end": 2490.92,
+    "text": "欧洲大陆国家间的积怨不容小觑。尽管存在诸多缺陷，欧盟仍实现了历史性突破——促成法国与德国这两个历史上曾多次兵戎相见的国家实现深度融合，并推动其他存在历史积怨国家的和解。需始终铭记的是，欧盟还长期致力于化解北爱尔兰问题，成功解决了诸多复杂难题。",
+    "speaker": "SPEAKER_01",
+    "original_text": "Nobody must underestimate the level of animosity within the European continent against each other. Which brings me to this question. The European Union for all of its flaws and all of its mistakes has done a miracle to bring France and Germany together and another two states that historically loved killing each other. The European Union also had solved quite a few problems. Let's not forget that. It basically also helped solve the Northern Irish conflict.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0078_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0078.wav",
+    "generated_duration": 28.330666666666666
+  },
+  {
+    "start": 2490.92,
+    "end": 2513.92,
+    "text": "一些冲突原本可以通过推行欧洲模式得以化解，然而在这个案例中恰恰相反——这种做法不仅未能实现和平计划的目标，反而加剧了矛盾。不禁让人思考：为何欧盟在推动和平进程中彻底失败，其推行的政策竟与初衷适得其反？",
+    "speaker": "SPEAKER_01",
+    "original_text": "As a couple of conflicts, just by Europeanising the states, the conflicts went away. Now in this case, it did the exact opposite. It made it worse. Can you explain to yourself why the European Union not only failed so miserably, but actually did the opposite of being a peace project?",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0079_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0079.wav",
+    "generated_duration": 23.893333333333334
+  },
+  {
+    "start": 2515.92,
+    "end": 2561.18,
+    "text": "这是一个值得深思的观点。欧盟在处理这场冲突的方式存在严重问题，不仅试图延长战争，更将本国人民推向更深的泥潭。当前掌权者如同投机分子，对欧洲面临核战争的风险置若罔闻。需要意识到，俄罗斯是全球首屈一指的核武大国，一旦莫斯科感受到压力，必将启动核打击。",
+    "speaker": "SPEAKER_00",
+    "original_text": "That's an interesting point. I think the European Union is approaching this conflict, this war incorrectly. They want to prolong the war and to drive their own population even deeper into this war in Ukraine. I think we are governed by gamblers who knowingly accept the risk of a nuclear war in Europe. You have to keep in mind that Russia is the most strongest nuclear power of the world. If Moscow comes under pressure, Russia will use the atomic bomb.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0080_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0080.wav",
+    "generated_duration": 30.933333333333334
+  },
+  {
+    "start": 2561.18,
+    "end": 2597.18,
+    "text": "《纽约时报》报道，俄军前驻卡拉奇诺波尔指挥官索罗维金将军早在2023年就已着手相关部署。这场俄乌冲突中，我们数次与核灾难擦肩而过。至于欧盟政客为何热衷煽动战争——正如你所问——本质是想转移视线，掩盖自身治理失能。",
+    "speaker": "SPEAKER_00",
+    "original_text": "As the New York Times reports, General Sorovikin, the former commander, the Russian commander in the Karsanoplast, was already considering this in 2023. We have already narrowly avoided a nuclear war, a nuclear inferno several times in this Ukraine war. The reason for this war-mongering among the political elites in the European Union, that was your question, is they want to distract from their own failures.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0081_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0081.wav",
+    "generated_duration": 24.96
+  },
+  {
+    "start": 2597.18,
+    "end": 2631.18,
+    "text": "他们通过战争和制裁让本国经济与政治陷入困境，把自己逼入死胡同。尤其以德国最为典型。因此，这种宣传的真正目的，是转移侵略的重点——这才是核心所在。民众对国内积压不满的愤怒被引导至外部敌人，俄罗斯正是西方政客借此争取时间以维持执政的棋子。",
+    "speaker": "SPEAKER_00",
+    "original_text": "They have ruined their own countries economically and politically through the war and through the sanctions. They have maneuvered themselves into a dead end. This applies especially to Germany. Therefore, no, the propaganda is intended to shift the focus of aggression. That's the main point. The people's anger over the grievances in their own countries is being diverted onto an external enemy. Russia, this is how the western political elites want to gain time to continue governing.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0082_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0082.wav",
+    "generated_duration": 27.17866666666667
+  },
+  {
+    "start": 2631.18,
+    "end": 2669.18,
+    "text": "这才是问题的关键。欧盟作为和平项目的彻底失败，你们已提到过这一点——它已退化成战争机器。欧洲议会做出的某些决定，在俄罗斯看来无异于宣战声明，这实际上可能引发核战争灾难。我们现在进入了一个寡头统治时代——劣币驱逐良币的寡头统治。他们为巩固既得利益集团的统治，正逐步削弱民主制度。至于顿巴斯地区，将永久脱离乌克兰版图。",
+    "speaker": "SPEAKER_00",
+    "original_text": "That's the point. And the European Union has completely failed as a peace project. You mentioned that and degenerated into a war machine. Decisions are being made in the European Parliament that Russia can only understand as a declaration of war. This could actually lead to a nuclear catastrophe. We have now arrived in a cacistocratie, the rule of the worst. They are gradually abolishing democracy to secure the rule of the traditional party cartels. As for Donbas, it will not return to Ukraine.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0083_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0083.wav",
+    "generated_duration": 36.693333333333335
+  },
+  {
+    "start": 2669.18,
+    "end": 2705.18,
+    "text": "俄罗斯在战争中占据上风，其要求已被满足。乌克兰正被分割，我已解释过这一点。战争拖得越久，乌克兰能保留的领土就越少，伤亡人数也将持续攀升。欧洲政客的冷酷态度同样难辞其咎。欧盟本应也有能力阻止这场战争，但柏林和欧盟始终未提出任何和平方案。这意味着除了军事溃败与经济衰退之外，还有更深层的危机正在酝酿。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Russia won the war and now once its demands met. Ukraine is being divided, I explained that. The longer the war lasts, the less of Ukraine will remain. The more people will be killed. The cynicism of European politicians is also responsible for this. The European Union could have and should have prevented this war. But neither Berlin nor the EU initiated a single peace initiative. This means that in addition to the military defeat and economic decline,",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0084_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0084.wav",
+    "generated_duration": 36.522666666666666
+  },
+  {
+    "start": 2705.18,
+    "end": 2710.18,
+    "text": "政界人士的道德彻底崩溃，同样是不容置疑的事实。",
+    "speaker": "SPEAKER_00",
+    "original_text": "there is also complete moral bankruptcy on the side of our politicians.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0085_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0085.wav",
+    "generated_duration": 4.906666666666666
+  },
+  {
+    "start": 2710.18,
+    "end": 2748.18,
+    "text": "这不更糟吗？这些人一直声称想要和平，却宣称要用武器带来和平——武器就是实现和平的方式。他们根本缺乏理解能力，甚至无法意识到自己的行为正在加剧战争。本应通过和平手段达成和平，他们偏偏选择用战争手段。面对这般无知之人，又当如何是好？这同样是军事战略家在制定策略时必须直面的难题：如果你假设对方是理性的，",
+    "speaker": "SPEAKER_01",
+    "original_text": "Isn't it even worse? These people kept saying, we want peace. We will bring peace through weapons. Weapons are the way to peace. And they don't understand. They don't have the mental capacity to comprehend what they are doing is to make the war worse. Instead of using peaceful means to get to peace, they want to use war means to get to peace. How do you deal with people who are that ignorant? This is a problem also to military strategists. If you assume that the other side is rational,",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0086_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0086.wav",
+    "generated_duration": 35.754666666666665
+  },
+  {
+    "start": 2748.18,
+    "end": 2758.18,
+    "text": "换位思考一下。但如果必须承认这些人是彻底的傻瓜……那该怎么办？",
+    "speaker": "SPEAKER_01",
+    "original_text": "then you can try to think yourself into their shoes. But if you have to understand that these people are complete morons, then how do you deal with that?",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0087_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0087.wav",
+    "generated_duration": 6.656
+  },
+  {
+    "start": 2758.18,
+    "end": 2803.99,
+    "text": "2022年，我在莫斯科与克里姆林宫代表进行秘密会谈时，他们向我提出了一个尖锐问题：如何处理那些严重脱离现实的政客？坦白讲，我对基层的真实情况一无所知。我的回答是：与这类人合作根本不可能，必须将其从政坛清除。我们需要培养新一代精英——这是一项需要20至30年的长期战略规划。",
+    "speaker": "SPEAKER_00",
+    "original_text": "In 2022, I met representatives of the Kremlin for a secret talk in Moscow. And they asked me this question. They asked how to deal with crazy politicians who lost the ground of reality. Yes, no idea what really happens on the ground. And I answered, you cannot deal with those kind of people. With this kind of people, it's impossible. They have to be kicked out of the business. We need a new elite. And this is a project for 20, 25, 30 years.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0088_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0088.wav",
+    "generated_duration": 33.57866666666666
+  },
+  {
+    "start": 2803.99,
+    "end": 2848.99,
+    "text": "若纵观整个西方世界的学术精英，尤其是德国知识界上层——无论是在大学、教会、政界还是媒体领域，其思维都呈现出令人不安的趋同性。这揭示出整个西欧的知识分子阶层已陷入集体性的精神失常。在这样的时刻，我总会想起莎士比亚那句经典箴言：\"时局黑暗，疯子却引领盲人前行。\" 这正是当前权力结构的真实写照，而这种局面无疑是极其危险的。",
+    "speaker": "SPEAKER_00",
+    "original_text": "And if you have a look at the academic elites in Europe as a whole, especially in Germany, in the university, in the schools, in the churches, in the political sphere, in the media, they all are thinking in the same way. So the complete academic elite in Western Europe has gone mad. That's the point. Well, in such a moment, I'm remembering a sentence of William Shakespeare. Tis the times black when madmen lead the blind. And that's the political situation. And this is very dangerous.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0089_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0089.wav",
+    "generated_duration": 39.08266666666667
+  },
+  {
+    "start": 2848.99,
+    "end": 2889.66,
+    "text": "这形势极其危险。但我们现在无法将他们清除出去，你现在已经能看得很清楚，这种专制政权如何竭力消除内部所有潜在的反对力量。在罗马尼亚、近期的法国，我曾与一位波兰记者交谈，他告诉我，在波兰也存在同样的情况——反对派仍依赖传统手段进行压制。如果这种系统性压制持续下去，欧洲恐怕将难以为继。",
+    "speaker": "SPEAKER_01",
+    "original_text": "This is extremely dangerous. But we won't get them out. I mean, you can see right now how this, the carcassocracy, how these people try to make sure that all potential opposition from within is being eliminated, right? In Romania, now recently in France, I've had a talk with a Polish journalist who told me in Poland, too. The opposition is basically being kept down also through traditional measures. And if this continues, then there's not much hope for Europe.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0090_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0090.wav",
+    "generated_duration": 32.42666666666667
+  },
+  {
+    "start": 2889.66,
+    "end": 2897.66,
+    "text": "它显然将自取灭亡，但这一过程伴随重新军事化。难道这不是更危险吗？",
+    "speaker": "SPEAKER_01",
+    "original_text": "Because it will ruin itself, obviously, but it will do so while remilitarizing. Which is even more dangerous, isn't it?",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0091_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0091.wav",
+    "generated_duration": 7.168
+  },
+  {
+    "start": 2897.66,
+    "end": 2941.66,
+    "text": "事实确实如此。欧洲正在自毁，这将导致一个糟糕的结局——我们正沦为美国和俄罗斯联邦的附庸。我们在国际发展上不断倒退，全球经济重心正向东南亚转移，这种趋势愈发明显。我们正在失去优势地位，然而人们却对此视若无睹。西方欧洲人已与现实脱节。",
+    "speaker": "SPEAKER_00",
+    "original_text": "It is absolutely the case. Europe is ruining itself. And this will take a bad end because we are becoming the backyard of the United States and the Russian Federation as well. So we are falling back in the international development. And we have a great shift to Southeast Asia in economic power, a shift in economic power. And we are losing our ground. And people don't see that. They have lost the ground of reality in Western Europe.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0092_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0092.wav",
+    "generated_duration": 30.08
+  },
+  {
+    "start": 2941.66,
+    "end": 2954.66,
+    "text": "如果那时你28岁，带着这些经历，你会选择留在德国打拼，还是离开？",
+    "speaker": "SPEAKER_01",
+    "original_text": "If you were 28, but you know what you know today, I mean with all the experiences, would you stay in Germany and try to make a living there or would you actually leave?",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0093_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0093.wav",
+    "generated_duration": 8.021333333333333
+  },
+  {
+    "start": 2954.66,
+    "end": 2991.66,
+    "text": "不，我肯定会离开这个国家。大概去瑞士，也有可能去新加坡或香港，甚至考虑俄罗斯联邦的圣彼得堡。我不打算留在欧洲，因为看到欧洲正面临经济和政治的衰退，自由也在不断丧失。民主的根基正在被侵蚀，如今在德国，我们所处的不过是表面的民主，仅此而已。",
+    "speaker": "SPEAKER_00",
+    "original_text": "No, I would leave the country. I would go probably to Switzerland, probably to Singapore or Hong Kong, probably to the Russian Federation, to St. Petersburg. I would not stay in Europe because I see the decline in Europe, the decline economically, politically, the decline in liberties. We are losing the ground of democracy. Today we are living in Germany in a kind of facade democracy. Nothing else.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0094_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0094.wav",
+    "generated_duration": 27.690666666666665
+  },
+  {
+    "start": 2991.66,
+    "end": 3029.38,
+    "text": "您觉得是否存在某种制度性纠错机制？理论上，民主国家一旦真正偏离正轨，民众往往能及时认识到自身受损，通过选举反对党上台来纠正航向。比如德国就有右翼的AfD政党对吗？议会中的左翼阵营曾有瓦根克内希特，但后来她未能连任。",
+    "speaker": "SPEAKER_01",
+    "original_text": "Do you think that there's some mechanisms to repair this? I mean, in theory, democracies should be able to, once they really run in the wrong direction, the population starts understanding that they're suffering and they then elect opposition parties into power and therefore you can then start correcting course. I mean, Germany has a large opposition party, which is the AFD, right? And they used to have in parliament on the left side Ms. Wagenknecht, but they didn't manage to get in again,",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0095_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0095.wav",
+    "generated_duration": 21.162666666666667
+  },
+  {
+    "start": 3029.38,
+    "end": 3034.75,
+    "text": "但有反对意见。这种反对会蔓延吗？",
+    "speaker": "SPEAKER_01",
+    "original_text": "but there is opposition. Will this opposition grow?",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0096_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0096.wav",
+    "generated_duration": 4.181333333333333
+  },
+  {
+    "start": 3034.75,
+    "end": 3089.03,
+    "text": "我认为这种反对力量将不断壮大，存在两种可能。在德国，目前有两股政治力量主张与俄罗斯缓和关系——右翼民粹主义倾向的AfD党和以萨拉·瓦根克内希特为首的BSV党。在我看来，这两股力量应加强合作推动俄德关系缓和。若未能实现这一目标，AfD党或将转向跨大西洋右翼政治势力，通过谋求组阁可能向德国人民施压。",
+    "speaker": "SPEAKER_00",
+    "original_text": "I think this opposition will grow and there are two possibilities. In Germany we have two parties who are oriented at peace with Russia, the AFD and the BSV, the Sarah Wagenknecht Party. And those parties should, from my point of view, closely cooperate to achieve peace with Russia. If they don't do that, the AFD will come into a turnaround to a transatlantic political right-wing group to bring the people in Germany under pressure by gaining a government possibility",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0097_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0097.wav",
+    "generated_duration": 42.19733333333333
+  },
+  {
+    "start": 3089.03,
+    "end": 3136.6,
+    "text": "削减社会保障开支等做法显然不是正确的选择。在我看来，人们应当为和平发声，将对和平的呼吁带入街头。但在德国，民众却很少这么做。需要明白的是，酿成灾难的责任不仅在于那些直接造成灾难的人，更在于那些对这一进程漠不关心且袖手旁观者。",
+    "speaker": "SPEAKER_00",
+    "original_text": "to cut social security expenses and so on. And so this would be the wrong way, from my point of view. On the other hand, people have to demonstrate for peace. They have to bring their interest in peace onto the streets, but in Germany people don't do that. Well, responsible for the Catastrophe is not only that one who is causing the Catastrophe, but also that one who don't want to do something against this process.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0098_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0098.wav",
+    "generated_duration": 29.610666666666667
+  },
+  {
+    "start": 3136.6,
+    "end": 3167.6,
+    "text": "斗胆请教您一个一直困扰我的问题——关于\"投降\"还是\"屈服\"的抉择。我始终坚信，日本之所以能避免像韩国那样遭遇历史性的悲剧结局，正是因为它最终选择了投降——在数月前还被视作难以置信的事。众所周知，德国却始终拒绝投降，以至于苏联军队推进至希特勒的地下掩体。",
+    "speaker": "SPEAKER_01",
+    "original_text": "Can I ask you, and this is also quite difficult, but something that occupies me a lot at the moment, mentally, is this question about surrender or a capitulation. I believe very strongly one of the things that saved Japan from suffering the same fate as Korea was because Japan was able to surrender. It was able to do what was unthinkable only months before. Germany, of course, famously didn't surrender, and the Russians went all the way to the bunker,",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0099_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0099.wav",
+    "generated_duration": 23.850666666666665
+  },
+  {
+    "start": 3167.6,
+    "end": 3197.6,
+    "text": "他们攻占柏林，摧毁国家，将其分裂为四块，后又分为两部分，持续四十年。那是一段恐怖至极的岁月。但经历这段历史后，德国人被迫彻底转变态度，承认纳粹政权犯下罄竹难书的暴行。如今每个德国人都深知，绝不允许此类悲剧重演。",
+    "speaker": "SPEAKER_01",
+    "original_text": "and they took Berlin and it destroyed the country and it split it up into four and then two pieces for 40 years. It was horrible, horrible. But after this experience in Germany, you were forced to surrender and you were forced to turn around 180 degrees and accept that, no, the Nazi regime was an evil regime and it did the most horrible things. And today Germany accepts that, right? Every German accepts that never ever again they would want that,",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0100_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0100.wav",
+    "generated_duration": 22.698666666666668
+  },
+  {
+    "start": 3197.6,
+    "end": 3215.6,
+    "text": "难以想象的是，再度视投降为通往和平的手段。目前在欧洲，你能向自己解释为何投降并非通向和平的选项？",
+    "speaker": "SPEAKER_01",
+    "original_text": "but it is unthinkable that, again, surrender might be the way toward peace. Can you explain to yourself why that is that surrender is not a concept in Europe at the moment in order to get to peace?",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0101_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0101.wav",
+    "generated_duration": 11.818666666666667
+  },
+  {
+    "start": 3215.6,
+    "end": 3273.1,
+    "text": "我赞同挪威南大学格伦·迪森教授的观点。他说，要实现乌克兰和平，西方国家、北约和欧盟总部布鲁塞尔必须接受俄罗斯的要求。投降？当然。俄罗斯其实是在投降，因为俄方将继续战斗，直到乌克兰确认该国维持中立。这才是关键。而西方精英群体无法接受这一点，因为个人利益与这些政策密切相关。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Well, I agree with Professor Glenn Deeson of the University of South Norway. He said the only way to bring peace to Ukraine is the West NATO, the United States and Brussels have to accept the Russian demands. Surrender? Of course. Russia is surrender, exactly, because the Russians will continue to fight until Ukraine will confirm that this country stays neutral. This is the main point. And the Western elites don't accept that because their own careers are very close",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0102_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0102.wav",
+    "generated_duration": 39.38133333333333
+  },
+  {
+    "start": 3273.1,
+    "end": 3324.1,
+    "text": "致那些美国民主党内的战争贩子。他们不支持特朗普，反而选择躲进地下室等待他下台。他们甚至希望战争能持续到特朗普离开的那一刻。但他们不会摧毁所有和平解决方案——这本质上是一种心理障碍。他们以自我为中心的方式陷入功能紊乱，思维早已脱离现实，活在跨大西洋意识形态的泡沫中。",
+    "speaker": "SPEAKER_00",
+    "original_text": "to the warmongers in the United States of the Democratic Party. They don't follow Donald Trump. They want to hide themselves and to survive in the basement until Trump is gone. And they hope the war will last until Trump is gone. And they won't destroy every peace solution. It is, on the one hand, a psychological problem. They are, in a narcissistic way, dysfunctional. It's a dysfunctional thinking. They lost the ground of reality. And they are living in a bubble of transatlantic ideology.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0103_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0103.wav",
+    "generated_duration": 37.41866666666667
+  },
+  {
+    "start": 3324.1,
+    "end": 3336.1,
+    "text": "特朗普正用重拳击碎那个泡沫。这会疼得难以忍受——对这些人来说，心理上更是煎熬。",
+    "speaker": "SPEAKER_01",
+    "original_text": "Donald Trump is currently using a sledgehammer to destroy that bubble. I mean, this is going to hurt. This is going to hurt so bad. I mean, psychologically to these people.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0104_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0104.wav",
+    "generated_duration": 8.704
+  },
+  {
+    "start": 3336.1,
+    "end": 3338.1,
+    "text": "对。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Yes.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0105_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0105.wav",
+    "generated_duration": 2.2186666666666666
+  },
+  {
+    "start": 3338.1,
+    "end": 3351.1,
+    "text": "嗯，我们没像我想的那样多聊顿巴斯，不过你刚才把不同层次串联起来的方式真的很有趣。帕特里克，你还想说点什么吗？",
+    "speaker": "SPEAKER_01",
+    "original_text": "Well, we didn't talk as much about Donbass as I wanted to, but this was very interesting, the way that we connected, or you connected, these different levels. Patrick, do you want to add something more?",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0106_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0106.wav",
+    "generated_duration": 10.026666666666667
+  },
+  {
+    "start": 3351.1,
+    "end": 3390.1,
+    "text": "是的，我可以进一步介绍顿巴斯现状及当地政局。目前在地方行政层面，俄罗斯宪法已正式实施。根据该宪法规定，顿巴斯地区行政首脑由总统直接任命并负责。例如，顿巴斯人民共和国政府领导人的人事任免均直接受总统管辖，这一权力结构在当地已全面推行。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Yes. I can tell a bit more about Donbass and how the Donbass is doing today and how are the political structures today. On the ground, well, as far as the political structures are concerned, the Russian constitution applies now. And according to this, the provincial governors in the Donbass are appointed by the president himself and are directly responsible to him. This can also be seen on the ground. For example, with the head of the government of the Donetsk People's Republic,",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0107_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0107.wav",
+    "generated_duration": 27.605333333333334
+  },
+  {
+    "start": 3391.1,
+    "end": 3427.1,
+    "text": "据我所知，他不过是与克里姆林宫保持步调一致罢了，仅此而已。与此同时，其他俄罗斯地区已接管相关赞助事务——即负责四个已被纳入俄罗斯联邦的边疆区重建工作。这意味着俄罗斯各地方在军事、政治和经济等多领域积极参与重建援助。据称，总统普京本人也亲自参与了重建工作的协调推进。",
+    "speaker": "SPEAKER_00",
+    "original_text": "as far as I can tell, he's towing the Kremlin's general line. Nothing else. In the meantime, other Russian regions have taken over sponsorships. They have taken over sponsorships for the Four Oblasts, which have been incorporated in the Russian Federation. And this means that Russian regions are actively providing reconstruction assistance, militarily, politically, and economically. I was also told that President Putin is partly overseeing the reconstruction himself.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0108_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0108.wav",
+    "generated_duration": 31.317333333333334
+  },
+  {
+    "start": 3427.1,
+    "end": 3468.1,
+    "text": "他刚到访马里奥·波利斯韦尔，了解新城区、住宅和住房项目进展。已派出代表监测物价。因顿涅茨克、卢甘斯克、斯巴罗日耶和科尔松四地仍属战区，故实行戒严，军方最终拥有最高指挥权，此规定亦体现在如宵禁等措施中。",
+    "speaker": "SPEAKER_00",
+    "original_text": "He was in Mario Poliswell and was told how the construction of new districts, new houses, and new housing estates was progressing. He's also sending representatives to monitor, for example, food prices. And it is important that all four districts, Donetsk, Lugansk, Saburozhye and Kerson, are still war zones. Martial law, therefore applies. The military commanders are ultimately in charge. This is also reflected, for example, in the curfew.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0109_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0109.wav",
+    "generated_duration": 26.538666666666668
+  },
+  {
+    "start": 3468.1,
+    "end": 3507.1,
+    "text": "晚上十点后若无特别许可不得在街头逗留。与俄罗斯不同，年轻男性仍需服兵役。顿巴斯实际上受莫斯科遥控指挥，但中央政府反而获得了地方官员和民众的广泛支持——这种情况是例外。2014年至2022年间，美国中情局（CIA）与乌克兰安全局（SBU）对地区事务产生深远影响。",
+    "speaker": "SPEAKER_00",
+    "original_text": "At 10 p.m. in the evening, you are no longer allowed to be on the streets without a special permit. Unlike in Russia, young men are still conscripted into the military. And my overall impression is that Donbas is ruled from Moscow, but the central government has the support of regional officials and the local people, the population. However, this is an exception. Between 2014 and 2022, the CIA and the Ukrainian secret service SBU",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0110_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0110.wav",
+    "generated_duration": 30.250666666666667
+  },
+  {
+    "start": 3507.1,
+    "end": 3546.1,
+    "text": "试图在米利托波尔地区建立一支地下武装力量。该组织作为俄军进攻时的游击战后备力量，藏身于俄克里米亚之间的咽喉之地——介于第聂伯河与阿尔佐夫海之间。其储存有大量武器弹药储备，并持续在该区域发动袭击。",
+    "speaker": "SPEAKER_00",
+    "original_text": "tried to set up a kind of stay-behind organization in the Militopol area. This is a secret underground army that was supposed to start a guerrilla war in the event of a Russian attack. The city of Militopol is strategically located between Russia and Crimea, halfway between the Dnipro and the Sea of Arzolf. And this stay-behind organization has secret weapons stores and explosive stores and still carries out attacks in the Militopol area.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0111_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0111.wav",
+    "generated_duration": 24.490666666666666
+  },
+  {
+    "start": 3546.1,
+    "end": 3586.1,
+    "text": "我采访了一位原本是行政管理人员的平民，他成为了袭击的目标。汽车炸弹爆炸让他失去一条腿。2022年秋季访问顿巴斯期间，一些城镇和村庄几乎被彻底摧毁。以马里乌波尔为例，据估算建筑物损毁率高达80%。此外，当时各处可见领取食物的长队，流浪儿童、无家可归者随处可见，大量房屋空置荒废，焦黑的建筑外墙触目惊心，此类景象令人痛心。",
+    "speaker": "SPEAKER_00",
+    "original_text": "I spoke to a man who, as a civilian, he was an administrative manager, was the target of an attack. He lost a leg when a car bomb exploded. And I think that's interesting. I have to add, when I was in the Donbas in the fall of 22, some of the towns and villages were completely destroyed. Mariupol, for example, were destroyed at, I estimate, to 80%. Long queues everywhere for food distribution, stray children, homeless people, shut-up houses, burnt facades and all that.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0112_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0112.wav",
+    "generated_duration": 38.22933333333334
+  },
+  {
+    "start": 3586.1,
+    "end": 3632.1,
+    "text": "重建工作持续推进，公寓楼翻新改造同步进行。学校全面安装新型窗户的同时，多所现代化教学楼也相继落成。重建工程为顿巴斯地区提供大量就业机会，促使许多因战事逃离的居民陆续返乡。目前顿巴斯已成为人口流入地区。值得注意的是，俄罗斯接收的乌克兰难民数量居各国之首——据联合国统计约280万人，而俄方称该数字可能高达500万。",
+    "speaker": "SPEAKER_00",
+    "original_text": "In the meantime, the infrastructure is being rebuilt. The apartment houses are being renovated. New windows have been installed everywhere in the schools or new schools have been built. Reconstruction is creating new jobs in the Donbas. As a result, many people who fled the war are returning. Donbas is now a region of immigration. It is important to note that Russia has taken in the most refugees from Ukraine. The UN speaks of 2.8 million, but Russian authorities up to 5 million refugees.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0113_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0113.wav",
+    "generated_duration": 39.85066666666667
+  },
+  {
+    "start": 3632.1,
+    "end": 3670.1,
+    "text": "难以准确统计具体人数，因许多人已与亲属团聚或取得俄罗斯国籍。养老金标准现已提升至俄方水平，我此前已向大家说明。这意味着退休人员的养老金金额达到原先的三倍，不仅显著增强购买力，也强化了民众对领导层的向心力。同时，战争创伤仍深刻影响着当地居民。我在马里乌波尔与当地教师进行座谈，他们正在教授经历战争创伤的孩子。",
+    "speaker": "SPEAKER_00",
+    "original_text": "It is difficult to determine the exact number, as many people have been accommodated with relatives or have now taken Russian citizenship. Pensions have now been raised to the Russian level, I told you that. This means that pensioners have three times as much money in their pockets as before. This strengthens purchasing power and loyalty to the leadership as well. And many people are completely traumatized of the war. I spoke to teachers in Mariupol who teach those kind of children.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0114_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0114.wav",
+    "generated_duration": 38.656
+  },
+  {
+    "start": 3670.1,
+    "end": 3708.1,
+    "text": "他们告诉我，每当课间铃声响起时，有些孩子会躲到桌子底下——因为他们误以为这是炸弹警报。即便美俄之间的双边会谈重新点燃了结束战争的希望，但在那些孩子的心理，这场战争的阴影却永远挥之不去。这就是问题的关键所在。我从未见过讲俄语的人和讲乌克兰语的人在待遇上有什么区别。",
+    "speaker": "SPEAKER_00",
+    "original_text": "They tell me, when the bell rings at recess, some children crawl under the table because they think it's a bomb alert. And even if bilateral talks between Washington and Moscow have been raised to optimism that the war can be ended, the war in the minds of those children will never end. That's the point. I have no seen a difference in how the Russian-speaking people and the Ukrainian-speaking people are treated.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0115_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0115.wav",
+    "generated_duration": 34.90133333333333
+  },
+  {
+    "start": 3708.1,
+    "end": 3745.1,
+    "text": "特别是米利托波尔市直接拱手让给了俄军，城里连个枪声都没响过。我在那家亚美尼亚餐厅吃饭时注意到，店主一家其实不亲俄，反而挺支持乌克兰的。他们现在啥麻烦都没有，生意照样照常做，真没啥特别的（事情）。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Especially the city of Militopol was handed over to the Russian army without a fight. That's why there is no destruction in the city. I was in an Armenian restaurant over there and the owners of the family is not politically inclined towards Russia but towards Ukraine. They have no recognizable disadvantages. They can continue to run their business. There's nothing.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0116_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0116.wav",
+    "generated_duration": 22.186666666666667
+  },
+  {
+    "start": 3745.1,
+    "end": 3756.1,
+    "text": "如今俄控顿巴斯地区的乌克兰语使用者所面临的结构性劣势，难道你没注意到吗？",
+    "speaker": "SPEAKER_01",
+    "original_text": "You haven't seen any systematic disadvantage of the Ukrainian-speaking population of now Russian-controlled Donbas?",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0117_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0117.wav",
+    "generated_duration": 7.552
+  },
+  {
+    "start": 3756.1,
+    "end": 3800.1,
+    "text": "不，这在俄罗斯很正常。作为一个多民族国家，不同族群共同生活本就是常态。早在俄乌冲突前，顿巴斯地区的人们就普遍使用带乌克兰口音的俄语交流。如今俄语已成为当地官方语言，学校课程逐渐采用俄罗斯教育体系的内容，教师培训也参照俄罗斯模式进行。值得一提的是，乌克兰语在日常生活中依然被广泛使用。",
+    "speaker": "SPEAKER_00",
+    "original_text": "No, because this is normal in Russia. It's a multi-ethnic country. It's all over Russia. It's the same thing. Different ethnic groups of people are living together. And this is a good sign. Even before the Russian invasion, everyone in Donbas spoke Russian with the Ukrainian accent. Russian is now the official language there. The school curricula have adapted to the Russian curriculas and teachers are trained in the Russian way accordingly. They can use Ukrainian language in everyday life.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0118_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0118.wav",
+    "generated_duration": 33.74933333333333
+  },
+  {
+    "start": 3800.1,
+    "end": 3806.1,
+    "text": "但我不确定这让他们吃亏了。我没见过这种情况。",
+    "speaker": "SPEAKER_00",
+    "original_text": "But I couldn't say that this puts them to a disadvantage. I never saw that.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0119_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0119.wav",
+    "generated_duration": 3.6693333333333333
+  },
+  {
+    "start": 3806.1,
+    "end": 3824.1,
+    "text": "这是一件非常积极的事。很遗憾，一小时的时间到了，我们得在这里结束了。如果有人想关注您，特别是英语观众的话，您是用英文还是主要是用德语发表？有没有什么特定的渠道可以读到您的文章？",
+    "speaker": "SPEAKER_01",
+    "original_text": "That's a very positive thing. I'm sorry but we are reaching the one-hour mark. We do have to stop at this point. If people want to follow you, also like English-speaking audience, do you publish in English or mainly in German? Or is there an outlet to go to to read from you?",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0120_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0120.wav",
+    "generated_duration": 15.018666666666666
+  },
+  {
+    "start": 3824.1,
+    "end": 3840.1,
+    "text": "对，你可以在加拿大《Post Hill》杂志上看到我写的文章。虽然不多，但还是有几篇。主要是用德语发表文章。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Yeah, you can read some articles that I've wrote in the Canadian magazine, the Post Hill magazine. Not so much but some articles. Mostly I'm publishing in German language.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0121_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0121.wav",
+    "generated_duration": 10.325333333333333
+  },
+  {
+    "start": 3840.1,
+    "end": 3855.1,
+    "text": "我会把英文和德文的链接加入描述。大家快去读一读帕特里克的内容，他既勤于报道又善于思考。今日衷心感谢各位带来的宝贵见解。",
+    "speaker": "SPEAKER_01",
+    "original_text": "I will put the links to your publishing in English and also in German into the description. Everybody go and read from Patrick. He really reports a lot and he thinks a lot. I thank you very much for all the insights today.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0122_SPEAKER_01.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0122.wav",
+    "generated_duration": 12.928
+  },
+  {
+    "start": 3855.1,
+    "end": 3858.1,
+    "text": "非常感谢。与您交谈非常愉快。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Thanks very much. It was great talking to you.",
+    "reference_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/audio_segments/7ffcd42a8a73b9b51e83_0123_SPEAKER_00.mp3",
+    "generated_audio": "temp/erman War Journalist REVEALS Realities in Ukraine/tts_segments/segment_0123.wav",
+    "generated_duration": 3.072
+  }
+]

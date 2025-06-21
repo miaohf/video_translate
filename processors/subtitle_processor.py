@@ -3,8 +3,7 @@ import json
 import aiohttp
 import logging
 from typing import List, Dict, Optional
-from datetime import datetime
-from utils.common import get_file_hash
+from utils.common import get_file_hash, format_time
 
 logger = logging.getLogger(__name__)
 
@@ -358,8 +357,8 @@ class SubtitleProcessor:
                     f.write(f"{i}\n")
                     
                     # 写入时间戳
-                    start_time = self.format_time(subtitle["start"])
-                    end_time = self.format_time(subtitle["end"])
+                    start_time = format_time(subtitle["start"])
+                    end_time = format_time(subtitle["end"])
                     f.write(f"{start_time} --> {end_time}\n")
                     
                     # 写入说话人信息和文本
@@ -393,20 +392,4 @@ class SubtitleProcessor:
             
         except Exception as e:
             logger.error(f"保存 JSON 文件失败: {str(e)}")
-            raise
-            
-    def format_time(self, seconds: float) -> str:
-        """
-        将秒数格式化为SRT时间格式
-        
-        参数:
-            seconds: 秒数
-            
-        返回:
-            格式化的时间字符串
-        """
-        hours = int(seconds // 3600)
-        minutes = int((seconds % 3600) // 60)
-        seconds = seconds % 60
-        milliseconds = int((seconds - int(seconds)) * 1000)
-        return f"{hours:02d}:{minutes:02d}:{int(seconds):02d},{milliseconds:03d}" 
+            raise 
