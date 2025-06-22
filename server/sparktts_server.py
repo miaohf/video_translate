@@ -487,19 +487,19 @@ async def upload_audio(file: UploadFile = File(...)):
 if __name__ == "__main__":
     import uvicorn
     logger.info("Starting SparkTTS API server")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8002)
 
 # 示例请求:
-# curl -X POST "http://localhost:8000/tts" \
+# curl -X POST "http://localhost:8002/tts" \
 #      -H "Content-Type: application/json" \
 #      -d '{"text": "你好，这是一个测试。", "gender": "female", "pitch": "moderate", "speed": "moderate"}'
 
-# curl -X POST "http://localhost:8000/tts" \
+# curl -X POST "http://localhost:8002/tts" \
 #      -H "Content-Type: application/json" \
 #      -d '{"text": "你好，这是一个测试。", "prompt_speech_path": "prompt.wav"}' \
 #      --output output.wav
 
-# curl -X POST "http://localhost:8000/tts" \
+# curl -X POST "http://localhost:8002/tts" \
 #      -H "Content-Type: application/json" \
 #      -d '{"text": "你好，这是一个测试。", "speaker": "Scarlett"}' \
 #      --output output.wav 

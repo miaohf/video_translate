@@ -1,0 +1,202 @@
+[
+  {
+    "start": 0.34,
+    "end": 28.74,
+    "text": "Every day, I get comments saying that I must be using a Mac or a Windows PC to make these videos. Now, there's nothing wrong with folks using the tools that they like, and I use Linux because it's what I like. I do all my editing using Kaden Live, my footage capture using OBS, and my thumbnails using Inkscape. And today, I'll show you how I do it.",
+    "speaker": "SPEAKER_00",
+    "original_text": "Every day, I get comments saying that I must be using a Mac or a Windows PC to make these videos. Now, there's nothing wrong with folks using the tools that they like, and I use Linux because it's what I like. I do all my editing using Kaden Live, my footage capture using OBS, and my thumbnails using Inkscape. And today, I'll show you how I do it.",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0000_SPEAKER_00.mp3"
+  },
+  {
+    "start": 35.21,
+    "end": 79.42,
+    "text": "Greetings and welcome to another workflow-tastic episode of Veronica Explains. I'm Veronica, and I just rebased my editing rig onto Debian Trixie in anticipation of the next release. That means I'm reinstalling everything, so I figured right now would be a great time to walk through my setup and general workflow for creating videos using Linux. Kaden Live, or is it KDEN Live? Is my video editor, and I've been using it since the very first episode of Veronica Explains.",
+    "speaker": "SPEAKER_00",
+    "original_text": "Greetings and welcome to another workflow-tastic episode of Veronica Explains. I'm Veronica, and I just rebased my editing rig onto Debian Trixie in anticipation of the next release. That means I'm reinstalling everything, so I figured right now would be a great time to walk through my setup and general workflow for creating videos using Linux. Kaden Live, or is it KDEN Live? Is my video editor, and I've been using it since the very first episode of Veronica Explains.",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0001_SPEAKER_00.mp3"
+  },
+  {
+    "start": 79.42,
+    "end": 112.42,
+    "text": "It's a free and open-source video editor which is brought to us by the KDE Project and uses the open-source MLT framework to make these videos look so fantastic. Kaden Live is a nonlinear video editor, which nowadays is the primary way videographers edit videos. We import all of the clips for a video into a project and then reassemble them into a final sequence, which we then render or merge down into a single new video file.",
+    "speaker": "SPEAKER_00",
+    "original_text": "It's a free and open-source video editor which is brought to us by the KDE Project and uses the open-source MLT framework to make these videos look so fantastic. Kaden Live is a nonlinear video editor, which nowadays is the primary way videographers edit videos. We import all of the clips for a video into a project and then reassemble them into a final sequence, which we then render or merge down into a single new video file.",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0002_SPEAKER_00.mp3"
+  },
+  {
+    "start": 112.42,
+    "end": 145.42,
+    "text": "And for that very basic usage, blending multiple video files together and then cutting them into an artistic order, Kaden Live, for me at least, has always been more than up to the task. In addition to merging video files, I typically record a separate audio track while the camera is rolling, recorded using outdoor or audacity. I line the video files up with that audio file, which Kaden Live makes simple with an Align Audio to Reference option.",
+    "speaker": "SPEAKER_00",
+    "original_text": "And for that very basic usage, blending multiple video files together and then cutting them into an artistic order, Kaden Live, for me at least, has always been more than up to the task. In addition to merging video files, I typically record a separate audio track while the camera is rolling, recorded using outdoor or audacity. I line the video files up with that audio file, which Kaden Live makes simple with an Align Audio to Reference option.",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0003_SPEAKER_00.mp3"
+  },
+  {
+    "start": 145.42,
+    "end": 179.42,
+    "text": "Basically, the camera records horrible sounding audio like this, but the peaks and valleys line up with the peaks and valleys from this fancy microphone, and Kaden Live can automatically line up those two tracks. Then I just delete the nasty camera audio from the timeline and group the video and nice audio together. Then I excise the unnecessary attempts at alliteration, as well as the awkward silence while I wait for the teleprompter to get to where I need to read next.",
+    "speaker": "SPEAKER_00",
+    "original_text": "Basically, the camera records horrible sounding audio like this, but the peaks and valleys line up with the peaks and valleys from this fancy microphone, and Kaden Live can automatically line up those two tracks. Then I just delete the nasty camera audio from the timeline and group the video and nice audio together. Then I excise the unnecessary attempts at alliteration, as well as the awkward silence while I wait for the teleprompter to get to where I need to read next.",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0004_SPEAKER_00.mp3"
+  },
+  {
+    "start": 179.42,
+    "end": 211.02,
+    "text": "Like that. After editing all of that down, it's time to add overlay elements. Now this typically comes in the form of still screenshots, additional video footage, or transparent title clips, like this little guy up here. Kaden Live's title editor is good, but could be better. I'd very much like the ability to create groups of layers inside this title window, so I could easily lay out and manage changes across groups inside a title.",
+    "speaker": "SPEAKER_00",
+    "original_text": "Like that. After editing all of that down, it's time to add overlay elements. Now this typically comes in the form of still screenshots, additional video footage, or transparent title clips, like this little guy up here. Kaden Live's title editor is good, but could be better. I'd very much like the ability to create groups of layers inside this title window, so I could easily lay out and manage changes across groups inside a title.",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0005_SPEAKER_00.mp3"
+  },
+  {
+    "start": 211.02,
+    "end": 242.02,
+    "text": "Now speaking of downsides, one of Kaden Live's biggest drawbacks as an editor is that it doesn't yet have GPU rendering, which I'm not going to complain about because this is free and open source software, and if I expect that functionality, I should build it myself or I should pay someone else to do it. The lack of hardware acceleration across a lot of Kaden Live has some obvious drawbacks, but I've mitigated a fair amount of that using proxy clips,",
+    "speaker": "SPEAKER_00",
+    "original_text": "Now speaking of downsides, one of Kaden Live's biggest drawbacks as an editor is that it doesn't yet have GPU rendering, which I'm not going to complain about because this is free and open source software, and if I expect that functionality, I should build it myself or I should pay someone else to do it. The lack of hardware acceleration across a lot of Kaden Live has some obvious drawbacks, but I've mitigated a fair amount of that using proxy clips,",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0006_SPEAKER_00.mp3"
+  },
+  {
+    "start": 242.02,
+    "end": 275.02,
+    "text": "basically an option which pre-renders my 4K video files into smaller formats for the edit. Kaden Live is smart enough to reference the original files in the final render, and that makes life a lot easier. Lately, I've been trying my hand at editing captions inside Kaden Live as well. Kaden Live can use the Vosk or Whisper models for speech-to-text, but there's a lot that gets wrong, particularly tech jargon, which will frequently misspell or use bad punctuation, that sort of thing.",
+    "speaker": "SPEAKER_00",
+    "original_text": "basically an option which pre-renders my 4K video files into smaller formats for the edit. Kaden Live is smart enough to reference the original files in the final render, and that makes life a lot easier. Lately, I've been trying my hand at editing captions inside Kaden Live as well. Kaden Live can use the Vosk or Whisper models for speech-to-text, but there's a lot that gets wrong, particularly tech jargon, which will frequently misspell or use bad punctuation, that sort of thing.",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0007_SPEAKER_00.mp3"
+  },
+  {
+    "start": 275.02,
+    "end": 305.02,
+    "text": "When I've used these speech-to-text tools, I still have to go through and clean things up quite a bit, which is worth doing because good captions not only help folks more easily digest your video, but they also might help get it in front of more eyes, thanks to the transcript being scraped for keywords. As far as how I get Kaden Live, I typically just install the FlatHub version, which is nice because it updates way more frequently than the native version here on Debian.",
+    "speaker": "SPEAKER_00",
+    "original_text": "When I've used these speech-to-text tools, I still have to go through and clean things up quite a bit, which is worth doing because good captions not only help folks more easily digest your video, but they also might help get it in front of more eyes, thanks to the transcript being scraped for keywords. As far as how I get Kaden Live, I typically just install the FlatHub version, which is nice because it updates way more frequently than the native version here on Debian.",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0008_SPEAKER_00.mp3"
+  },
+  {
+    "start": 305.02,
+    "end": 340.75,
+    "text": "I've also used the app image a few times just for testing, and it worked fine. In fact, over the years I've used Kaden Live, it's only gotten better and better. I'm a proud sponsor of the project, and your support has helped me send the money over the years. So hey, that's nice! Open Broadcaster Software Studio, or OBS Studio for short, or OBS for shorter, is the free and open-source video capture and live streaming software",
+    "speaker": "SPEAKER_00",
+    "original_text": "I've also used the app image a few times just for testing, and it worked fine. In fact, over the years I've used Kaden Live, it's only gotten better and better. I'm a proud sponsor of the project, and your support has helped me send the money over the years. So hey, that's nice! Open Broadcaster Software Studio, or OBS Studio for short, or OBS for shorter, is the free and open-source video capture and live streaming software",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0009_SPEAKER_00.mp3"
+  },
+  {
+    "start": 340.75,
+    "end": 374.75,
+    "text": "that so much of this industry uses that it almost feels like I don't have to mention it. If you've ever watched someone on a live stream, chances are pretty good that their software was either OBS or was based on OBS. OBS uses a canvas-based workflow in which you lay out your video sources independently in the window. Those video sources can be from a webcam, or in my case, a capture card, which accepts HDMI video and makes it available like a webcam.",
+    "speaker": "SPEAKER_00",
+    "original_text": "that so much of this industry uses that it almost feels like I don't have to mention it. If you've ever watched someone on a live stream, chances are pretty good that their software was either OBS or was based on OBS. OBS uses a canvas-based workflow in which you lay out your video sources independently in the window. Those video sources can be from a webcam, or in my case, a capture card, which accepts HDMI video and makes it available like a webcam.",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0010_SPEAKER_00.mp3"
+  },
+  {
+    "start": 374.75,
+    "end": 408.75,
+    "text": "You can also use your own computer screen as a video source, which I use pretty frequently to capture virtual machines or web browser windows. You can also add audio sources, like this fancy microphone over here, and add some rudimentary effects processing to the audio. Echo! My typical workflow for screen capture involves plugging the HDMI from a mini PC or laptop into a capture card. That's also how I get vintage computing footage captures for the channel,",
+    "speaker": "SPEAKER_00",
+    "original_text": "You can also use your own computer screen as a video source, which I use pretty frequently to capture virtual machines or web browser windows. You can also add audio sources, like this fancy microphone over here, and add some rudimentary effects processing to the audio. Echo! My typical workflow for screen capture involves plugging the HDMI from a mini PC or laptop into a capture card. That's also how I get vintage computing footage captures for the channel,",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0011_SPEAKER_00.mp3"
+  },
+  {
+    "start": 408.75,
+    "end": 439.75,
+    "text": "including the outro, where I use a Commodore 64 to shout out the $10 a month supporters over on Patreon and Ko-fi. For vintage computer video capture, I'm typically either modding the vintage computer with RGB to HDMI or using my trusty RetroTank 5X. That gets me clean HDMI, which I can easily connect right into the capture card. Now, as far as hardware acceleration goes, OBS has pretty great support on Linux,",
+    "speaker": "SPEAKER_00",
+    "original_text": "including the outro, where I use a Commodore 64 to shout out the $10 a month supporters over on Patreon and Ko-fi. For vintage computer video capture, I'm typically either modding the vintage computer with RGB to HDMI or using my trusty RetroTank 5X. That gets me clean HDMI, which I can easily connect right into the capture card. Now, as far as hardware acceleration goes, OBS has pretty great support on Linux,",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0012_SPEAKER_00.mp3"
+  },
+  {
+    "start": 439.75,
+    "end": 478.75,
+    "text": "and I've had no trouble at all getting it to work well on Debian, and before that, PopOS. That said, I have to use the native version of OBS that's in the repo, because the FlatHub version doesn't ship support for Blackmagic's DeckLink capture devices. I've spent hours putzing with that to no avail, so if you have a solution to getting DeckLink to work on the FlatHub OBS, leave me a comment. Shoot, I forgot to do a thumbnail face. I've used lots of graphics packages over the years,",
+    "speaker": "SPEAKER_00",
+    "original_text": "and I've had no trouble at all getting it to work well on Debian, and before that, PopOS. That said, I have to use the native version of OBS that's in the repo, because the FlatHub version doesn't ship support for Blackmagic's DeckLink capture devices. I've spent hours putzing with that to no avail, so if you have a solution to getting DeckLink to work on the FlatHub OBS, leave me a comment. Shoot, I forgot to do a thumbnail face. I've used lots of graphics packages over the years,",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0013_SPEAKER_00.mp3"
+  },
+  {
+    "start": 478.75,
+    "end": 508.75,
+    "text": "but lately I've been all over Inkscape for thumbnails. A lot of this is because we're using Inkscape for the graphics that we produce for the merch store, but also because Inkscape is getting better and better thanks to the tireless work of the developers. Developers like Martin Owens, who you should totally support on Patreon if you want a better Inkscape. Now, I'm far from a visual arts expert, so my thumbnail process is pretty simple.",
+    "speaker": "SPEAKER_00",
+    "original_text": "but lately I've been all over Inkscape for thumbnails. A lot of this is because we're using Inkscape for the graphics that we produce for the merch store, but also because Inkscape is getting better and better thanks to the tireless work of the developers. Developers like Martin Owens, who you should totally support on Patreon if you want a better Inkscape. Now, I'm far from a visual arts expert, so my thumbnail process is pretty simple.",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0014_SPEAKER_00.mp3"
+  },
+  {
+    "start": 508.75,
+    "end": 546.75,
+    "text": "I typically take a still of me from the video and export it from CadenLive as a PNG. Then I lay it out size-wise in Inkscape and add my text over the top. By the way, since folks keep asking, this font is Futura, and my terminal font is Iosevka. If I want to cut myself out of the thumbnail, I draw a path around me and then set a clip to that path. I usually duplicate the path before I clip it, so that way I can make a pretty outline of my thumbnail face. Everyone loves that.",
+    "speaker": "SPEAKER_00",
+    "original_text": "I typically take a still of me from the video and export it from CadenLive as a PNG. Then I lay it out size-wise in Inkscape and add my text over the top. By the way, since folks keep asking, this font is Futura, and my terminal font is Iosevka. If I want to cut myself out of the thumbnail, I draw a path around me and then set a clip to that path. I usually duplicate the path before I clip it, so that way I can make a pretty outline of my thumbnail face. Everyone loves that.",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0015_SPEAKER_00.mp3"
+  },
+  {
+    "start": 546.75,
+    "end": 583.36,
+    "text": "What I've always liked about Inkscape is that manipulating text is so much easier in a vector graphics program than a raster editor, and I can really quickly get the text to look exactly the way I want it to. The FlatHub version of Inkscape has worked just fine for my thumbnail needs for a while now. But now, what about the hardware that I use? This is Heart of Glass, my main editing rig for all of the last year, which I paid for with my own money.",
+    "speaker": "SPEAKER_00",
+    "original_text": "What I've always liked about Inkscape is that manipulating text is so much easier in a vector graphics program than a raster editor, and I can really quickly get the text to look exactly the way I want it to. The FlatHub version of Inkscape has worked just fine for my thumbnail needs for a while now. But now, what about the hardware that I use? This is Heart of Glass, my main editing rig for all of the last year, which I paid for with my own money.",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0016_SPEAKER_00.mp3"
+  },
+  {
+    "start": 583.36,
+    "end": 615.36,
+    "text": "And in case you're curious, here's a fast fetch full of specs for you. Now, I crammed all of this into a Fractal North case, which is okay to work in, but I mainly just picked it because it was available, and it doesn't look terrible here at my editing desk. I mentioned before that I'm running Debian on this rig, which I just rebased to Trixie after running Sid for a while. Trixie's about to go stable, and I think I'm going to quit tracking Sid on my boring editing desktop for a bit.",
+    "speaker": "SPEAKER_00",
+    "original_text": "And in case you're curious, here's a fast fetch full of specs for you. Now, I crammed all of this into a Fractal North case, which is okay to work in, but I mainly just picked it because it was available, and it doesn't look terrible here at my editing desk. I mentioned before that I'm running Debian on this rig, which I just rebased to Trixie after running Sid for a while. Trixie's about to go stable, and I think I'm going to quit tracking Sid on my boring editing desktop for a bit.",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0017_SPEAKER_00.mp3"
+  },
+  {
+    "start": 615.36,
+    "end": 647.36,
+    "text": "If I want excitement, that's what one of my laptops are for. Now, I perpetually bop between Genome, and yes, that's a proper pronunciation, KDE Plasma, and Sway, because I'm a YouTuber and I'm very easily distracted by shiny new sources of content. My capture hardware is a pair of Blackmagic PCIe 4K capture cards, which work fine via Blackmagic's proprietary decklink drivers. Now, I don't love that I need proprietary drivers for these cards,",
+    "speaker": "SPEAKER_00",
+    "original_text": "If I want excitement, that's what one of my laptops are for. Now, I perpetually bop between Genome, and yes, that's a proper pronunciation, KDE Plasma, and Sway, because I'm a YouTuber and I'm very easily distracted by shiny new sources of content. My capture hardware is a pair of Blackmagic PCIe 4K capture cards, which work fine via Blackmagic's proprietary decklink drivers. Now, I don't love that I need proprietary drivers for these cards,",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0018_SPEAKER_00.mp3"
+  },
+  {
+    "start": 647.36,
+    "end": 682.36,
+    "text": "but I honestly couldn't find better alternatives in my price range that support Linux out of the box. USB capture cards that work in 4K have been hit or miss in my opinion, but I still keep an Elgato Camlink 4K around, as it's been the most reliable for me here on Linux. If someone was starting a channel and wanted a capture device, it's probably what I'd recommend. My audio interface is the same personas, audio box, something or other that I've used for at least a decade now for making music.",
+    "speaker": "SPEAKER_00",
+    "original_text": "but I honestly couldn't find better alternatives in my price range that support Linux out of the box. USB capture cards that work in 4K have been hit or miss in my opinion, but I still keep an Elgato Camlink 4K around, as it's been the most reliable for me here on Linux. If someone was starting a channel and wanted a capture device, it's probably what I'd recommend. My audio interface is the same personas, audio box, something or other that I've used for at least a decade now for making music.",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0019_SPEAKER_00.mp3"
+  },
+  {
+    "start": 682.36,
+    "end": 711.36,
+    "text": "It's fine, but I feel like the preamps are getting a little bit noisy, and I might replace this with something with a bit more oomph in the near future. And because I record music as well, I made the switch to pipe wire years ago, and I feel like learning pipe wire made the switch to Wayland a little simpler too. Lately it's been no trouble at all doing screen sharing or capture on Wayland, but for a while that was a bit of a thing.",
+    "speaker": "SPEAKER_00",
+    "original_text": "It's fine, but I feel like the preamps are getting a little bit noisy, and I might replace this with something with a bit more oomph in the near future. And because I record music as well, I made the switch to pipe wire years ago, and I feel like learning pipe wire made the switch to Wayland a little simpler too. Lately it's been no trouble at all doing screen sharing or capture on Wayland, but for a while that was a bit of a thing.",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0020_SPEAKER_00.mp3"
+  },
+  {
+    "start": 711.36,
+    "end": 743.36,
+    "text": "As far as the cameras are concerned, I'm using this trio of Panasonic Lumix cameras. The GH5 over here has Synchro Shutter or whatever they call it, which allows me to dial in the shutter speed, which makes it ideal for capturing CRT screens like my terminal, or a Macintosh or an Apple II GS or whatever old computer I feel like recording today. I typically leave a camera behind the teleprompter, have one above my monitor for streaming,",
+    "speaker": "SPEAKER_00",
+    "original_text": "As far as the cameras are concerned, I'm using this trio of Panasonic Lumix cameras. The GH5 over here has Synchro Shutter or whatever they call it, which allows me to dial in the shutter speed, which makes it ideal for capturing CRT screens like my terminal, or a Macintosh or an Apple II GS or whatever old computer I feel like recording today. I typically leave a camera behind the teleprompter, have one above my monitor for streaming,",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0021_SPEAKER_00.mp3"
+  },
+  {
+    "start": 743.36,
+    "end": 774.36,
+    "text": "and have a third for B-roll, which is an outdated term for additional footage that we YouTubers use because it makes us feel special. Now these cameras get pricey, and I always try to buy them on the used market in order to save a few bucks, but I've always been a sucker for swapping lenses and trying new creative shots in my videos. Now I know a lot of folks don't consider YouTube art, but I do, and these cameras are my tools, and they're just fine for me.",
+    "speaker": "SPEAKER_00",
+    "original_text": "and have a third for B-roll, which is an outdated term for additional footage that we YouTubers use because it makes us feel special. Now these cameras get pricey, and I always try to buy them on the used market in order to save a few bucks, but I've always been a sucker for swapping lenses and trying new creative shots in my videos. Now I know a lot of folks don't consider YouTube art, but I do, and these cameras are my tools, and they're just fine for me.",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0022_SPEAKER_00.mp3"
+  },
+  {
+    "start": 774.36,
+    "end": 806.36,
+    "text": "Let me know with a comment if you want to see a detailed video or a blog post on any of the software or hardware that I outlined here. I know it can be tough to imagine a Linux-based workflow for video editing, and I know it's not for everyone. I've said it before, and I'll say it again. I don't make these videos because I think badly of folks who use Windows or a Mac. I think you should use what you like to use, and I care more about what you build than how you're building it.",
+    "speaker": "SPEAKER_00",
+    "original_text": "Let me know with a comment if you want to see a detailed video or a blog post on any of the software or hardware that I outlined here. I know it can be tough to imagine a Linux-based workflow for video editing, and I know it's not for everyone. I've said it before, and I'll say it again. I don't make these videos because I think badly of folks who use Windows or a Mac. I think you should use what you like to use, and I care more about what you build than how you're building it.",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0023_SPEAKER_00.mp3"
+  },
+  {
+    "start": 806.36,
+    "end": 853.06,
+    "text": "But at the same time, I see comment after comment after comment saying Linux just isn't up to the task for creating media. And I'm here to tell you, with decades of experience under my belt, that you can absolutely get the job done on Linux, because Linux is awesome, and so are you. If you're still watching, say, nice pedalboard in the comments.",
+    "speaker": "SPEAKER_00",
+    "original_text": "But at the same time, I see comment after comment after comment saying Linux just isn't up to the task for creating media. And I'm here to tell you, with decades of experience under my belt, that you can absolutely get the job done on Linux, because Linux is awesome, and so are you. If you're still watching, say, nice pedalboard in the comments.",
+    "reference_audio": "temp/0433adbe92e648709e676b30f15233e1/audio_segments/e9693973aa3df7066832_0024_SPEAKER_00.mp3"
+  }
+]

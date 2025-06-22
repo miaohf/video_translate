@@ -13,6 +13,10 @@ from processors.subtitle_processor import SubtitleProcessor
 from processors.video_processor import VideoProcessor
 from utils.common import get_file_hash
 from config import settings
+try:
+    from config_manager import config as app_config
+except ImportError:
+    app_config = None
 
 # 配置日志
 logging.basicConfig(
@@ -39,7 +43,8 @@ class VideoTranslationClient:
         logger.info(f"- Python Version: {platform.python_version()}")
         
         # 确保temp目录存在
-        os.makedirs("temp", exist_ok=True)
+        temp_base_dir = app_config.temp_dir if app_config else "temp"
+        os.makedirs(temp_base_dir, exist_ok=True)
     
     def _get_temp_dir(self, video_path: str) -> str:
         """
@@ -53,7 +58,8 @@ class VideoTranslationClient:
         """
         # 使用输入视频的文件名作为目录名
         video_name = Path(video_path).stem
-        temp_dir = os.path.join("temp", video_name)
+        temp_base_dir = app_config.temp_dir if app_config else "temp"
+        temp_dir = os.path.join(temp_base_dir, video_name)
         os.makedirs(temp_dir, exist_ok=True)
         return temp_dir
     
@@ -202,7 +208,7 @@ class VideoTranslationClient:
             os.makedirs(temp_dir, exist_ok=True)
             
             # 获取 TTS 服务器地址
-            tts_server_url = os.getenv("TTS_SERVER_URL", "http://localhost:8000")
+            tts_server_url = os.getenv("TTS_SERVER_URL", "http://localhost:8002")
             
             # 生成每个字幕的音频并保存文件信息
             updated_subtitles = []

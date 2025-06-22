@@ -1,0 +1,227 @@
+[
+  {
+    "start": 0.34,
+    "end": 28.74,
+    "text": "每天我都会收到评论，说一定是我在使用Mac或Windows电脑制作这些视频。其实人们使用自己喜欢的工具没有问题，而我选择Linux是因为这是我个人的偏好。我所有的剪辑工作都用Kaden Live完成，素材采集使用OBS，缩略图则用Inkscape制作。今天我会向大家展示我是如何做到的。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Every day, I get comments saying that I must be using a Mac or a Windows PC to make these videos. Now, there's nothing wrong with folks using the tools that they like, and I use Linux because it's what I like. I do all my editing using Kaden Live, my footage capture using OBS, and my thumbnails using Inkscape. And today, I'll show you how I do it.",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0000_SPEAKER_00.mp3"
+  },
+  {
+    "start": 35.21,
+    "end": 79.42,
+    "text": "欢迎收看Veronica Explains系列的又一集精彩工作流程分享。我是Veronica，我刚刚将我的剪辑设备重新配置到Debian Trixie系统上，为下一次发布做准备。这意味着我要重新安装所有软件，因此我认为现在正是一个很好的时机，向大家介绍我在Linux环境下制作视频的整体设置和一般工作流程。Kaden Live（或者说是KDEN Live？）是我的视频编辑器，并且从Veronica Explains系列的第一集开始我就一直在使用它。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Greetings and welcome to another workflow-tastic episode of Veronica Explains. I'm Veronica, and I just rebased my editing rig onto Debian Trixie in anticipation of the next release. That means I'm reinstalling everything, so I figured right now would be a great time to walk through my setup and general workflow for creating videos using Linux. Kaden Live, or is it KDEN Live? Is my video editor, and I've been using it since the very first episode of Veronica Explains.",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0001_SPEAKER_00.mp3"
+  },
+  {
+    "start": 79.42,
+    "end": 112.42,
+    "text": "这是一款免费开源的视频编辑软件，由KDE项目开发，采用开源的MLT框架来制作这些令人惊叹的视频。Kaden Live是一种非线性视频编辑器，如今这是视频制作者编辑视频的主要方式。我们将所有用于视频的片段导入到一个项目中，然后重新组合成最终的序列，并将其渲染或合并为一个新的单一视频文件。",
+    "speaker": "SPEAKER_00",
+    "original_text": "It's a free and open-source video editor which is brought to us by the KDE Project and uses the open-source MLT framework to make these videos look so fantastic. Kaden Live is a nonlinear video editor, which nowadays is the primary way videographers edit videos. We import all of the clips for a video into a project and then reassemble them into a final sequence, which we then render or merge down into a single new video file.",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0002_SPEAKER_00.mp3"
+  },
+  {
+    "start": 112.42,
+    "end": 145.42,
+    "text": "对于这种最基本的用途，将多个视频文件混合在一起然后按艺术顺序进行剪辑，就我而言，Kaden Live一直都能胜任。除了合并视频文件外，我通常会在摄像机运行时单独录制一条音频轨道，使用户外或Audacity进行录音。我会将这些视频文件与该音频文件对齐，而Kaden Live通过'将音频对齐到参考'功能使这一过程变得简单。",
+    "speaker": "SPEAKER_00",
+    "original_text": "And for that very basic usage, blending multiple video files together and then cutting them into an artistic order, Kaden Live, for me at least, has always been more than up to the task. In addition to merging video files, I typically record a separate audio track while the camera is rolling, recorded using outdoor or audacity. I line the video files up with that audio file, which Kaden Live makes simple with an Align Audio to Reference option.",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0003_SPEAKER_00.mp3"
+  },
+  {
+    "start": 145.42,
+    "end": 179.42,
+    "text": "基本上，摄像机记录的音频听起来很糟糕，但其峰值和谷值会与这个高端麦克风的峰值和谷值对齐，而Kaden Live可以自动将这两条轨道对齐。然后我只需从时间轴中删除那些令人讨厌的摄像机音频，并将视频和优质音频组合在一起。接着我会删掉不必要的头韵尝试，以及等待提词器到达我需要阅读的位置时出现的尴尬沉默。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Basically, the camera records horrible sounding audio like this, but the peaks and valleys line up with the peaks and valleys from this fancy microphone, and Kaden Live can automatically line up those two tracks. Then I just delete the nasty camera audio from the timeline and group the video and nice audio together. Then I excise the unnecessary attempts at alliteration, as well as the awkward silence while I wait for the teleprompter to get to where I need to read next.",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0004_SPEAKER_00.mp3"
+  },
+  {
+    "start": 179.42,
+    "end": 211.02,
+    "text": "就像这样。在编辑完所有内容后，是时候添加叠加元素了。通常这些元素以静态截图、额外视频素材或透明标题片段的形式出现，比如这里这个小家伙。Kaden Live的标题编辑器表现不错，但还有提升空间。我非常希望能在标题窗口内创建图层组，这样我可以轻松地在标题中布局和管理各组之间的变化。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Like that. After editing all of that down, it's time to add overlay elements. Now this typically comes in the form of still screenshots, additional video footage, or transparent title clips, like this little guy up here. Kaden Live's title editor is good, but could be better. I'd very much like the ability to create groups of layers inside this title window, so I could easily lay out and manage changes across groups inside a title.",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0005_SPEAKER_00.mp3"
+  },
+  {
+    "start": 211.02,
+    "end": 242.02,
+    "text": "说到缺点，Kaden Live作为编辑器最大的缺陷之一是目前还不支持GPU渲染。我对此并不抱怨，因为这是免费的开源软件，如果我希望拥有该功能，应该自己构建或支付他人来实现。Kaden Live在很多方面缺乏硬件加速确实存在明显弊端，但通过使用代理剪辑（proxy clips）我已经缓解了相当多的问题",
+    "speaker": "SPEAKER_00",
+    "original_text": "Now speaking of downsides, one of Kaden Live's biggest drawbacks as an editor is that it doesn't yet have GPU rendering, which I'm not going to complain about because this is free and open source software, and if I expect that functionality, I should build it myself or I should pay someone else to do it. The lack of hardware acceleration across a lot of Kaden Live has some obvious drawbacks, but I've mitigated a fair amount of that using proxy clips,",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0006_SPEAKER_00.mp3"
+  },
+  {
+    "start": 242.02,
+    "end": 275.02,
+    "text": "基本上这是一个预渲染我的4K视频文件为更小格式进行编辑的选项。Kaden Live足够智能，在最终渲染时会引用原始文件，这让工作变得简单得多。最近我还在尝试在Kaden Live中直接编辑字幕。Kaden Live可以使用Vosk或Whisper模型实现语音转文字，但存在很多错误，尤其是技术术语部分，经常会拼写错误或使用不当标点",
+    "speaker": "SPEAKER_00",
+    "original_text": "basically an option which pre-renders my 4K video files into smaller formats for the edit. Kaden Live is smart enough to reference the original files in the final render, and that makes life a lot easier. Lately, I've been trying my hand at editing captions inside Kaden Live as well. Kaden Live can use the Vosk or Whisper models for speech-to-text, but there's a lot that gets wrong, particularly tech jargon, which will frequently misspell or use bad punctuation, that sort of thing.",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0007_SPEAKER_00.mp3"
+  },
+  {
+    "start": 275.02,
+    "end": 305.02,
+    "text": "当我使用这些语音转文字工具时，仍然需要花不少时间进行清理，这是值得的，因为好的字幕不仅能帮助观众更轻松地理解视频内容，还能通过抓取字幕中的关键词让更多人看到你的视频。至于如何获取Kaden Live，我通常会安装FlatHub版本，这很好，因为它更新频率比Debian系统上的原生版本高得多",
+    "speaker": "SPEAKER_00",
+    "original_text": "When I've used these speech-to-text tools, I still have to go through and clean things up quite a bit, which is worth doing because good captions not only help folks more easily digest your video, but they also might help get it in front of more eyes, thanks to the transcript being scraped for keywords. As far as how I get Kaden Live, I typically just install the FlatHub version, which is nice because it updates way more frequently than the native version here on Debian.",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0008_SPEAKER_00.mp3"
+  },
+  {
+    "start": 305.02,
+    "end": 340.75,
+    "text": "我也曾几次使用应用的图片进行测试，效果很好。事实上，多年来我一直在使用Kaden Live，它变得越来越好。我是该项目的自豪赞助商，你们的支持帮助我在过去几年里完成了资金筹集。所以嘿，这很棒！Open Broadcaster Software Studio（简称OBS Studio，或更简称为OBS）是一款免费且开源的视频捕获和直播软件",
+    "speaker": "SPEAKER_00",
+    "original_text": "I've also used the app image a few times just for testing, and it worked fine. In fact, over the years I've used Kaden Live, it's only gotten better and better. I'm a proud sponsor of the project, and your support has helped me send the money over the years. So hey, that's nice! Open Broadcaster Software Studio, or OBS Studio for short, or OBS for shorter, is the free and open-source video capture and live streaming software",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0009_SPEAKER_00.mp3"
+  },
+  {
+    "start": 340.75,
+    "end": 374.75,
+    "text": "这个行业的许多人都在使用它，以至于我几乎不用特别提及。如果你曾经观看过有人进行直播，有很大几率他们使用的软件是OBS或者基于OBS开发的。OBS采用基于画布的工作流程，你可以在窗口中独立地布局视频源。这些视频源可以来自网络摄像头，或者像我这样使用捕获卡（可接收HDMI视频并将其作为网络摄像头使用）",
+    "speaker": "SPEAKER_00",
+    "original_text": "that so much of this industry uses that it almost feels like I don't have to mention it. If you've ever watched someone on a live stream, chances are pretty good that their software was either OBS or was based on OBS. OBS uses a canvas-based workflow in which you lay out your video sources independently in the window. Those video sources can be from a webcam, or in my case, a capture card, which accepts HDMI video and makes it available like a webcam.",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0010_SPEAKER_00.mp3"
+  },
+  {
+    "start": 374.75,
+    "end": 408.75,
+    "text": "你也可以将自己电脑的屏幕用作视频源，我经常这样做来捕获虚拟机或网页浏览器窗口。还可以添加音频源，比如这个漂亮的麦克风，并对音频进行一些基础的效果处理。回声！我的典型屏幕捕获工作流程是将迷你PC或笔记本电脑的HDMI接口连接到捕获卡上。这也是我为频道获取复古计算画面素材的方式",
+    "speaker": "SPEAKER_00",
+    "original_text": "You can also use your own computer screen as a video source, which I use pretty frequently to capture virtual machines or web browser windows. You can also add audio sources, like this fancy microphone over here, and add some rudimentary effects processing to the audio. Echo! My typical workflow for screen capture involves plugging the HDMI from a mini PC or laptop into a capture card. That's also how I get vintage computing footage captures for the channel,",
+    "translation_quality": "poor",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0011_SPEAKER_00.mp3"
+  },
+  {
+    "start": 408.75,
+    "end": 439.75,
+    "text": "包括片尾部分，我会用 Commodore 64 来感谢 Patreon 和 Ko-fi 上每月支持 $10 的观众。在复古电脑视频采集方面，我通常会通过改装复古电脑将 RGB 转换为 HDMI，或者使用我信赖的 RetroTank 5X。这样就能获得干净的 HDMI 信号，可以直接连接到采集卡上。至于硬件加速功能，OBS 在 Linux 上的支持相当不错，",
+    "speaker": "SPEAKER_00",
+    "original_text": "including the outro, where I use a Commodore 64 to shout out the $10 a month supporters over on Patreon and Ko-fi. For vintage computer video capture, I'm typically either modding the vintage computer with RGB to HDMI or using my trusty RetroTank 5X. That gets me clean HDMI, which I can easily connect right into the capture card. Now, as far as hardware acceleration goes, OBS has pretty great support on Linux,",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0012_SPEAKER_00.mp3"
+  },
+  {
+    "start": 439.75,
+    "end": 478.75,
+    "text": "我在 Debian 和之前的 PopOS 上都从未遇到任何兼容性问题。不过需要说明的是，我必须使用仓库中自带的原生 OBS 版本，因为 FlatHub 版本不支持 Blackmagic 的 DeckLink 采集设备。我曾花费数小时反复折腾但毫无成效，所以如果你知道如何让 FlatHub 版本的 OBS 支持 DeckLink，请在评论区告诉我。哎呀，我忘记做缩略图封面了。多年来我使用过许多图形软件，",
+    "speaker": "SPEAKER_00",
+    "original_text": "and I've had no trouble at all getting it to work well on Debian, and before that, PopOS. That said, I have to use the native version of OBS that's in the repo, because the FlatHub version doesn't ship support for Blackmagic's DeckLink capture devices. I've spent hours putzing with that to no avail, so if you have a solution to getting DeckLink to work on the FlatHub OBS, leave me a comment. Shoot, I forgot to do a thumbnail face. I've used lots of graphics packages over the years,",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0013_SPEAKER_00.mp3"
+  },
+  {
+    "start": 478.75,
+    "end": 508.75,
+    "text": "但最近一直用 Inkscape 来制作缩略图。很大程度上是因为我们正在用 Inkscape 设计商品店的图形素材，同时也因为 Inkscape 在开发者的持续努力下越来越好。像 Martin Owens 这样的开发者就值得你去 Patreon 支持，以获得更好的 Inkscape 体验。不过我远非视觉艺术专家，因此我的缩略图制作流程非常简单。",
+    "speaker": "SPEAKER_00",
+    "original_text": "but lately I've been all over Inkscape for thumbnails. A lot of this is because we're using Inkscape for the graphics that we produce for the merch store, but also because Inkscape is getting better and better thanks to the tireless work of the developers. Developers like Martin Owens, who you should totally support on Patreon if you want a better Inkscape. Now, I'm far from a visual arts expert, so my thumbnail process is pretty simple.",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0014_SPEAKER_00.mp3"
+  },
+  {
+    "start": 508.75,
+    "end": 546.75,
+    "text": "我通常会从视频中截取一张我的静态图像，并将其从CadenLive导出为PNG格式。然后我在Inkscape中按尺寸进行排版，并在顶部添加文字。顺便说一下，由于大家一直问，这个字体是Futura，而我的终端字体是Iosevka。如果我想把自己从缩略图中裁剪出来，我会围绕自己绘制一条路径，然后将裁剪区域设置为该路径。我通常会在裁剪之前先复制这条路径，这样就能制作出一个漂亮的缩略图人脸轮廓。每个人都喜欢这个效果。",
+    "speaker": "SPEAKER_00",
+    "original_text": "I typically take a still of me from the video and export it from CadenLive as a PNG. Then I lay it out size-wise in Inkscape and add my text over the top. By the way, since folks keep asking, this font is Futura, and my terminal font is Iosevka. If I want to cut myself out of the thumbnail, I draw a path around me and then set a clip to that path. I usually duplicate the path before I clip it, so that way I can make a pretty outline of my thumbnail face. Everyone loves that.",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0015_SPEAKER_00.mp3"
+  },
+  {
+    "start": 546.75,
+    "end": 583.36,
+    "text": "我一直喜欢Inkscape的一点是，在矢量图形程序中操作文字比在位图编辑器中容易得多，我可以非常快速地让文字呈现出我想要的精确效果。FlatHub版本的Inkscape一直以来都很好地满足了我的缩略图需求。但现在，关于我使用的硬件呢？这是Heart of Glass，这是我过去一年的主要编辑设备，我用自己的钱购买了它。",
+    "speaker": "SPEAKER_00",
+    "original_text": "What I've always liked about Inkscape is that manipulating text is so much easier in a vector graphics program than a raster editor, and I can really quickly get the text to look exactly the way I want it to. The FlatHub version of Inkscape has worked just fine for my thumbnail needs for a while now. But now, what about the hardware that I use? This is Heart of Glass, my main editing rig for all of the last year, which I paid for with my own money.",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0016_SPEAKER_00.mp3"
+  },
+  {
+    "start": 583.36,
+    "end": 615.36,
+    "text": "如果你好奇的话，这里有一个快速获取的完整规格信息。我把所有这些组件都装进了Fractal North机箱中，虽然这个机箱在工作时还算合适，但主要原因是它当时有货，并且在我的编辑桌上看起来也不算难看。我之前提到过，这台设备上运行的是Debian系统，我刚刚从使用一段时间的Sid分支重新基准到Trixie分支。Trixie即将进入稳定版，我想我会暂时停止在无聊的编辑桌面上跟踪Sid分支。",
+    "speaker": "SPEAKER_00",
+    "original_text": "And in case you're curious, here's a fast fetch full of specs for you. Now, I crammed all of this into a Fractal North case, which is okay to work in, but I mainly just picked it because it was available, and it doesn't look terrible here at my editing desk. I mentioned before that I'm running Debian on this rig, which I just rebased to Trixie after running Sid for a while. Trixie's about to go stable, and I think I'm going to quit tracking Sid on my boring editing desktop for a bit.",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0017_SPEAKER_00.mp3"
+  },
+  {
+    "start": 615.36,
+    "end": 647.36,
+    "text": "如果我想追求刺激，那正是我的笔记本电脑之一的用途。现在，我一直在Genome、没错，这就是正确的发音方式，KDE Plasma和Sway之间来回切换，因为我是个YouTuber，很容易被新奇的内容来源分散注意力。我的采集硬件是两张Blackmagic PCIe 4K采集卡，通过Blackmagic专有的Decklink驱动程序可以正常工作。现在，我不太喜欢必须使用这些显卡的专有驱动程序",
+    "speaker": "SPEAKER_00",
+    "original_text": "If I want excitement, that's what one of my laptops are for. Now, I perpetually bop between Genome, and yes, that's a proper pronunciation, KDE Plasma, and Sway, because I'm a YouTuber and I'm very easily distracted by shiny new sources of content. My capture hardware is a pair of Blackmagic PCIe 4K capture cards, which work fine via Blackmagic's proprietary decklink drivers. Now, I don't love that I need proprietary drivers for these cards,",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0018_SPEAKER_00.mp3"
+  },
+  {
+    "start": 647.36,
+    "end": 682.36,
+    "text": "但老实说，在我这个价位范围内，我找不到比这更合适的替代方案来支持开箱即用的Linux系统。在我看来，能实现4K采集的USB采集卡效果参差不齐，但我仍然保留着一款Elgato Camlink 4K，因为它在Linux环境下对我来说是最可靠的。如果有人要开始做直播并需要采集设备，我大概会推荐这个。我的音频接口是同一家厂商生产的audio box系列，我已经用了至少十年来制作音乐",
+    "speaker": "SPEAKER_00",
+    "original_text": "but I honestly couldn't find better alternatives in my price range that support Linux out of the box. USB capture cards that work in 4K have been hit or miss in my opinion, but I still keep an Elgato Camlink 4K around, as it's been the most reliable for me here on Linux. If someone was starting a channel and wanted a capture device, it's probably what I'd recommend. My audio interface is the same personas, audio box, something or other that I've used for at least a decade now for making music.",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0019_SPEAKER_00.mp3"
+  },
+  {
+    "start": 682.36,
+    "end": 711.36,
+    "text": "虽然还能用，但我觉得前置放大器有点噪音，可能在不久的将来会换成更有力量的产品。而且因为我也会录制音乐，几年前我就改用Pipe Wire了，我觉得学习Pipe Wire也让转向Wayland的切换变得简单了一些。最近在Wayland上进行屏幕共享或采集已经完全没有问题，但有一段时间这确实是个棘手的问题",
+    "speaker": "SPEAKER_00",
+    "original_text": "It's fine, but I feel like the preamps are getting a little bit noisy, and I might replace this with something with a bit more oomph in the near future. And because I record music as well, I made the switch to pipe wire years ago, and I feel like learning pipe wire made the switch to Wayland a little simpler too. Lately it's been no trouble at all doing screen sharing or capture on Wayland, but for a while that was a bit of a thing.",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0020_SPEAKER_00.mp3"
+  },
+  {
+    "start": 711.36,
+    "end": 743.36,
+    "text": "就摄像机而言，我正在使用这组三台松下Lumix相机。这里的GH5有同步快门（或他们称之为的其他名称），让我可以调节快门速度，这对于捕捉像我的终端、Macintosh或Apple II GS之类的CRT屏幕非常理想，或者今天我想录制的任何旧电脑。通常我会把一台摄像机放在提词器后面，另一台放在显示器上方用于直播，",
+    "speaker": "SPEAKER_00",
+    "original_text": "As far as the cameras are concerned, I'm using this trio of Panasonic Lumix cameras. The GH5 over here has Synchro Shutter or whatever they call it, which allows me to dial in the shutter speed, which makes it ideal for capturing CRT screens like my terminal, or a Macintosh or an Apple II GS or whatever old computer I feel like recording today. I typically leave a camera behind the teleprompter, have one above my monitor for streaming,",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0021_SPEAKER_00.mp3"
+  },
+  {
+    "start": 743.36,
+    "end": 774.36,
+    "text": "第三台则用于拍摄备用镜头（B-roll），这是一个过时的术语，我们YouTubers使用它是因为这让我们觉得自己很特别。现在这些摄像机价格不菲，我总是尽量在二手市场购买以节省一些钱，但我一直喜欢更换镜头并尝试视频中的新创意拍摄方式。我知道很多人并不认为YouTube内容是艺术，但我觉得它是，而这些摄像机就是我的工具，对我而言它们已经足够好用。",
+    "speaker": "SPEAKER_00",
+    "original_text": "and have a third for B-roll, which is an outdated term for additional footage that we YouTubers use because it makes us feel special. Now these cameras get pricey, and I always try to buy them on the used market in order to save a few bucks, but I've always been a sucker for swapping lenses and trying new creative shots in my videos. Now I know a lot of folks don't consider YouTube art, but I do, and these cameras are my tools, and they're just fine for me.",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0022_SPEAKER_00.mp3"
+  },
+  {
+    "start": 774.36,
+    "end": 806.36,
+    "text": "如果想了解我在这里提到的任何软件或硬件的详细视频或博客文章，请在评论中告诉我。我知道想象基于Linux的视频编辑工作流程可能有些困难，我也知道这并不适合每个人。我之前说过，现在再说一次：我制作这些视频并不是因为看不起使用Windows或Mac的人。我认为你应该使用自己喜欢的工具，我更在意你创造了什么，而不是你用什么方式去创造它。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Let me know with a comment if you want to see a detailed video or a blog post on any of the software or hardware that I outlined here. I know it can be tough to imagine a Linux-based workflow for video editing, and I know it's not for everyone. I've said it before, and I'll say it again. I don't make these videos because I think badly of folks who use Windows or a Mac. I think you should use what you like to use, and I care more about what you build than how you're building it.",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0023_SPEAKER_00.mp3"
+  },
+  {
+    "start": 806.36,
+    "end": 853.06,
+    "text": "但与此同时，我看到接连不断的评论声称Linux根本无法胜任媒体创作的任务。我要告诉你们，凭借数十年的经验积累，你完全可以使用Linux完成这项工作，因为Linux非常出色，而你们也同样优秀。如果你还在观看，请在评论中说一声‘不错的效果器板’。",
+    "speaker": "SPEAKER_00",
+    "original_text": "But at the same time, I see comment after comment after comment saying Linux just isn't up to the task for creating media. And I'm here to tell you, with decades of experience under my belt, that you can absolutely get the job done on Linux, because Linux is awesome, and so are you. If you're still watching, say, nice pedalboard in the comments.",
+    "translation_quality": "good",
+    "reference_audio": "temp/9f22a12c13764cf9bcd23ff8e1a74e77/audio_segments/5b8798fa7ce244274231_0024_SPEAKER_00.mp3"
+  }
+]
