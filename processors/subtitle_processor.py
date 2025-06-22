@@ -5,6 +5,7 @@ import logging
 from typing import List, Dict, Optional
 from datetime import datetime
 from utils.common import get_file_hash
+from utils.vtt_parser import VTTParser
 
 logger = logging.getLogger(__name__)
 
@@ -259,13 +260,14 @@ class SubtitleProcessor:
         
         return merged
 
-    async def get_subtitles(self, audio_path: str, video_name: str) -> List[Dict]:
+    async def get_subtitles(self, audio_path: str, video_name: str, video_path: str = None) -> List[Dict]:
         """
         获取音频的字幕
         
         参数:
             audio_path: 音频文件路径
             video_name: 视频文件名（不含扩展名）
+            video_path: 视频文件路径（用于查找VTT文件）
             
         返回:
             字幕列表
@@ -274,36 +276,29 @@ class SubtitleProcessor:
             # 计算文件哈希值
             file_hash = get_file_hash(video_name)
             
-            # 音频路径格式：temp/{video_name}/{file_hash}_audio.wav
-            # 缓存文件格式：temp/{video_name}/{file_hash}_subtitles.json
-            cache_file = os.path.join("temp", video_name, f"{file_hash}_subtitles.json")
-            english_srt_file = os.path.join("temp", video_name, f"{file_hash}_subtitles.srt")           
+            # 检查是否存在已有的字幕文件
+            if video_path:
+                existing_subtitles = self.check_existing_subtitles(video_path, video_name, file_hash)
+                if existing_subtitles:
+                    # 对字幕进行说话人合并处理
+                    logger.info("📝 对已有字幕进行说话人合并处理...")
+                    subtitles = self.merge_speaker_segments(existing_subtitles)
+                    
+                    # 保存为VTT格式
+                    cache_vtt_file = os.path.join("temp", video_name, f"{file_hash}_subtitles.vtt")
+                    VTTParser.save_vtt_file(subtitles, cache_vtt_file, 'en')
+                    logger.info(f"✅ 字幕已保存为VTT格式: {cache_vtt_file}")
+                    
+                    return subtitles
             
-            # 检查字幕缓存
-            if os.path.exists(cache_file):
-                logger.info(f"使用缓存的字幕文件: {cache_file}")
-                with open(cache_file, 'r', encoding='utf-8') as f:
-                    subtitles = json.load(f)
-                    
-                    # 对缓存的字幕进行说话人合并处理
-                    logger.info("对缓存字幕进行说话人合并处理...")
-                    subtitles = self.merge_speaker_segments(subtitles)
-                    
-                    # 更新缓存文件
-                    with open(cache_file, 'w', encoding='utf-8') as f:
-                        json.dump(subtitles, f, ensure_ascii=False, indent=2)
-                    logger.info(f"合并后的字幕已更新到缓存: {cache_file}")
-                    
-                    # 重新生成 SRT 文件
-                    self.save_subtitles_to_srt(subtitles, english_srt_file)
-                    
-                return subtitles
+            # 如果没有找到已有字幕，进行转录
+            logger.info("🎤 开始音频转录...")
             
             # 进行说话人识别
             speaker_segments = await self.process_speaker_diarization(audio_path, video_name, file_hash)
             
             # 进行音频转录
-            logger.info("开始音频转录...")
+            logger.info("📝 开始音频转录...")
             session = await self.get_session()
             with open(audio_path, 'rb') as f:
                 async with session.post(
@@ -322,16 +317,19 @@ class SubtitleProcessor:
             segments = self.merge_speaker_info(segments, speaker_segments)
             
             # 对字幕进行说话人合并处理
-            logger.info("对转录字幕进行说话人合并处理...")
+            logger.info("📝 对转录字幕进行说话人合并处理...")
             segments = self.merge_speaker_segments(segments)
             
-            # 保存到缓存
-            with open(cache_file, 'w', encoding='utf-8') as f:
-                json.dump(segments, f, ensure_ascii=False, indent=2)
-            logger.info(f"字幕已保存到: {cache_file}")
+            # 保存为VTT格式
+            cache_vtt_file = os.path.join("temp", video_name, f"{file_hash}_subtitles.vtt")
+            VTTParser.save_vtt_file(segments, cache_vtt_file, 'en')
+            logger.info(f"✅ 字幕已保存为VTT格式: {cache_vtt_file}")
             
-            # 生成 SRT 文件
-            self.save_subtitles_to_srt(segments, english_srt_file)
+            # 兼容性：同时保存JSON格式（可选）
+            cache_json_file = os.path.join("temp", video_name, f"{file_hash}_subtitles.json")
+            with open(cache_json_file, 'w', encoding='utf-8') as f:
+                json.dump(segments, f, ensure_ascii=False, indent=2)
+            logger.info(f"📄 字幕已保存为JSON格式: {cache_json_file}")
             
             return segments
             
@@ -342,35 +340,22 @@ class SubtitleProcessor:
             # 确保关闭session
             await self.close()
     
-    def save_subtitles_to_srt(self, subtitles: List[Dict], output_path: str):
+    def save_subtitles_to_vtt(self, subtitles: List[Dict], output_path: str, language: str = 'en'):
         """
-        将字幕保存为 SRT 格式
+        将字幕保存为 VTT 格式
         
         参数:
             subtitles: 字幕列表
             output_path: 输出文件路径
+            language: 语言代码
         """
         try:
-            logger.info(f"保存 SRT 文件: {output_path}")
-            with open(output_path, 'w', encoding='utf-8') as f:
-                for i, subtitle in enumerate(subtitles, 1):
-                    # 写入序号
-                    f.write(f"{i}\n")
-                    
-                    # 写入时间戳
-                    start_time = self.format_time(subtitle["start"])
-                    end_time = self.format_time(subtitle["end"])
-                    f.write(f"{start_time} --> {end_time}\n")
-                    
-                    # 写入说话人信息和文本
-                    speaker = subtitle.get("speaker", "Unknown")
-                    text = subtitle["text"]
-                    f.write(f"[{speaker}] {text}\n\n")
-            
-            logger.info(f"SRT 文件已保存: {output_path}")
+            logger.info(f"保存 VTT 文件: {output_path}")
+            VTTParser.save_vtt_file(subtitles, output_path, language)
+            logger.info(f"VTT 文件已保存: {output_path}")
             
         except Exception as e:
-            logger.error(f"保存 SRT 文件失败: {str(e)}")
+            logger.error(f"保存 VTT 文件失败: {str(e)}")
             raise
             
     def save_subtitles_to_json(self, subtitles: List[Dict], output_path: str):
@@ -409,4 +394,53 @@ class SubtitleProcessor:
         minutes = int((seconds % 3600) // 60)
         seconds = seconds % 60
         milliseconds = int((seconds - int(seconds)) * 1000)
-        return f"{hours:02d}:{minutes:02d}:{int(seconds):02d},{milliseconds:03d}" 
+        return f"{hours:02d}:{minutes:02d}:{int(seconds):02d},{milliseconds:03d}"
+
+    def check_existing_subtitles(self, video_path: str, video_name: str, file_hash: str) -> Optional[List[Dict]]:
+        """
+        检查是否存在已有的字幕文件
+        
+        参数:
+            video_path: 视频文件路径
+            video_name: 视频文件名（不含扩展名）
+            file_hash: 文件哈希值
+            
+        返回:
+            字幕列表或None
+        """
+        try:
+            # 检查缓存的字幕文件
+            cache_json_file = os.path.join("temp", video_name, f"{file_hash}_subtitles.json")
+            if os.path.exists(cache_json_file):
+                logger.info(f"发现缓存的字幕文件: {cache_json_file}")
+                with open(cache_json_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            
+            # 检查缓存的VTT文件
+            cache_vtt_file = os.path.join("temp", video_name, f"{file_hash}_subtitles.vtt")
+            if os.path.exists(cache_vtt_file):
+                logger.info(f"发现缓存的VTT字幕文件: {cache_vtt_file}")
+                subtitles = VTTParser.parse_vtt_file(cache_vtt_file)
+                if subtitles:
+                    # 为TTS合并字幕，处理断句问题
+                    logger.info("对VTT字幕进行TTS优化合并...")
+                    subtitles = VTTParser.merge_subtitles_for_tts(subtitles)
+                    return subtitles
+            
+            # 在视频文件同目录下查找VTT文件
+            if video_path:
+                vtt_files = VTTParser.find_vtt_files(video_path)
+                for vtt_file in vtt_files:
+                    logger.info(f"发现现有VTT字幕文件: {vtt_file}")
+                    subtitles = VTTParser.parse_vtt_file(vtt_file)
+                    if subtitles:
+                        # 为TTS合并字幕，处理断句问题
+                        logger.info("对现有VTT字幕进行TTS优化合并...")
+                        subtitles = VTTParser.merge_subtitles_for_tts(subtitles)
+                        return subtitles
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"检查现有字幕文件失败: {str(e)}")
+            return None 

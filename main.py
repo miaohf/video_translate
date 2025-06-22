@@ -119,12 +119,36 @@ class VideoTranslationClient:
                     with open(subtitle_json_path, "r", encoding="utf-8") as f:
                         subtitles = json.load(f)
                 else:
-                    # 生成字幕
-                    subtitles = await self.subtitle_processor.get_subtitles(audio_path, video_name)
+                    # 生成字幕（传递video_path参数）
+                    subtitles = await self.subtitle_processor.get_subtitles(audio_path, video_name, video_path)
 
                 # 翻译字幕
                 logger.info("\n3. Translating Subtitles...")
-                subtitles = await self.translation_service.translate_batch_subtitles(subtitles, video_name)
+                # 翻译字幕  
+                logger.info("开始翻译字幕...")
+                translation_service = TranslationService()
+                
+                # 从配置读取翻译模式
+                translation_mode = settings.TRANSLATION_MODE
+                use_whole_translation = (translation_mode == 'whole')  # whole=整体翻译，batch=批量翻译
+                logger.info(f"使用翻译模式: {translation_mode} ({'整体翻译' if use_whole_translation else '批量翻译'})")
+                
+                if use_whole_translation:
+                    print("使用整体翻译")
+                    translated_subtitles = await translation_service.translate_whole_subtitles(
+                        subtitles=subtitles,
+                        video_name=video_name,
+                        output_path=translated_subtitle_path,
+                        original_path=subtitle_json_path
+                    )
+                else:
+                    print("使用批量翻译")
+                    translated_subtitles = await translation_service.translate_batch_subtitles(
+                        subtitles=subtitles,
+                        video_name=video_name,
+                        output_path=translated_subtitle_path,
+                        original_path=subtitle_json_path
+                    )
                 logger.info("字幕翻译完成")
 
                 # 创建音频切片作为参考音频

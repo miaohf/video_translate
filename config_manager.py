@@ -121,6 +121,10 @@ class Config:
     def tts_server_url(self) -> str:
         return self.get('TTS_SERVER_URL', 'http://localhost:8002')
     
+    @property
+    def translation_mode(self) -> str:
+        return self.get('TRANSLATION_MODE', 'batch')
+    
     # 任务配置
     @property
     def default_estimated_duration(self) -> int:
@@ -184,4 +188,5 @@ def get_config():
 
 # 向后兼容的配置访问方式
 STT_SERVER_URL = config.stt_server_url
-TTS_SERVER_URL = config.tts_server_url 
+TTS_SERVER_URL = config.tts_server_url
+TRANSLATION_MODE = config.translation_mode 

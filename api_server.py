@@ -229,7 +229,7 @@ async def process_translation_task(task_id: str, video_file_path: str, callback_
             with open(subtitle_json_path, "r", encoding="utf-8") as f:
                 subtitles = json.load(f)
         else:
-            subtitles = await translation_client.subtitle_processor.get_subtitles(audio_path, video_name)
+            subtitles = await translation_client.subtitle_processor.get_subtitles(audio_path, video_name, video_file_path)
         
         if check_cancelled():
             return
@@ -244,7 +244,22 @@ async def process_translation_task(task_id: str, video_file_path: str, callback_
             current_step="Translating subtitles"
         ))
         
-        subtitles = await translation_client.translation_service.translate_batch_subtitles(subtitles, video_name)
+        # 使用配置的翻译模式
+        translation_mode = config.translation_mode
+        use_whole_translation = (translation_mode == 'whole')
+        
+        if use_whole_translation:
+            subtitles = await translation_client.translation_service.translate_whole_subtitles(
+                subtitles=subtitles,
+                video_name=video_name
+            )
+        else:
+            subtitles = await translation_client.translation_service.translate_batch_subtitles(
+                subtitles=subtitles,
+                video_name=video_name
+            )
+        
+        logger.info(f"翻译完成，使用模式: {translation_mode} ({'整体翻译' if use_whole_translation else '批量翻译'})")
         
         if check_cancelled():
             return

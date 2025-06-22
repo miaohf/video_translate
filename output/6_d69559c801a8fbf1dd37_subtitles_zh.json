@@ -1,0 +1,218 @@
+[
+  {
+    "start": 0.0,
+    "end": 19.88,
+    "text": "之前下着非常大的雨，我被淋到了，全身都湿透了，真是糟糕透了。我得承认，现在我在室内，温暖又干燥，非常感激。我想分享一些工具清单，这些工具在某些方面出乎意料地实用。首先就是WebChemise，其实我已经在过去五到十段视频中使用过它",
+    "speaker": "SPEAKER_00",
+    "original_text": "It was raining super hard earlier and I got caught in it and I got soaked and really sucked. I'm not going to lie, but I'm inside and warm and dry and very thankful for that. And I have a list of tools that I found oddly useful in one way or another that I wanted to go over. So first of all is WebChemise, which I've actually been using the past five or ten",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0000_SPEAKER_00.mp3"
+  },
+  {
+    "start": 19.88,
+    "end": 49.64,
+    "text": "它的功能是自动挂载你的单反相机或几乎所有现代相机（按他们的说法）作为WebChem使用，显然也能轻松进行视频录制。我仍然用FFMPEG进行录制。这是一个很棒的工具，因为它实际上只是一个200行的shell脚本。你可以在这里阅读源码，就像我之前说过的，对于任何我要介绍的内容，我都建议在运行随机程序前先查看源代码",
+    "speaker": "SPEAKER_00",
+    "original_text": "videos because what it does is it will automatically mount up your DSLR or according to them pretty much any modern camera intended to be used as a WebChem, but obviously video recording is easily possible as well. I just record with FFMPEG still. And this is a great tool because it's actually just a 200 line shell script. You can go read over it here and as with everything I go over, I would recommend look at source code before you run some random program from some random person.",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0001_SPEAKER_00.mp3"
+  },
+  {
+    "start": 49.64,
+    "end": 70.6,
+    "text": "不过根据我的使用经验，这个工具实际上表现完美无瑕。我已经用过三款不同的相机（两款佳能和一款索尼），每次都是完美的体验。就像字面意思那样，只需插入相机并运行命令，它就会立即准备就绪。我在研究GPhoto时发现了这个项目，当时我打算自己写脚本做类似的事情，结果发现这个项目直接可用",
+    "speaker": "SPEAKER_00",
+    "original_text": "But anyways, in my experience, this has actually been flawless. I've tried it with three different cameras now, two Canon and one Sony, and it was just perfect every time. Like literally plug in the camera and you run the command and it is there and ready to go. I found it while looking into GPhoto too because I was going to make my own script to do something very similar to this and then I found this project and it just worked.",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0002_SPEAKER_00.mp3"
+  },
+  {
+    "start": 70.6,
+    "end": 96.84,
+    "text": "因此我非常高兴终于找到了这个，希望这能帮助到有类似需求的人——当你需要将摄像头用作WebChem或某种记录设备时。顺便说一下，这页上的插图真的很可爱。我想提一下，不知道你有没有发现，如果企业级的插画不那么糟糕的话，那应该就是这个样子的。真的非常可爱。不管怎样，我把它放到另一个显示器上吧。我想看看DF的替代方案。",
+    "speaker": "SPEAKER_00",
+    "original_text": "So I'm very glad that I found this finally and hopefully this helps somebody else if you have a situation where you want to be using a camera as either a WebChem or a recording device in some way. And the art on this page is really cute by the way. I wanted to mention that, I don't know, it's like if corporate art wasn't bad, that's what this art is. It's really cute. Anyways, let me put that on my other monitor. I wanted to look at an alternative to DF.",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0003_SPEAKER_00.mp3"
+  },
+  {
+    "start": 96.84,
+    "end": 127.28,
+    "text": "DF如你所知，会列出所有磁盘的存储空间。但要从它的输出中快速直观地了解磁盘空间占用情况其实有点困难。因此有一个名为disk（拼写为Y）的工具，它采用彩色显示、格式更清晰，并且每个磁盘都有一个小图表。老实说，我觉得用这个工具查看信息要容易得多，不需要像DF那样费力去分辨单一颜色的输出内容。",
+    "speaker": "SPEAKER_00",
+    "original_text": "DF as you probably know lists out disk space on all of your disks. But it's kind of hard to look at it and get an idea in a glance of how much disk space you have. So there's a cool called disk spelled with a Y there that is colorized and better formatted and has this little graph for each disk and honestly I feel like this is just so much easier to look at it and get the information I need quickly rather than having to like try to look through DF that's all in one color and by",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0004_SPEAKER_00.mp3"
+  },
+  {
+    "start": 127.28,
+    "end": 153.8,
+    "text": "默认情况下，DF会列出所有临时文件系统及相关内容。而disk几乎包含了你需要的所有过滤选项、列排序和排序功能。你甚至可以将其输出为Jcellin或CSV格式（如果你需要的话）。实际上，这个工具是用Rust语言编写的。我做过一点基准测试，发现它与DF相比只慢了一点点，但差别非常小。是的，我已经使用了它一段时间。",
+    "speaker": "SPEAKER_00",
+    "original_text": "default lists all the temp file systems and all that sort of stuff. And disk has pretty much the options you would need in terms of filtering and changing the column order and sorting order. You can even output as Jcellin or CSV if you wanted to do that. And this is actually, it's written in Rust. I've benchmarked it just a little bit to see how it compared to DF and it was like marginally slower but really only marginally. So yeah, I've been using this for a while now.",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0005_SPEAKER_00.mp3"
+  },
+  {
+    "start": 153.8,
+    "end": 181.28,
+    "text": "与DF相比，它在查看信息时要容易得多，只需一瞥就能获取我需要了解的信息。不管怎样，接下来要介绍的是一个严格来说不算程序但极其实用的工具，我认为它适合列入这个清单，那就是《Pure Bash Bible》。该书作者还开发了Pywall、NeoFetch、Kiss Linux等你可能听说过的一系列其他工具。这真的是一款无价的工具。",
+    "speaker": "SPEAKER_00",
+    "original_text": "It's a lot easier to use than DF just in terms of like looking at something, getting a glance of the information I need to know. Anyways, so next up is something that's technically not a program but it's extremely useful so I feel like it fits this list and that is the Pure Bash Bible. By the same person who actually created Pywall and NeoFetch and Kiss Linux and like a bunch of other stuff you've probably heard of. This is just such an invaluable tool.",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0006_SPEAKER_00.mp3"
+  },
+  {
+    "start": 181.28,
+    "end": 209.52,
+    "text": "如果你在进行shell脚本编写，甚至超出这个范围的情况也适用。它本质上为那些通常需要借助外部工具完成的操作提供了bash替代方案（当你不知道如何用bash实现时）。例如处理字符串时，你经常会使用said或awk等工具来完成这类操作。但很多时候可以直接在bash中完成这些操作，出于优化的考虑，尽可能这样做不是更好吗？",
+    "speaker": "SPEAKER_00",
+    "original_text": "If you're doing shell scripting but honestly beyond that too. So it's got essentially bash alternatives to things you would normally be trying to do with external tools if you didn't know how to do it in bash. So for example strings, a lot of the time you'd be using said or awk or something else in order to take care of this sort of string manipulation. But a lot of the time you could be just doing it directly in bash which for optimization reasons you should be when possible, right?",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0007_SPEAKER_00.mp3"
+  },
+  {
+    "start": 209.52,
+    "end": 231.36,
+    "text": "除非有特殊原因无法或不想用bash处理，否则没有理由不在bash中进行简单的字符串处理，因为这样效率会比调用像awk这样的重型工具高得多，对吧？因此，如果你正在学习bash或者想要提升自己的脚本、优化现有脚本，这都非常有用。",
+    "speaker": "SPEAKER_00",
+    "original_text": "Unless there's a specific reason why you can't or don't want to be doing it in bash, there's no reason not to do the really simple string processing in bash because it's going to be far more optimized than calling something heavier like awk to do it, right? So this is really useful if you're either trying to learn bash or you're trying to spruce up your own scripts, optimize your own",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0008_SPEAKER_00.mp3"
+  },
+  {
+    "start": 231.36,
+    "end": 254.8,
+    "text": "脚本之外，从概念上讲，如果你使用某个工具，应该先确认是否能用这个工具直接完成所需操作，而不是去寻找外部工具。你不需要在shell或bash环境中才能应用这种逻辑，无论你用什么语言编程，只要能用当前使用的工具直接完成任务即可。",
+    "speaker": "SPEAKER_00",
+    "original_text": "scripts but beyond that you know conceptually just the idea of if I'm using one tool I should see if I can do what I need to do with that one tool instead of going for you know some external tool and you know you don't have to be in shell or bash in order to apply that logic like no matter what you're coding in the concept of okay if I can do this directly with what I'm already using",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0009_SPEAKER_00.mp3"
+  },
+  {
+    "start": 254.8,
+    "end": 276.48,
+    "text": "那为什么还要使用外部工具呢？我认为从概念上来说，这值得记住。当你优化程序时，还有《纯sh圣经》这本书，本质上和这个想法是一样的，只是提供了POSIX sh的替代方案。如果你正在学习这些内容，它同样非常有用。我不确定是否值得推荐，但说实话，这是一个极其优秀的指南。",
+    "speaker": "SPEAKER_00",
+    "original_text": "then why use an external tool? I think just conceptually that's worth keeping in mind you know as you're as you're working on optimizing your programs and there's also the pure sh bible which is essentially the same thing but posix sh alternatives so equally useful if you're trying to learn any of this sort of stuff I don't know I feel like this is just a guide that I pull up constantly whenever",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0010_SPEAKER_00.mp3"
+  },
+  {
+    "start": 276.48,
+    "end": 298.96,
+    "text": "所以我想稍微介绍一下Zephyr，因为我之前在视频中提到过它。我之所以要提这个，是因为我真的经常使用这个工具，它非常实用。我认为作者甚至把它写进了书里，这还挺酷的。总之，这是一个极其优秀的指南，接下来我们详细看看Zephyr。",
+    "speaker": "SPEAKER_00",
+    "original_text": "I'm doing any sort of shell scripting so I figured I should at some point like mention this just because I genuinely use this thing constantly it's it's so helpful and I think he even made it into a book which is kind of cool I don't know it's worth it I mean it's really really really a good guide all right so um I wanted to go over zephyr a bit since I mentioned that in my last video",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0011_SPEAKER_00.mp3"
+  },
+  {
+    "start": 298.96,
+    "end": 321.12,
+    "text": "我当时并没有详细说明这一点，但有人实际上问了类似的问题：这是什么？它有什么作用？它是如何运作的？所以让我实际演示一下Zephyr的功能。这里是一个在本机dwm中打开的微型dwm，其实本质上是作为应用程序运行的一个嵌套式X服务器，如果你需要处理这类需求的话",
+    "speaker": "SPEAKER_00",
+    "original_text": "and I didn't really elaborate on it and somebody actually asked like what is what does it do how does it work or something like that so let me actually show you what zephyr does so this is a miniature dwm opened in my dwm here um no it's essentially a nested x server that you're running as an application so if you're doing anything that requires that sort of idea there",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0012_SPEAKER_00.mp3"
+  },
+  {
+    "start": 321.12,
+    "end": 342.4,
+    "text": "这真的非常有用，有很多使用场景。首先，如果你正在开发一个窗口管理器，并且需要不断刷新以实时查看修改效果，这就非常实用。这里其实就是我在这里运行的一个dwm开发版本，按控制+Shift键可以锁定鼠标进出，正常退出即可重新启动",
+    "speaker": "SPEAKER_00",
+    "original_text": "this is really useful there's a bunch of use cases so first of all if you're just going to be developing a window manager and you need to be refreshing it constantly and seeing changes as you're making them this is very useful it's this is literally just you know a development build of dwm that I was running here control shift is going to lock your mouse in and out just quit it normally to start it up it's",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0013_SPEAKER_00.mp3"
+  },
+  {
+    "start": 342.4,
+    "end": 367.84,
+    "text": "操作非常简单，你只需要执行一个命令（严格来说是两个命令），也就是在Zephyr后加上一些参数，然后运行display one dwm。让我打开对应的ArchWiki文章，还有一些其他使用场景我认为值得提及。例如，ArchWiki中提到它可能对解决某些编写质量较差的应用程序的问题有帮助",
+    "speaker": "SPEAKER_00",
+    "original_text": "very simple you literally just run essentially like one command I mean two technically but um yeah so just zephyr with some flags on it and then display one dwm let me go ahead open the arch wiki article for it um there's a few other use cases that I think are worth mentioning so first of all what's actually mentioned on the arch wiki is it might be useful to work around a badly written application for example",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0014_SPEAKER_00.mp3"
+  },
+  {
+    "start": 367.84,
+    "end": 388.88,
+    "text": "一个会不断重新创建窗口并窃取焦点的应用程序，我几年前其实就遇到过这个问题。我当时真希望早点发现这个工具，因为它完美适用于这种每两秒就会因为代码写得极差而自动窃取焦点的场景。虽然你不得不使用它，但确实有点让人无奈，我当时真的很希望能早点拥有这个工具。",
+    "speaker": "SPEAKER_00",
+    "original_text": "an application that's going to constantly recreate its window and steal focus which I was actually dealing with a couple years ago and I wish I had found this tool then because this is perfect if you have something that's like every two seconds going to steal focus just because it's so poorly written but like you have to use it um yeah I wish I wish I had this then because I had to like just",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0015_SPEAKER_00.mp3"
+  },
+  {
+    "start": 388.88,
+    "end": 409.28,
+    "text": "你必须让它持续运行，然后去做别的事情等待它完成，因为它会每隔两秒就从你正在使用的其他应用程序中窃取焦点。这就是其中一个用途，另一个我之前提到的用法是测试窗口管理器。Arch Wiki 上有说明如何设置和操作，但还有一个用途是 Arch Wiki 提到需要进一步扩展解释的场景。",
+    "speaker": "SPEAKER_00",
+    "original_text": "leave it running and go do something else while waiting for it because it would just every two seconds steal focus away from you know whatever other application I was in so that's one of the uses the other use that I you know already mentioned is if you're trying to test a window manager and the arch wiki describes you know how to do that how to set that up um but a third use in which actually the",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0016_SPEAKER_00.mp3"
+  },
+  {
+    "start": 409.28,
+    "end": 432.08,
+    "text": "这里简要解释一下：X11 确实没有对应用程序进行沙盒隔离，或者说其沙盒机制非常薄弱。而 Zephyr 则允许你通过沙盒隔离来实现安全防护或其他相关需求。这正是它能发挥价值的地方，如果需要的话，这就是它的核心用途。",
+    "speaker": "SPEAKER_00",
+    "original_text": "arch wiki says that it needs expansion on this and the the brief explanation here is that x11 really does not sandbox applications um it's you know poor or no sandboxing meaning zephyr will allow you to essentially sandbox if you need to sandbox for security reasons or whatever else related to that this will allow you to do that so that's kind of if if anything that's",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0017_SPEAKER_00.mp3"
+  },
+  {
+    "start": 432.08,
+    "end": 456.16,
+    "text": "Zephyr 最重要的原因之一是……不管怎样，我想先复制一下链接。我想要讨论一些核心工具（如复制和移动）的补丁。你可能会想，为什么需要为复制和移动添加补丁？这个补丁很有趣，因为它为复制和移动功能增加了进度条",
+    "speaker": "SPEAKER_00",
+    "original_text": "the most important reason that zephyr is you know to be used for right um anyways so I wanted to go over let me copy me link for it I wanted to go over a patch for some of the core utils tools uh copy and move um which you might think copy and move why would I need a patch for that so this is sort of an interesting patch because it adds progress bars to copy and move",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0018_SPEAKER_00.mp3"
+  },
+  {
+    "start": 456.16,
+    "end": 478.64,
+    "text": "你可能会想，为什么不直接使用 rsync？大多数情况下确实应该用 rsync，因为它是一个强大的工具，能处理各种任务。我甚至应该专门做一个视频来介绍它有多好。但如果你因为某些原因无法或不想使用 rsync，比如遇到一些任意的限制……",
+    "speaker": "SPEAKER_00",
+    "original_text": "which you might think why not just use rsync which most of the time yes you probably just want to use rsync because rsync is a great utility and it does all sorts of stuff and I should probably make a video dedicated to it because of how good it is but if you were in a situation for whatever reason you couldn't or didn't want to use rsync maybe there is some arbitrary reason that you know you might encounter",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0019_SPEAKER_00.mp3"
+  },
+  {
+    "start": 478.64,
+    "end": 499.6,
+    "text": "在这种情况下，这个补丁会为复制和移动功能添加进度条。它大约有一千行代码，如果你想阅读的话可以浏览一下。实际上还有一个安装脚本，可以直接为你安装。当然你也可以手动安装，就像我之前说的，在运行前最好先查看代码内容。不管怎样，你可以通过 bash 进行安装",
+    "speaker": "SPEAKER_00",
+    "original_text": "that you can't use rsync um this would have a progress bar for copy and move so it's about a thousand lines um you can read through it if you want to read through it and there's actually an install script just to go ahead and install it for you or you can install it manually obviously like I said read through code before you run it um but anyways you can install through bash or",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0020_SPEAKER_00.mp3"
+  },
+  {
+    "start": 499.6,
+    "end": 518.8,
+    "text": "通过fish bash版本在zsh中同样有效，实际上我安装了它并设置了别名，这样我可以直接在这里演示。我应该有一个文件名为file.zip的文件，让我复制到这里。我们会有进度条显示复制过程。",
+    "speaker": "SPEAKER_00",
+    "original_text": "through fish bash version works for zsh as well um and I actually I installed it and went ahead and set up an alias so I could just go ahead and just demonstrate it here uh I should have yeah file dot zip let me just copy that here and we've got you know a progress bar gonna go ahead and copy it um essentially I don't know it does what's on the tin right",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0021_SPEAKER_00.mp3"
+  },
+  {
+    "start": 518.96,
+    "end": 542.08,
+    "text": "有趣的是，原作者确实将补丁提交给了core utils团队，但他们不想合并这个补丁，因为move和copy被认为已经功能完备。我理解他们的考虑，但我觉得这类工具就像这样：当你知道它存在后，总有一天会遇到需要它的场景，这时候就会觉得很有用。",
+    "speaker": "SPEAKER_00",
+    "original_text": "um and it's funny they actually said the original author sent the patch to the core utils team but they didn't want to merge the patch because move and copy are considered feature complete which I can understand but I feel like this is just one of those things that like if you're aware it exists and then one day you're in a situation where you actually need this particular thing then you know it's kind of useful so",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0022_SPEAKER_00.mp3"
+  },
+  {
+    "start": 542.08,
+    "end": 549.28,
+    "text": "我不知道，我只是觉得这有点酷而已。总之就这些，希望你喜欢这个分享，下次再见，Peace。",
+    "speaker": "SPEAKER_00",
+    "original_text": "I don't know I just thought it was kind of cool anyways that's about it I hope you enjoyed I'll see you next time peace",
+    "translation_quality": "good",
+    "reference_audio": "temp/0c99eea8020b45f0862528be61d325b4/audio_segments/d69559c801a8fbf1dd37_0023_SPEAKER_00.mp3"
+  }
+]
