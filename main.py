@@ -319,12 +319,22 @@ class VideoTranslationClient:
             file_hash = get_file_hash(video_name)
             original_audio_path = os.path.join("temp", video_name, f"{file_hash}_audio.mp3")
             
-            # 调用新的音频合成方法
-            final_audio_path = await self._mix_audio_with_background(
-                updated_subtitles, 
-                original_audio_path, 
-                final_audio_path
-            )
+            # 根据配置选择音频合成方法
+            from config import AUDIO_OVERLAP_DETECTION
+            if AUDIO_OVERLAP_DETECTION:
+                logger.info("使用改进版音频合成方法（带重叠检测）")
+                final_audio_path = await self._mix_audio_with_background_v2(
+                    updated_subtitles, 
+                    original_audio_path, 
+                    final_audio_path
+                )
+            else:
+                logger.info("使用标准音频合成方法")
+                final_audio_path = await self._mix_audio_with_background(
+                    updated_subtitles, 
+                    original_audio_path, 
+                    final_audio_path
+                )
             
             logger.info(f"音频合成完成: {final_audio_path}")
             
@@ -517,6 +527,236 @@ class VideoTranslationClient:
             
         except Exception as e:
             logger.error(f"音频混合失败: {str(e)}")
+            raise
+
+    async def _mix_audio_with_background_v2(self, subtitles: List[Dict], background_audio_path: str, output_path: str) -> str:
+        """
+        改进版音频混合方法，解决TTS音频重叠问题
+        
+        参数:
+            subtitles: 包含generated_audio信息的字幕列表
+            background_audio_path: 背景音频文件路径
+            output_path: 输出文件路径
+            
+        返回:
+            合成后的音频文件路径
+        """
+        try:
+            from pydub import AudioSegment
+            import numpy as np
+            
+            # 从配置文件加载参数
+            from config import (AUDIO_FADE_DURATION, BACKGROUND_MIN_VOLUME, 
+                               MIN_GAP_BETWEEN_SPEECH, MAX_SPEEDUP_RATIO)
+            
+            fade_duration = AUDIO_FADE_DURATION
+            background_min_volume = BACKGROUND_MIN_VOLUME
+            min_gap_between_speech = MIN_GAP_BETWEEN_SPEECH
+            max_speedup_ratio = MAX_SPEEDUP_RATIO
+            
+            logger.info("加载背景音频...")
+            background = AudioSegment.from_file(background_audio_path)
+            
+            # 获取背景音频的采样点数
+            background_samples = np.array(background.get_array_of_samples())
+            
+            if background.channels == 2:
+                total_samples = len(background_samples) // 2
+            else:
+                total_samples = len(background_samples)
+            
+            # 创建音量包络数组
+            volume_envelope = np.ones(total_samples)
+            
+            logger.info("检测和解决TTS音频重叠问题...")
+            
+            # 准备TTS音频信息
+            tts_segments = []
+            for i, subtitle in enumerate(subtitles):
+                generated_audio_path = subtitle.get("generated_audio")
+                if not generated_audio_path or not os.path.exists(generated_audio_path):
+                    logger.warning(f"第 {i+1} 个字幕缺少生成的音频文件")
+                    continue
+                
+                start_time_ms = subtitle["start"] * 1000
+                subtitle_duration_ms = (subtitle["end"] - subtitle["start"]) * 1000
+                generated_duration_ms = subtitle.get("generated_duration", 0) * 1000
+                
+                tts_segments.append({
+                    "index": i,
+                    "subtitle_index": i + 1,
+                    "audio_path": generated_audio_path,
+                    "subtitle_start": start_time_ms,
+                    "subtitle_end": subtitle["end"] * 1000,
+                    "subtitle_duration": subtitle_duration_ms,
+                    "original_tts_duration": generated_duration_ms,
+                    "adjusted_tts_duration": generated_duration_ms,  # 将被调整
+                    "final_start": start_time_ms,  # 最终播放开始时间
+                    "final_end": start_time_ms + generated_duration_ms  # 最终播放结束时间
+                })
+            
+            # 按开始时间排序
+            tts_segments.sort(key=lambda x: x["subtitle_start"])
+            
+            # 检测并解决重叠问题
+            for i in range(len(tts_segments)):
+                current = tts_segments[i]
+                
+                # 检查与下一个片段的重叠
+                if i < len(tts_segments) - 1:
+                    next_segment = tts_segments[i + 1]
+                    
+                    # 计算重叠
+                    current_end = current["final_end"]
+                    next_start = next_segment["subtitle_start"]
+                    overlap = current_end - next_start + min_gap_between_speech
+                    
+                    if overlap > 0:
+                        logger.warning(f"检测到重叠: 字幕{current['subtitle_index']} 和 {next_segment['subtitle_index']}, 重叠{overlap/1000:.2f}s")
+                        
+                        # 解决方案1: 尝试音频加速
+                        available_time = next_start - current["final_start"] - min_gap_between_speech
+                        if available_time > 0:
+                            # 计算压缩比例
+                            compression_ratio = available_time / current["original_tts_duration"]
+                            
+                            if compression_ratio >= (1.0 / max_speedup_ratio):
+                                # 可以通过适度加速解决重叠
+                                current["adjusted_tts_duration"] = available_time
+                                current["final_end"] = current["final_start"] + available_time
+                                current["needs_speedup"] = True
+                                current["speedup_ratio"] = 1.0 / compression_ratio
+                                logger.info(f"字幕{current['subtitle_index']} TTS将加速{current['speedup_ratio']:.2f}x")
+                            else:
+                                # 加速倍率超限，使用延迟策略
+                                logger.info(f"字幕{current['subtitle_index']} 需要加速{1.0/compression_ratio:.2f}x超过限制，改用延迟策略")
+                                delay = current["final_end"] - next_segment["subtitle_start"] + min_gap_between_speech
+                                next_segment["final_start"] = next_segment["subtitle_start"] + delay
+                                next_segment["final_end"] = next_segment["final_start"] + next_segment["original_tts_duration"]
+                                next_segment["is_delayed"] = True
+                                logger.info(f"字幕{next_segment['subtitle_index']} TTS将延迟{delay/1000:.2f}s播放")
+                        else:
+                            # 解决方案2: 延迟下一个TTS音频
+                            delay = current["final_end"] - next_segment["subtitle_start"] + min_gap_between_speech
+                            next_segment["final_start"] = next_segment["subtitle_start"] + delay
+                            next_segment["final_end"] = next_segment["final_start"] + next_segment["original_tts_duration"]
+                            next_segment["is_delayed"] = True
+                            logger.info(f"字幕{next_segment['subtitle_index']} TTS将延迟{delay/1000:.2f}s播放")
+            
+            # 用于存储要叠加的TTS音频
+            overlays = []
+            
+            # 处理每个TTS片段
+            for segment in tts_segments:
+                try:
+                    # 加载TTS音频
+                    tts_audio = AudioSegment.from_file(segment["audio_path"])
+                    
+                    # 应用音频调整
+                    if segment.get("needs_speedup"):
+                        # 加速音频
+                        speedup_ratio = segment["speedup_ratio"]
+                        tts_audio = tts_audio.speedup(playback_speed=speedup_ratio)
+                        logger.debug(f"字幕{segment['subtitle_index']} 音频已加速{speedup_ratio:.2f}x")
+                    
+                    # 添加到叠加列表
+                    overlays.append({
+                        "audio": tts_audio,
+                        "start_time": int(segment["final_start"]),
+                        "duration": len(tts_audio),
+                        "subtitle_index": segment["subtitle_index"]
+                    })
+                    
+                    # 更新背景音量包络
+                    start_sample = int((segment["final_start"] / 1000.0) * background.frame_rate)
+                    duration_samples = int((len(tts_audio) / 1000.0) * background.frame_rate)
+                    
+                    if start_sample < total_samples:
+                        # 计算淡入淡出位置
+                        fade_duration_samples = int((fade_duration / 1000.0) * background.frame_rate)
+                        fade_out_start = max(0, start_sample - fade_duration_samples // 2)
+                        fade_out_end = min(total_samples, start_sample + fade_duration_samples // 2)
+                        fade_in_start = max(0, start_sample + duration_samples - fade_duration_samples // 2)
+                        fade_in_end = min(total_samples, start_sample + duration_samples + fade_duration_samples // 2)
+                        
+                        # 应用音量包络
+                        if fade_out_start < fade_out_end:
+                            fade_out_samples = np.linspace(1.0, background_min_volume, fade_out_end - fade_out_start)
+                            volume_envelope[fade_out_start:fade_out_end] = np.minimum(
+                                volume_envelope[fade_out_start:fade_out_end], fade_out_samples
+                            )
+                        
+                        low_volume_start = fade_out_end
+                        low_volume_end = min(total_samples, fade_in_start)
+                        if low_volume_start < low_volume_end:
+                            volume_envelope[low_volume_start:low_volume_end] = np.minimum(
+                                volume_envelope[low_volume_start:low_volume_end], background_min_volume
+                            )
+                        
+                        if fade_in_start < fade_in_end:
+                            fade_in_samples = np.linspace(background_min_volume, 1.0, fade_in_end - fade_in_start)
+                            volume_envelope[fade_in_start:fade_in_end] = fade_in_samples
+                    
+                except Exception as e:
+                    logger.error(f"处理字幕{segment['subtitle_index']} TTS音频失败: {str(e)}")
+                    continue
+            
+            logger.info("应用音量包络到背景音频...")
+            
+            # 应用音量包络
+            if background.channels == 2:
+                background_samples_reshaped = background_samples.reshape((-1, 2))
+                volume_envelope_stereo = np.column_stack([volume_envelope, volume_envelope])
+                background_samples_processed = (background_samples_reshaped * volume_envelope_stereo).astype(np.int16)
+                background_samples_final = background_samples_processed.flatten()
+            else:
+                background_samples_final = (background_samples * volume_envelope).astype(np.int16)
+            
+            # 重建背景音频
+            modified_background = background._spawn(background_samples_final.tobytes())
+            
+            logger.info("叠加TTS音频...")
+            
+            # 叠加所有TTS音频
+            final_audio = modified_background
+            for overlay in overlays:
+                try:
+                    tts_audio = overlay["audio"]
+                    
+                    # 确保采样率和声道数匹配
+                    if tts_audio.frame_rate != final_audio.frame_rate:
+                        tts_audio = tts_audio.set_frame_rate(final_audio.frame_rate)
+                    if tts_audio.channels != final_audio.channels:
+                        if final_audio.channels == 2 and tts_audio.channels == 1:
+                            tts_audio = tts_audio.set_channels(2)
+                        elif final_audio.channels == 1 and tts_audio.channels == 2:
+                            tts_audio = tts_audio.set_channels(1)
+                    
+                    # 叠加音频
+                    final_audio = final_audio.overlay(tts_audio, position=overlay["start_time"])
+                    logger.debug(f"已叠加第 {overlay['subtitle_index']} 个TTS音频 (位置: {overlay['start_time']/1000:.2f}s)")
+                    
+                except Exception as e:
+                    logger.error(f"叠加第 {overlay['subtitle_index']} 个TTS音频失败: {str(e)}")
+                    continue
+            
+            logger.info("导出最终音频...")
+            final_audio.export(output_path, format="wav")
+            
+            # 输出处理统计
+            speedup_count = len([s for s in tts_segments if s.get("needs_speedup")])
+            delayed_count = len([s for s in tts_segments if s.get("is_delayed")])
+            total_processed = speedup_count + delayed_count
+            
+            logger.info(f"音频混合完成，最终时长: {final_audio.duration_seconds:.2f}s")
+            logger.info(f"处理了 {total_processed} 个重叠问题:")
+            logger.info(f"  - 音频加速: {speedup_count} 个")
+            logger.info(f"  - 延迟播放: {delayed_count} 个")
+            
+            return output_path
+            
+        except Exception as e:
+            logger.error(f"改进版音频混合失败: {str(e)}")
             raise
 
 if __name__ == "__main__":

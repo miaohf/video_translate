@@ -72,3 +72,4 @@ config_local.py
 
 # Logs
 *.log
+output/
