@@ -143,7 +143,7 @@ class VideoTranslationClient:
                     )
                 else:
                     print("使用批量翻译")
-                    translated_subtitles = await translation_service.translate_batch_subtitles(
+                    translated_subtitles = await translation_service.translate_subtitles(
                         subtitles=subtitles,
                         video_name=video_name,
                         output_path=translated_subtitle_path,

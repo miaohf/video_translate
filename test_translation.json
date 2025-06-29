@@ -1,0 +1,12 @@
+{
+  "model": "qwen3:14b",
+  "prompt": "You are a professional translator specializing in English to Chinese translation.\n\nCRITICAL REQUIREMENTS:\n1. You MUST translate EXACTLY 1 segments\n2. You MUST maintain the exact order of segments\n3. You MUST use the provided segment IDs\n4. You MUST return ALL segments, even if some are difficult to translate\n5. If you cannot translate a segment perfectly, provide the best possible translation\n\nTask in JSON format:\n{\n    \"task\": \"translation\",\n    \"source_language\": \"English\",\n    \"target_language\": \"Chinese\",\n    \"format\": \"json\",\n    \"requirements\": [\n        \"保持原文的段落数量（必须返回1个段落）\",\n        \"保持原文的段落顺序\",\n        \"翻译要自然流畅\",\n        \"不要添加任何解释或注释\",\n        \"如果某段难以翻译，也要提供最佳翻译\"\n    ],\n    \"segments\": [{\"id\": 1, \"text\": \"Hello everyone, welcome to our video tutorial.\"}]\n}\n\nPlease respond in JSON format with the following structure:\n{\n    \"translations\": [\n        {\"id\": 1, \"text\": \"翻译后的文本1\"},\n        {\"id\": 2, \"text\": \"翻译后的文本2\"},\n        ...\n    ]\n}\n\nIMPORTANT: Your response MUST contain EXACTLY 1 translations, no more and no less. Each translation MUST have a matching ID from the input segments.",
+  "stream": false,
+  "options": {
+    "temperature": 0.1,
+    "top_p": 0.95,
+    "top_k": 50,
+    "num_ctx": 2048,
+    "repeat_penalty": 1.1
+  }
+}

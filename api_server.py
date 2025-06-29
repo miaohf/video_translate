@@ -254,7 +254,7 @@ async def process_translation_task(task_id: str, video_file_path: str, callback_
                 video_name=video_name
             )
         else:
-            subtitles = await translation_client.translation_service.translate_batch_subtitles(
+            subtitles = await translation_client.translation_service.translate_subtitles(
                 subtitles=subtitles,
                 video_name=video_name
             )

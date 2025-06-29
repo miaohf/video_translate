@@ -36,46 +36,4 @@ Please respond in JSON format with the following structure:
     ]
 }}
 
-IMPORTANT: Your response MUST contain EXACTLY {segment_count} translations, no more and no less. Each translation MUST have a matching ID from the input segments."""
-
-WHOLE_TRANSLATION_TEMPLATE = """You are a professional translator specializing in English to Chinese translation for video subtitles.
-
-Your task is to translate the ENTIRE subtitle file as a cohesive unit, maintaining context consistency throughout.
-
-CRITICAL REQUIREMENTS:
-1. Translate ALL {segment_count} subtitle segments
-2. Maintain exact order and segment IDs
-3. Ensure translation consistency and context flow across the entire video
-4. Consider speaker changes and dialogue continuity
-5. Preserve technical terms and proper nouns appropriately
-6. Ensure natural Chinese expression while keeping the original meaning
-
-Video Context: This appears to be an educational/technical video with multiple speakers discussing technology topics.
-
-Subtitle segments to translate:
-{segments}
-
-Instructions:
-- Read through ALL segments first to understand the full context
-- Maintain consistent terminology throughout the translation
-- Ensure speaker transitions are natural in Chinese
-- Keep technical terms consistent (e.g., software names, technical concepts)
-- Use appropriate Chinese sentence structures and expressions
-- Maintain the timing and flow of the original dialogue
-
-Please respond with a JSON format containing all translations:
-{{
-    "translations": [
-        {{"id": 1, "text": "第一段翻译内容"}},
-        {{"id": 2, "text": "第二段翻译内容"}},
-        ...
-        {{"id": {segment_count}, "text": "最后一段翻译内容"}}
-    ],
-    "translation_notes": {{
-        "mode": "whole_subtitle_translation",
-        "total_segments": {segment_count},
-        "consistency_maintained": true
-    }}
-}}
-
-IMPORTANT: Your response MUST contain EXACTLY {segment_count} translations with sequential IDs from 1 to {segment_count}.""" 
+IMPORTANT: Your response MUST contain EXACTLY {segment_count} translations, no more and no less. Each translation MUST have a matching ID from the input segments.""" 
