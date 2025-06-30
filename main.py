@@ -320,16 +320,24 @@ class VideoTranslationClient:
             original_audio_path = os.path.join("temp", video_name, f"{file_hash}_audio.mp3")
             
             # 根据配置选择音频合成方法
-            from config import AUDIO_OVERLAP_DETECTION
-            if AUDIO_OVERLAP_DETECTION:
-                logger.info("使用改进版音频合成方法（带重叠检测）")
+            from config import (AUDIO_OVERLAP_DETECTION, ENABLE_ADAPTIVE_PROCESSING)
+            
+            if AUDIO_OVERLAP_DETECTION and ENABLE_ADAPTIVE_PROCESSING:
+                logger.info("🚀 使用分阶段自适应音频合成方法")
+                final_audio_path = await self._mix_audio_with_background_v2(
+                    updated_subtitles, 
+                    original_audio_path, 
+                    final_audio_path
+                )
+            elif AUDIO_OVERLAP_DETECTION:
+                logger.info("⚡ 使用改进版音频合成方法（带重叠检测）")
                 final_audio_path = await self._mix_audio_with_background_v2(
                     updated_subtitles, 
                     original_audio_path, 
                     final_audio_path
                 )
             else:
-                logger.info("使用标准音频合成方法")
+                logger.info("📦 使用标准音频合成方法")
                 final_audio_path = await self._mix_audio_with_background(
                     updated_subtitles, 
                     original_audio_path, 
@@ -531,7 +539,13 @@ class VideoTranslationClient:
 
     async def _mix_audio_with_background_v2(self, subtitles: List[Dict], background_audio_path: str, output_path: str) -> str:
         """
-        改进版音频混合方法，解决TTS音频重叠问题
+        分阶段自适应音频混合方法，采用三阶段处理策略 + 严格时长控制
+        
+        特点：
+        - 三阶段处理：预分析 → 智能处理 → 对齐优化
+        - 严格时长控制：确保最终音频时长与原音频完全一致
+        - 全局压缩机制：当总时长超出时自动计算并应用全局压缩
+        - 最终验证：通过截断或填充确保时长精确匹配
         
         参数:
             subtitles: 包含generated_audio信息的字幕列表
@@ -547,7 +561,12 @@ class VideoTranslationClient:
             
             # 从配置文件加载参数
             from config import (AUDIO_FADE_DURATION, BACKGROUND_MIN_VOLUME, 
-                               MIN_GAP_BETWEEN_SPEECH, MAX_SPEEDUP_RATIO)
+                               MIN_GAP_BETWEEN_SPEECH, MAX_SPEEDUP_RATIO,
+                               BOUNDARY_EXTENSION_LIMIT, LAST_SEGMENT_PROTECTION,
+                               ALIGNMENT_TOLERANCE, GLOBAL_TIME_BUFFER,
+                               ENABLE_BOUNDARY_EXTENSION, ENABLE_SMART_ALIGNMENT,
+                               PREFER_COMPLETENESS, ENABLE_ADAPTIVE_PROCESSING,
+                               STRICT_DURATION_CONTROL)
             
             fade_duration = AUDIO_FADE_DURATION
             background_min_volume = BACKGROUND_MIN_VOLUME
@@ -568,10 +587,14 @@ class VideoTranslationClient:
             # 创建音量包络数组
             volume_envelope = np.ones(total_samples)
             
-            logger.info("检测和解决TTS音频重叠问题...")
+            # ===== 阶段1: 预分析阶段 =====
+            logger.info("🔍 阶段1: 预分析阶段 - 全局时长评估...")
             
             # 准备TTS音频信息
             tts_segments = []
+            total_original_duration = 0
+            total_tts_duration = 0
+            
             for i, subtitle in enumerate(subtitles):
                 generated_audio_path = subtitle.get("generated_audio")
                 if not generated_audio_path or not os.path.exists(generated_audio_path):
@@ -581,6 +604,9 @@ class VideoTranslationClient:
                 start_time_ms = subtitle["start"] * 1000
                 subtitle_duration_ms = (subtitle["end"] - subtitle["start"]) * 1000
                 generated_duration_ms = subtitle.get("generated_duration", 0) * 1000
+                
+                total_original_duration += subtitle_duration_ms
+                total_tts_duration += generated_duration_ms
                 
                 tts_segments.append({
                     "index": i,
@@ -592,56 +618,271 @@ class VideoTranslationClient:
                     "original_tts_duration": generated_duration_ms,
                     "adjusted_tts_duration": generated_duration_ms,  # 将被调整
                     "final_start": start_time_ms,  # 最终播放开始时间
-                    "final_end": start_time_ms + generated_duration_ms  # 最终播放结束时间
+                    "final_end": start_time_ms + generated_duration_ms,  # 最终播放结束时间
+                    "processing_stage": "initial"  # 处理阶段标记
                 })
             
             # 按开始时间排序
             tts_segments.sort(key=lambda x: x["subtitle_start"])
+
+            # 获取背景音频总时长（毫秒）
+            background_duration_ms = len(background)
             
-            # 检测并解决重叠问题
+            # 全局时长评估
+            time_difference = total_tts_duration - total_original_duration
+            time_overflow = max(0, tts_segments[-1]["final_end"] - background_duration_ms) if tts_segments else 0
+            global_time_buffer_ms = GLOBAL_TIME_BUFFER * 1000
+            
+            logger.info(f"📊 全局时长分析:")
+            logger.info(f"   背景音频时长: {background_duration_ms/1000:.2f}s")
+            logger.info(f"   原字幕总时长: {total_original_duration/1000:.2f}s")
+            logger.info(f"   TTS音频总时长: {total_tts_duration/1000:.2f}s")
+            logger.info(f"   时长差异: {time_difference/1000:.2f}s")
+            logger.info(f"   末尾超出: {time_overflow/1000:.2f}s")
+            
+            # 严格时长控制：计算全局压缩比例
+            global_compression_ratio = 1.0
+            needs_global_compression = False
+            
+            if STRICT_DURATION_CONTROL and time_overflow > 0:
+                # 计算需要的全局压缩比例
+                available_total_time = background_duration_ms
+                required_total_time = tts_segments[-1]["final_end"] if tts_segments else 0
+                
+                if required_total_time > available_total_time:
+                    global_compression_ratio = available_total_time / required_total_time
+                    needs_global_compression = True
+                    logger.warning(f"⚠️ 启用严格时长控制：全局压缩比例 {global_compression_ratio:.3f}")
+                    logger.info(f"🎯 目标：确保最终音频时长 = {background_duration_ms/1000:.2f}s")
+                    
+                    # 应用全局压缩到所有片段
+                    for segment in tts_segments:
+                        # 压缩TTS音频时长
+                        segment["adjusted_tts_duration"] = segment["original_tts_duration"] * global_compression_ratio
+                        
+                        # 调整时间线：保持开始时间，压缩持续时间
+                        compressed_duration = segment["adjusted_tts_duration"]
+                        segment["final_end"] = segment["final_start"] + compressed_duration
+                        
+                        # 标记需要压缩
+                        segment["needs_global_compression"] = True
+                        segment["global_compression_ratio"] = global_compression_ratio
+                    
+                    logger.info(f"✅ 已应用全局时间压缩到 {len(tts_segments)} 个片段")
+            
+            # 分阶段片段识别
+            total_segments = len(tts_segments)
+            protection_threshold = int(total_segments * (1 - LAST_SEGMENT_PROTECTION))
+            
+            logger.info(f"📌 片段分组策略:")
+            logger.info(f"   总片段数: {total_segments}")
+            logger.info(f"   前80%片段 (标准处理): {protection_threshold} 个")
+            logger.info(f"   后20%片段 (保护处理): {total_segments - protection_threshold} 个")
+            
+            # 风险片段识别
+            risk_segments = []
+            for segment in tts_segments:
+                if segment["original_tts_duration"] > segment["subtitle_duration"] * max_speedup_ratio:
+                    risk_segments.append(segment["subtitle_index"])
+            
+            if risk_segments:
+                logger.warning(f"⚠️  识别到高风险片段 (无法通过1.3x加速解决): {risk_segments}")
+            
+            # 动态边界计算
+            if STRICT_DURATION_CONTROL:
+                # 严格模式：不允许任何边界扩展
+                effective_boundary_ms = background_duration_ms
+                logger.info(f"🔒 严格时长控制模式：边界固定为 {effective_boundary_ms/1000:.2f}s")
+            elif ENABLE_BOUNDARY_EXTENSION and time_overflow > 0:
+                allowed_extension = min(BOUNDARY_EXTENSION_LIMIT * 1000, time_overflow + global_time_buffer_ms)
+                effective_boundary_ms = background_duration_ms + allowed_extension
+                logger.info(f"🎯 动态边界扩展: +{allowed_extension/1000:.2f}s (新边界: {effective_boundary_ms/1000:.2f}s)")
+            else:
+                effective_boundary_ms = background_duration_ms
+                logger.info(f"🎯 使用原始边界: {effective_boundary_ms/1000:.2f}s")
+            
+            # ===== 阶段2: 智能处理阶段 =====
+            logger.info("🛠️ 阶段2: 智能处理阶段 - 分段处理策略...")
+            
             for i in range(len(tts_segments)):
                 current = tts_segments[i]
+                is_protected_segment = i >= protection_threshold
+                is_last_segment = i == len(tts_segments) - 1
                 
-                # 检查与下一个片段的重叠
+                # 标记处理阶段
+                if is_last_segment:
+                    current["processing_stage"] = "last_segment"
+                elif is_protected_segment:
+                    current["processing_stage"] = "protected"
+                else:
+                    current["processing_stage"] = "standard"
+                
+                logger.debug(f"处理片段 {current['subtitle_index']} (阶段: {current['processing_stage']})")
+                
+                # 1. 边界检查 (根据阶段使用不同的边界)
+                boundary_to_use = effective_boundary_ms if is_protected_segment else background_duration_ms
+                
+                if current["final_end"] > boundary_to_use:
+                    excess_time = current["final_end"] - boundary_to_use
+                    logger.warning(f"字幕{current['subtitle_index']} 超出边界 {excess_time/1000:.2f}s (阶段: {current['processing_stage']})")
+                    
+                    # 保护段和最后一段的特殊处理
+                    if is_protected_segment:
+                        if is_last_segment and PREFER_COMPLETENESS:
+                            # 最后一段：优先保证完整性
+                            if current["final_end"] <= effective_boundary_ms:
+                                logger.info(f"✅ 最后片段 {current['subtitle_index']} 在扩展边界内，保持完整")
+                                continue
+                            else:
+                                # 即使在扩展边界外，也尝试温和处理
+                                available_time = effective_boundary_ms - current["final_start"]
+                                if available_time > current["original_tts_duration"] * 0.7:  # 至少保留70%
+                                    compression_ratio = available_time / current["original_tts_duration"]
+                                    current["adjusted_tts_duration"] = available_time
+                                    current["final_end"] = current["final_start"] + available_time
+                                    current["needs_speedup"] = True
+                                    current["speedup_ratio"] = 1.0 / compression_ratio
+                                    logger.info(f"🎵 最后片段 {current['subtitle_index']} 温和加速 {current['speedup_ratio']:.2f}x")
+                                else:
+                                    logger.warning(f"⚠️  最后片段 {current['subtitle_index']} 仍需截断，但已最大化保留")
+                        else:
+                            # 保护段：使用宽松的加速限制
+                            available_time = boundary_to_use - current["final_start"]
+                            if available_time > 0:
+                                compression_ratio = available_time / current["original_tts_duration"]
+                                if compression_ratio >= (1.0 / (max_speedup_ratio * 1.2)):  # 宽松20%
+                                    current["adjusted_tts_duration"] = available_time
+                                    current["final_end"] = current["final_start"] + available_time
+                                    current["needs_speedup"] = True
+                                    current["speedup_ratio"] = 1.0 / compression_ratio
+                                    logger.info(f"🛡️ 保护片段 {current['subtitle_index']} 宽松加速 {current['speedup_ratio']:.2f}x")
+                                else:
+                                    # 允许适度截断，但记录
+                                    current["adjusted_tts_duration"] = available_time
+                                    current["final_end"] = boundary_to_use
+                                    current["is_truncated"] = True
+                                    current["truncation_severity"] = "moderate"
+                                    logger.warning(f"✂️  保护片段 {current['subtitle_index']} 适度截断")
+                    else:
+                        # 标准段：使用原有逻辑
+                        available_time = boundary_to_use - current["final_start"]
+                        if available_time > 0:
+                            compression_ratio = available_time / current["original_tts_duration"]
+                            if compression_ratio >= (1.0 / max_speedup_ratio):
+                                current["adjusted_tts_duration"] = available_time
+                                current["final_end"] = current["final_start"] + available_time
+                                current["needs_speedup"] = True
+                                current["speedup_ratio"] = 1.0 / compression_ratio
+                                logger.info(f"⚡ 标准片段 {current['subtitle_index']} 加速 {current['speedup_ratio']:.2f}x")
+                            else:
+                                current["adjusted_tts_duration"] = available_time
+                                current["final_end"] = boundary_to_use
+                                current["is_truncated"] = True
+                                current["truncation_severity"] = "standard"
+                                logger.warning(f"✂️  标准片段 {current['subtitle_index']} 标准截断")
+                        else:
+                            current["skip"] = True
+                            logger.error(f"❌ 片段 {current['subtitle_index']} 开始时间超出边界，跳过")
+                            continue
+                
+                # 2. 重叠检查和处理
                 if i < len(tts_segments) - 1:
                     next_segment = tts_segments[i + 1]
-                    
-                    # 计算重叠
                     current_end = current["final_end"]
                     next_start = next_segment["subtitle_start"]
                     overlap = current_end - next_start + min_gap_between_speech
                     
                     if overlap > 0:
-                        logger.warning(f"检测到重叠: 字幕{current['subtitle_index']} 和 {next_segment['subtitle_index']}, 重叠{overlap/1000:.2f}s")
+                        next_is_protected = (i + 1) >= protection_threshold
+                        logger.debug(f"重叠检测: {current['subtitle_index']} vs {next_segment['subtitle_index']}, 重叠{overlap/1000:.2f}s")
                         
-                        # 解决方案1: 尝试音频加速
-                        available_time = next_start - current["final_start"] - min_gap_between_speech
-                        if available_time > 0:
-                            # 计算压缩比例
-                            compression_ratio = available_time / current["original_tts_duration"]
-                            
-                            if compression_ratio >= (1.0 / max_speedup_ratio):
-                                # 可以通过适度加速解决重叠
-                                current["adjusted_tts_duration"] = available_time
-                                current["final_end"] = current["final_start"] + available_time
-                                current["needs_speedup"] = True
-                                current["speedup_ratio"] = 1.0 / compression_ratio
-                                logger.info(f"字幕{current['subtitle_index']} TTS将加速{current['speedup_ratio']:.2f}x")
-                            else:
-                                # 加速倍率超限，使用延迟策略
-                                logger.info(f"字幕{current['subtitle_index']} 需要加速{1.0/compression_ratio:.2f}x超过限制，改用延迟策略")
-                                delay = current["final_end"] - next_segment["subtitle_start"] + min_gap_between_speech
-                                next_segment["final_start"] = next_segment["subtitle_start"] + delay
-                                next_segment["final_end"] = next_segment["final_start"] + next_segment["original_tts_duration"]
-                                next_segment["is_delayed"] = True
-                                logger.info(f"字幕{next_segment['subtitle_index']} TTS将延迟{delay/1000:.2f}s播放")
-                        else:
-                            # 解决方案2: 延迟下一个TTS音频
-                            delay = current["final_end"] - next_segment["subtitle_start"] + min_gap_between_speech
+                        # 根据段落类型选择解决策略
+                        if is_protected_segment and next_is_protected:
+                            # 两个都是保护段：优先延迟
+                            delay = overlap
                             next_segment["final_start"] = next_segment["subtitle_start"] + delay
                             next_segment["final_end"] = next_segment["final_start"] + next_segment["original_tts_duration"]
                             next_segment["is_delayed"] = True
-                            logger.info(f"字幕{next_segment['subtitle_index']} TTS将延迟{delay/1000:.2f}s播放")
+                            logger.info(f"⏰ 保护段重叠：延迟下一段 {next_segment['subtitle_index']} {delay/1000:.2f}s")
+                        else:
+                            # 标准处理：先尝试加速，再延迟
+                            available_time = next_start - current["final_start"] - min_gap_between_speech
+                            if available_time > 0:
+                                compression_ratio = available_time / current["original_tts_duration"]
+                                if compression_ratio >= (1.0 / max_speedup_ratio):
+                                    current["adjusted_tts_duration"] = available_time
+                                    current["final_end"] = current["final_start"] + available_time
+                                    current["needs_speedup"] = True
+                                    current["speedup_ratio"] = 1.0 / compression_ratio
+                                    logger.info(f"⚡ 重叠解决：加速当前段 {current['subtitle_index']} {current['speedup_ratio']:.2f}x")
+                                else:
+                                    delay = overlap
+                                    next_segment["final_start"] = next_segment["subtitle_start"] + delay
+                                    next_segment["final_end"] = next_segment["final_start"] + next_segment["original_tts_duration"]
+                                    next_segment["is_delayed"] = True
+                                    logger.info(f"⏰ 重叠解决：延迟下一段 {next_segment['subtitle_index']} {delay/1000:.2f}s")
+            
+            # ===== 阶段3: 对齐优化阶段 =====
+            logger.info("🎯 阶段3: 对齐优化阶段 - 智能对齐处理...")
+            
+            if ENABLE_SMART_ALIGNMENT:
+                for segment in tts_segments:
+                    if segment.get("skip"):
+                        continue
+                        
+                    # 短音频对齐处理
+                    if segment["adjusted_tts_duration"] < segment["subtitle_duration"] * 0.8:  # 短于原时长80%
+                        # 在原时间窗口内居中对齐或尾部对齐
+                        time_gap = segment["subtitle_duration"] - segment["adjusted_tts_duration"]
+                        if time_gap > ALIGNMENT_TOLERANCE * 1000:
+                            # 选择对齐策略：居中或尾部对齐
+                            segment["alignment_offset"] = time_gap * 0.7  # 70%偏向尾部对齐
+                            segment["final_start"] = segment["subtitle_start"] + segment["alignment_offset"]
+                            logger.debug(f"🎯 片段 {segment['subtitle_index']} 尾部对齐，偏移 {segment['alignment_offset']/1000:.2f}s")
+            
+            # 最终统计和边界检查
+            processing_stats = {
+                "speedup_count": 0,
+                "delayed_count": 0, 
+                "truncated_count": 0,
+                "skipped_count": 0,
+                "protected_count": 0,
+                "aligned_count": 0,
+                "global_compressed_count": 0
+            }
+            
+            boundary_issues = 0
+            for segment in tts_segments:
+                if segment.get("skip"):
+                    processing_stats["skipped_count"] += 1
+                    continue
+                
+                if segment["final_end"] > effective_boundary_ms:
+                    boundary_issues += 1
+                    logger.error(f"❌ 最终检查: 片段{segment['subtitle_index']} 仍超出有效边界")
+                
+                if segment.get("needs_speedup"):
+                    processing_stats["speedup_count"] += 1
+                if segment.get("is_delayed"):
+                    processing_stats["delayed_count"] += 1
+                if segment.get("is_truncated"):
+                    processing_stats["truncated_count"] += 1
+                if segment.get("processing_stage") in ["protected", "last_segment"]:
+                    processing_stats["protected_count"] += 1
+                if segment.get("alignment_offset"):
+                    processing_stats["aligned_count"] += 1
+                if segment.get("needs_global_compression"):
+                    processing_stats["global_compressed_count"] += 1
+
+            logger.info(f"📋 分阶段处理完成，最终统计:")
+            logger.info(f"   ⚡ 音频加速: {processing_stats['speedup_count']} 个")
+            logger.info(f"   ⏰ 延迟播放: {processing_stats['delayed_count']} 个") 
+            logger.info(f"   ✂️  音频截断: {processing_stats['truncated_count']} 个")
+            logger.info(f"   🛡️ 保护处理: {processing_stats['protected_count']} 个")
+            logger.info(f"   🎯 智能对齐: {processing_stats['aligned_count']} 个")
+            logger.info(f"   ❌ 跳过处理: {processing_stats['skipped_count']} 个")
+            if boundary_issues > 0:
+                logger.error(f"   ⚠️  边界问题: {boundary_issues} 个")
             
             # 用于存储要叠加的TTS音频
             overlays = []
@@ -649,26 +890,58 @@ class VideoTranslationClient:
             # 处理每个TTS片段
             for segment in tts_segments:
                 try:
+                    # 跳过被标记为跳过的片段
+                    if segment.get("skip"):
+                        logger.info(f"⏭️ 跳过片段 {segment['subtitle_index']}")
+                        continue
+                        
                     # 加载TTS音频
                     tts_audio = AudioSegment.from_file(segment["audio_path"])
                     
                     # 应用音频调整
+                    # 1. 先应用全局压缩（如果需要）
+                    if segment.get("needs_global_compression"):
+                        global_ratio = segment["global_compression_ratio"]
+                        tts_audio = tts_audio.speedup(playback_speed=1.0/global_ratio)
+                        logger.debug(f"🔒 字幕{segment['subtitle_index']} 应用全局压缩 {global_ratio:.3f}")
+                    
+                    # 2. 再应用局部加速（如果需要）
                     if segment.get("needs_speedup"):
-                        # 加速音频
                         speedup_ratio = segment["speedup_ratio"]
                         tts_audio = tts_audio.speedup(playback_speed=speedup_ratio)
-                        logger.debug(f"字幕{segment['subtitle_index']} 音频已加速{speedup_ratio:.2f}x")
+                        logger.debug(f"⚡ 字幕{segment['subtitle_index']} 音频已加速{speedup_ratio:.2f}x")
+                    
+                    # 处理截断音频
+                    if segment.get("is_truncated"):
+                        # 计算需要保留的音频时长（毫秒）
+                        truncated_duration_ms = segment["adjusted_tts_duration"]
+                        if truncated_duration_ms > 0 and truncated_duration_ms < len(tts_audio):
+                            # 截取音频到指定时长
+                            tts_audio = tts_audio[:int(truncated_duration_ms)]
+                            severity = segment.get("truncation_severity", "unknown")
+                            logger.info(f"✂️ 字幕{segment['subtitle_index']} 音频已截断到 {truncated_duration_ms/1000:.2f}s (级别: {severity})")
+                        elif truncated_duration_ms <= 0:
+                            # 如果调整后的时长<=0，跳过这个片段
+                            logger.warning(f"⚠️ 字幕{segment['subtitle_index']} 调整后时长为0，跳过处理")
+                            continue
+                    
+                    # 智能对齐处理
+                    final_start_time = segment["final_start"]
+                    if segment.get("alignment_offset"):
+                        final_start_time = segment["final_start"]
+                        logger.debug(f"🎯 字幕{segment['subtitle_index']} 应用对齐偏移")
                     
                     # 添加到叠加列表
                     overlays.append({
                         "audio": tts_audio,
-                        "start_time": int(segment["final_start"]),
+                        "start_time": int(final_start_time),
                         "duration": len(tts_audio),
-                        "subtitle_index": segment["subtitle_index"]
+                        "subtitle_index": segment["subtitle_index"],
+                        "processing_stage": segment.get("processing_stage", "standard")
                     })
                     
                     # 更新背景音量包络
-                    start_sample = int((segment["final_start"] / 1000.0) * background.frame_rate)
+                    start_sample = int((final_start_time / 1000.0) * background.frame_rate)
                     duration_samples = int((len(tts_audio) / 1000.0) * background.frame_rate)
                     
                     if start_sample < total_samples:
@@ -741,17 +1014,63 @@ class VideoTranslationClient:
                     continue
             
             logger.info("导出最终音频...")
+            
+            # 严格时长控制：确保最终音频时长与背景音频完全一致
+            if STRICT_DURATION_CONTROL:
+                target_duration_ms = len(background)
+                current_duration_ms = len(final_audio)
+                
+                if current_duration_ms != target_duration_ms:
+                    logger.info(f"🔧 调整最终音频时长: {current_duration_ms/1000:.3f}s → {target_duration_ms/1000:.3f}s")
+                    
+                    if current_duration_ms > target_duration_ms:
+                        # 截断超出部分
+                        final_audio = final_audio[:target_duration_ms]
+                        logger.info("✂️ 截断超出部分")
+                    else:
+                        # 用静音填充不足部分
+                        silence_duration = target_duration_ms - current_duration_ms
+                        silence = AudioSegment.silent(duration=silence_duration)
+                        final_audio = final_audio + silence
+                        logger.info(f"🔇 填充静音 {silence_duration/1000:.3f}s")
+                
+                # 最终验证
+                final_duration_ms = len(final_audio)
+                logger.info(f"✅ 时长验证: 最终={final_duration_ms/1000:.3f}s, 目标={target_duration_ms/1000:.3f}s")
+                
+                if abs(final_duration_ms - target_duration_ms) > 10:  # 允许10ms误差
+                    logger.warning(f"⚠️ 时长误差超过10ms: {abs(final_duration_ms - target_duration_ms)}ms")
+            
             final_audio.export(output_path, format="wav")
             
-            # 输出处理统计
-            speedup_count = len([s for s in tts_segments if s.get("needs_speedup")])
-            delayed_count = len([s for s in tts_segments if s.get("is_delayed")])
-            total_processed = speedup_count + delayed_count
+            # 输出处理统计 - 使用分阶段统计
+            logger.info(f"🎵 分阶段自适应音频混合完成！")
+            logger.info(f"   最终音频时长: {final_audio.duration_seconds:.3f}s")
+            logger.info(f"   背景音频时长: {background.duration_seconds:.3f}s")
             
-            logger.info(f"音频混合完成，最终时长: {final_audio.duration_seconds:.2f}s")
-            logger.info(f"处理了 {total_processed} 个重叠问题:")
-            logger.info(f"  - 音频加速: {speedup_count} 个")
-            logger.info(f"  - 延迟播放: {delayed_count} 个")
+            duration_diff = final_audio.duration_seconds - background.duration_seconds
+            if abs(duration_diff) < 0.01:  # 10ms容差
+                logger.info(f"✅ 时长完全一致 (误差: {duration_diff*1000:.1f}ms)")
+            else:
+                if duration_diff > 0:
+                    logger.warning(f"⚠️ 音频延长: +{duration_diff:.3f}s")
+                else:
+                    logger.warning(f"⚠️ 音频缩短: {duration_diff:.3f}s")
+            
+            logger.info(f"📈 分阶段处理效果总结:")
+            logger.info(f"   ⚡ 音频加速: {processing_stats['speedup_count']} 个")
+            logger.info(f"   ⏰ 延迟播放: {processing_stats['delayed_count']} 个")
+            logger.info(f"   ✂️  音频截断: {processing_stats['truncated_count']} 个")  
+            logger.info(f"   🛡️ 保护处理: {processing_stats['protected_count']} 个")
+            logger.info(f"   🎯 智能对齐: {processing_stats['aligned_count']} 个")
+            logger.info(f"   🔒 全局压缩: {processing_stats['global_compressed_count']} 个")
+            logger.info(f"   ❌ 跳过处理: {processing_stats['skipped_count']} 个")
+            
+            if needs_global_compression:
+                logger.info(f"🔒 全局压缩比例: {global_compression_ratio:.3f} (所有片段)")
+            
+            if processing_stats['protected_count'] > 0:
+                logger.info(f"✨ 启用保护策略，成功保护了最后 {processing_stats['protected_count']} 个重要片段")
             
             return output_path
             
