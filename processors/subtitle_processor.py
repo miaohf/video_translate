@@ -172,9 +172,9 @@ class SubtitleProcessor:
         current_merged = None
         
         # 合并参数
-        max_merged_duration = 60.0   # 最大合并片段时长（秒）
-        max_gap_duration = 3.0       # 最大间隔时长（秒）
-        max_chars_per_merged = 500   # 每个合并片段最大字符数
+        max_merged_duration = 30.0   # 最大合并片段时长（秒）
+        max_gap_duration = 0.5       # 最大间隔时长（秒）
+        max_chars_per_merged = 200   # 每个合并片段最大字符数
         
         for segment in segments:
             if not segment.get("text", "").strip():
