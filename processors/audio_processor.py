@@ -5,7 +5,7 @@ import numpy as np
 import librosa
 from pydub import AudioSegment
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 import json
 from tqdm import tqdm
 import subprocess
@@ -26,6 +26,7 @@ class AudioProcessor:
         """
         self.stt_server_url = stt_server_url or STT_SERVER_URL
         self.tts_server_url = tts_server_url or TTS_SERVER_URL
+        self._spleeter_model = None  # 延迟加载Spleeter模型
         
     def extract_audio(self, video_path: str, video_name: str) -> str:
         """
@@ -81,6 +82,193 @@ class AudioProcessor:
         """
         import hashlib
         return hashlib.md5(text.encode()).hexdigest()[:length]
+    
+    def _load_spleeter_model(self):
+        """延迟加载Spleeter模型"""
+        if self._spleeter_model is None:
+            try:
+                from spleeter.separator import Separator
+                logger.info("🔄 加载Spleeter模型...")
+                self._spleeter_model = Separator('spleeter:2stems')  # 分离人声和伴奏
+                logger.info("✅ Spleeter模型加载完成")
+            except ImportError:
+                logger.error("❌ 未安装Spleeter，请运行: pip install spleeter")
+                raise ImportError("Spleeter not installed")
+            except Exception as e:
+                logger.error(f"❌ 加载Spleeter模型失败: {str(e)}")
+                raise
+        return self._spleeter_model
+    
+    def separate_vocals_and_background(self, audio_path: str, video_name: str) -> Tuple[str, str]:
+        """
+        将音频分离为人声和背景音
+        
+        参数:
+            audio_path: 原始音频文件路径
+            video_name: 视频名称，用于创建目录
+            
+        返回:
+            (人声文件路径, 背景音文件路径)
+        """
+        try:
+            # 创建分离音频目录
+            temp_dir = os.path.join("temp", video_name)
+            separated_dir = os.path.join(temp_dir, "separated_audio")
+            os.makedirs(separated_dir, exist_ok=True)
+            
+            # 生成文件路径
+            file_hash = get_file_hash(video_name)
+            vocals_path = os.path.join(separated_dir, f"{file_hash}_vocals.wav")
+            background_path = os.path.join(separated_dir, f"{file_hash}_background.wav")
+            
+            # 检查是否已存在分离文件
+            if os.path.exists(vocals_path) and os.path.exists(background_path):
+                logger.info("🎵 使用已存在的人声和背景音分离文件")
+                return vocals_path, background_path
+            
+            # 加载Spleeter模型
+            separator = self._load_spleeter_model()
+            
+            logger.info("🎵 开始人声和背景音分离...")
+            
+            # 执行分离
+            prediction = separator.separate_to_file(
+                audio_path,
+                separated_dir,
+                filename_format=f"{file_hash}_{{instrument}}.wav"
+            )
+            
+            # 重命名文件以匹配我们的命名约定
+            spleeter_vocals = os.path.join(separated_dir, f"{file_hash}_vocals.wav")
+            spleeter_accompaniment = os.path.join(separated_dir, f"{file_hash}_accompaniment.wav")
+            
+            if os.path.exists(spleeter_vocals):
+                os.rename(spleeter_vocals, vocals_path)
+            if os.path.exists(spleeter_accompaniment):
+                os.rename(spleeter_accompaniment, background_path)
+            
+            logger.info("✅ 人声和背景音分离完成")
+            return vocals_path, background_path
+            
+        except Exception as e:
+            logger.error(f"❌ 人声和背景音分离失败: {str(e)}")
+            # 如果分离失败，返回原始音频作为人声，静音作为背景音
+            logger.warning("⚠️ 使用原始音频作为人声，静音作为背景音")
+            return audio_path, self._create_silent_background(audio_path, video_name)
+    
+    def _create_silent_background(self, audio_path: str, video_name: str) -> str:
+        """创建静音背景音文件"""
+        try:
+            # 加载原始音频获取时长
+            audio = AudioSegment.from_file(audio_path)
+            duration_ms = len(audio)
+            
+            # 创建静音音频
+            silent_audio = AudioSegment.silent(duration=duration_ms)
+            
+            # 保存静音背景音
+            temp_dir = os.path.join("temp", video_name)
+            separated_dir = os.path.join(temp_dir, "separated_audio")
+            os.makedirs(separated_dir, exist_ok=True)
+            
+            file_hash = get_file_hash(video_name)
+            background_path = os.path.join(separated_dir, f"{file_hash}_background.wav")
+            
+            silent_audio.export(background_path, format="wav")
+            logger.info("🔇 创建静音背景音文件")
+            
+            return background_path
+            
+        except Exception as e:
+            logger.error(f"❌ 创建静音背景音失败: {str(e)}")
+            raise
+    
+    def create_enhanced_audio_segments(self, audio_path: str, subtitles: List[Dict], video_name: str, 
+                                     use_vocal_separation: bool = True) -> List[Dict]:
+        """
+        创建增强的音频切片（支持人声分离）
+        
+        参数:
+            audio_path: 原始音频文件路径
+            subtitles: 字幕列表，每个字幕包含start和end时间
+            video_name: 视频名称，用于创建目录
+            use_vocal_separation: 是否使用人声分离
+            
+        返回:
+            更新后的字幕列表，包含reference_audio字段
+        """
+        try:
+            # 创建音频切片目录
+            segments_dir = os.path.join("temp", video_name, "audio_segments")
+            os.makedirs(segments_dir, exist_ok=True)
+            
+            # 如果启用人声分离，先进行分离
+            if use_vocal_separation:
+                logger.info("🎵 启用人声分离模式...")
+                vocals_path, background_path = self.separate_vocals_and_background(audio_path, video_name)
+                # 使用人声作为参考音频
+                reference_audio_path = vocals_path
+            else:
+                logger.info("🎵 使用原始音频模式...")
+                reference_audio_path = audio_path
+            
+            # 加载参考音频
+            logger.info(f"加载参考音频文件: {reference_audio_path}")
+            audio = AudioSegment.from_file(reference_audio_path)
+            
+            # 为每个字幕创建音频切片
+            updated_subtitles = []
+            for i, subtitle in enumerate(subtitles):
+                try:
+                    start_time = subtitle["start"] * 1000  # 转换为毫秒
+                    end_time = subtitle["end"] * 1000      # 转换为毫秒
+                    
+                    # 创建音频切片文件名
+                    file_hash = get_file_hash(video_name)
+                    speaker = subtitle.get("speaker", "UNKNOWN")
+                    separation_suffix = "_vocals" if use_vocal_separation else "_original"
+                    segment_filename = f"{file_hash}_{i:04d}_{speaker}{separation_suffix}.mp3"
+                    segment_path = os.path.join(segments_dir, segment_filename)
+                    
+                    # 如果切片文件已存在，跳过创建
+                    if os.path.exists(segment_path):
+                        logger.debug(f"音频切片已存在: {segment_filename}")
+                    else:
+                        # 提取音频片段
+                        audio_segment = audio[start_time:end_time]
+                        
+                        # 确保音频片段长度至少为500ms，避免过短的音频
+                        if len(audio_segment) < 500:
+                            logger.warning(f"音频片段 {i} 太短({len(audio_segment)}ms)，扩展到500ms")
+                            # 向前扩展时间
+                            extend_time = 500 - len(audio_segment)
+                            new_start = max(0, start_time - extend_time // 2)
+                            new_end = min(len(audio), end_time + extend_time // 2)
+                            audio_segment = audio[new_start:new_end]
+                        
+                        # 保存音频切片
+                        audio_segment.export(segment_path, format="mp3")
+                        logger.debug(f"创建音频切片: {segment_filename}")
+                    
+                    # 更新字幕，添加reference_audio字段
+                    updated_subtitle = subtitle.copy()
+                    updated_subtitle["reference_audio"] = segment_path
+                    updated_subtitle["audio_separation"] = "vocals" if use_vocal_separation else "original"
+                    updated_subtitles.append(updated_subtitle)
+                    
+                except Exception as e:
+                    logger.error(f"创建第 {i} 个音频切片失败: {str(e)}")
+                    # 即使出错也要保留原字幕
+                    updated_subtitles.append(subtitle)
+                    continue
+            
+            separation_type = "人声分离" if use_vocal_separation else "原始音频"
+            logger.info(f"✅ 成功创建 {len([s for s in updated_subtitles if 'reference_audio' in s])} 个音频切片 ({separation_type})")
+            return updated_subtitles
+            
+        except Exception as e:
+            logger.error(f"❌ 创建增强音频切片失败: {str(e)}")
+            return subtitles  # 返回原始字幕
     
     def generate_chinese_audio(self, subtitles: List[Dict], speaker: str = None) -> str:
         """

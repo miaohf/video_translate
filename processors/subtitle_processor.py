@@ -155,7 +155,7 @@ class SubtitleProcessor:
     
     def merge_speaker_segments(self, segments: List[Dict]) -> List[Dict]:
         """
-        合并同一说话人的连续字幕片段
+        合并同一说话人的连续字幕片段，处理断句问题
         
         Args:
             segments: 包含speaker信息的字幕片段列表
@@ -166,7 +166,7 @@ class SubtitleProcessor:
         if not segments:
             return []
         
-        logger.info(f"Merging speaker segments: {len(segments)} input segments")
+        logger.info(f"开始合并说话人片段: {len(segments)} 个输入片段")
         
         merged = []
         current_merged = None
@@ -204,11 +204,18 @@ class SubtitleProcessor:
                 merged_duration = current_end - current_merged["start"]
                 merged_text_length = len(current_merged["text"] + " " + current_text)
                 
-                should_merge = (
-                    same_speaker and
-                    gap_duration <= max_gap_duration and
-                    merged_duration <= max_merged_duration and
-                    merged_text_length <= max_chars_per_merged
+                # 检查是否为断句情况
+                previous_text = current_merged["text"].strip()
+                is_incomplete_sentence = self._is_incomplete_sentence(previous_text)
+                
+                # 合并条件：同一说话人 + (正常合并条件 OR 断句合并)
+                should_merge = same_speaker and (
+                    # 正常合并条件
+                    (gap_duration <= max_gap_duration and
+                     merged_duration <= max_merged_duration and
+                     merged_text_length <= max_chars_per_merged) or
+                    # 断句合并条件：前一句没有结束标点符号
+                    (is_incomplete_sentence and gap_duration <= 3.0)  # 断句允许更大的间隔
                 )
                 
                 if should_merge:
@@ -217,10 +224,17 @@ class SubtitleProcessor:
                     # 智能连接文本
                     merged_text = current_merged["text"]
                     if merged_text and current_text:
+                        # 检查是否为断句合并
+                        if is_incomplete_sentence:
+                            # 断句合并，直接连接或添加适当连接词
+                            if merged_text.endswith(('，', '、', '和', '或', '但', '而', '且')):
+                                current_merged["text"] = merged_text + current_text
+                            else:
+                                current_merged["text"] = merged_text + current_text
                         # 检查是否需要添加标点
-                        if merged_text[-1] in '.!?':
+                        elif merged_text[-1] in '.!?。！？':
                             current_merged["text"] = merged_text + " " + current_text
-                        elif merged_text[-1] in ',;:':
+                        elif merged_text[-1] in ',;:，；：':
                             current_merged["text"] = merged_text + " " + current_text
                         elif not merged_text.endswith(' ') and current_text[0].isupper():
                             # 如果下一句开头是大写字母，可能是新句子
@@ -250,15 +264,61 @@ class SubtitleProcessor:
         if current_merged:
             merged.append(current_merged)
         
-        logger.info(f"Merged speaker segments: {len(segments)} -> {len(merged)} segments")
+        logger.info(f"完成说话人片段合并: {len(segments)} -> {len(merged)} 个片段")
         
         # 打印合并统计
         for i, seg in enumerate(merged):
             duration = seg["end"] - seg["start"]
             char_count = len(seg["text"])
-            logger.debug(f"Merged {i+1}: {seg['speaker']} ({duration:.1f}s, {char_count} chars): '{seg['text'][:80]}{'...' if char_count > 80 else ''}'")
+            logger.debug(f"合并片段 {i+1}: {seg['speaker']} ({duration:.1f}s, {char_count} 字符): '{seg['text'][:80]}{'...' if char_count > 80 else ''}'")
         
         return merged
+
+    def _is_incomplete_sentence(self, text: str) -> bool:
+        """
+        判断句子是否为不完整的句子（用于识别断句）
+        
+        Args:
+            text: 文本内容
+            
+        Returns:
+            是否为不完整句子
+        """
+        if not text:
+            return False
+            
+        text = text.strip()
+        
+        # 检查是否以标点符号结尾
+        ending_punctuation = '.!?。！？'
+        if text[-1] in ending_punctuation:
+            return False
+            
+        # 检查是否以逗号、分号等中间标点结尾（可能是断句）
+        middle_punctuation = ',;:，；：'
+        if text[-1] in middle_punctuation:
+            return True
+            
+        # 检查是否以连接词结尾（明显的断句）
+        incomplete_endings = [
+            'and', 'or', 'but', 'because', 'so', 'that', 'which', 'who', 'when', 'where', 'how',
+            '和', '或', '但', '因为', '所以', '那', '这', '当', '在', '如何', '什么', '哪里',
+            'the', 'a', 'an', 'is', 'are', 'was', 'were', 'has', 'have', 'had', 'will', 'would',
+            '是', '有', '会', '将', '可以', '能够', '应该', '必须', '正在', '已经'
+        ]
+        
+        # 检查最后几个词
+        words = text.split()
+        if words:
+            last_word = words[-1].lower().strip('.,;:!?，。；：！？')
+            if last_word in incomplete_endings:
+                return True
+                
+        # 检查是否以数字或不完整的短语结尾
+        if len(words) <= 2:  # 很短的片段可能是断句
+            return True
+            
+        return False
 
     async def get_subtitles(self, audio_path: str, video_name: str, video_path: str = None) -> List[Dict]:
         """
@@ -280,14 +340,14 @@ class SubtitleProcessor:
             if video_path:
                 existing_subtitles = self.check_existing_subtitles(video_path, video_name, file_hash)
                 if existing_subtitles:
-                    # 对字幕进行说话人合并处理
-                    logger.info("📝 对已有字幕进行说话人合并处理...")
+                    # 对字幕进行说话人合并处理（包含断句处理）
+                    logger.info("📝 对已有字幕进行说话人合并和断句处理...")
                     subtitles = self.merge_speaker_segments(existing_subtitles)
                     
                     # 保存为VTT格式
                     cache_vtt_file = os.path.join("temp", video_name, f"{file_hash}_subtitles.vtt")
                     VTTParser.save_vtt_file(subtitles, cache_vtt_file, 'en')
-                    logger.info(f"✅ 字幕已保存为VTT格式: {cache_vtt_file}")
+                    logger.info(f"✅ 处理后的字幕已保存为VTT格式: {cache_vtt_file}")
                     
                     return subtitles
             
@@ -316,20 +376,20 @@ class SubtitleProcessor:
             # 合并说话人信息
             segments = self.merge_speaker_info(segments, speaker_segments)
             
-            # 对字幕进行说话人合并处理
-            logger.info("📝 对转录字幕进行说话人合并处理...")
+            # 对字幕进行说话人合并处理（包含断句处理）
+            logger.info("📝 对转录字幕进行说话人合并和断句处理...")
             segments = self.merge_speaker_segments(segments)
             
             # 保存为VTT格式
             cache_vtt_file = os.path.join("temp", video_name, f"{file_hash}_subtitles.vtt")
             VTTParser.save_vtt_file(segments, cache_vtt_file, 'en')
-            logger.info(f"✅ 字幕已保存为VTT格式: {cache_vtt_file}")
+            logger.info(f"✅ 处理后的字幕已保存为VTT格式: {cache_vtt_file}")
             
             # 兼容性：同时保存JSON格式（可选）
             cache_json_file = os.path.join("temp", video_name, f"{file_hash}_subtitles.json")
             with open(cache_json_file, 'w', encoding='utf-8') as f:
                 json.dump(segments, f, ensure_ascii=False, indent=2)
-            logger.info(f"📄 字幕已保存为JSON格式: {cache_json_file}")
+            logger.info(f"📄 处理后的字幕已保存为JSON格式: {cache_json_file}")
             
             return segments
             
@@ -422,9 +482,6 @@ class SubtitleProcessor:
                 logger.info(f"发现缓存的VTT字幕文件: {cache_vtt_file}")
                 subtitles = VTTParser.parse_vtt_file(cache_vtt_file)
                 if subtitles:
-                    # 为TTS合并字幕，处理断句问题
-                    logger.info("对VTT字幕进行TTS优化合并...")
-                    subtitles = VTTParser.merge_subtitles_for_tts(subtitles)
                     return subtitles
             
             # 在视频文件同目录下查找VTT文件
@@ -434,9 +491,6 @@ class SubtitleProcessor:
                     logger.info(f"发现现有VTT字幕文件: {vtt_file}")
                     subtitles = VTTParser.parse_vtt_file(vtt_file)
                     if subtitles:
-                        # 为TTS合并字幕，处理断句问题
-                        logger.info("对现有VTT字幕进行TTS优化合并...")
-                        subtitles = VTTParser.merge_subtitles_for_tts(subtitles)
                         return subtitles
             
             return None

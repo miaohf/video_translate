@@ -17,7 +17,10 @@ from utils.common import get_file_hash
 from services.translation_templates import (
     TRANSLATION_TEMPLATE, 
     CONTEXTUAL_TRANSLATION_TEMPLATE,
-    STREAMING_TRANSLATION_TEMPLATE
+    STREAMING_TRANSLATION_TEMPLATE,
+    THREE_STEP_TRANSLATION_TEMPLATE,
+    THREE_STEP_STREAMING_TEMPLATE,
+    REFLECTION_TEMPLATE
 )
 from services.translation_config import TranslationConfig
 
@@ -157,8 +160,8 @@ class TranslationService:
         self.llm = OllamaLLM(model=self.model)
         self._session = None
         
-        # 初始化功能模块
-        self.context_manager = ContextManager() if TranslationConfig.ENABLE_CONTEXT else None
+        # 初始化功能模块 - 上下文模式始终启用
+        self.context_manager = ContextManager()  # 上下文模式始终启用
         
         if TranslationConfig.ENABLE_ADAPTIVE_BATCH:
             initial_batch_size = batch_size or TranslationConfig.DEFAULT_BATCH_SIZE
@@ -170,29 +173,44 @@ class TranslationService:
             )
             self.adaptive_processor = None
         
-        # 初始化模板
-        self.translation_prompt = PromptTemplate(
-            input_variables=["segments", "segment_count"],
-            template=TRANSLATION_TEMPLATE
+        # 初始化模板 - 上下文模式始终启用
+        self.contextual_prompt = PromptTemplate(
+            input_variables=["previous_context", "terminology_dict", 
+                           "current_segments", "segment_count"],
+            template=CONTEXTUAL_TRANSLATION_TEMPLATE
         )
         
-        if TranslationConfig.ENABLE_CONTEXT:
-            self.contextual_prompt = PromptTemplate(
+        self.streaming_prompt = PromptTemplate(
+            input_variables=["context_info", "terminology_dict", "segments"],
+            template=STREAMING_TRANSLATION_TEMPLATE
+        )
+        
+        # 三步翻译法模板初始化
+        if TranslationConfig.ENABLE_THREE_STEP_TRANSLATION:
+            self.three_step_prompt = PromptTemplate(
                 input_variables=["previous_context", "terminology_dict", 
                                "current_segments", "segment_count"],
-                template=CONTEXTUAL_TRANSLATION_TEMPLATE
+                template=THREE_STEP_TRANSLATION_TEMPLATE
             )
             
-            self.streaming_prompt = PromptTemplate(
+            self.three_step_streaming_prompt = PromptTemplate(
                 input_variables=["context_info", "terminology_dict", "segments"],
-                template=STREAMING_TRANSLATION_TEMPLATE
+                template=THREE_STEP_STREAMING_TEMPLATE
+            )
+            
+            self.reflection_prompt = PromptTemplate(
+                input_variables=["original_text", "current_translation", 
+                               "context_info", "terminology_dict"],
+                template=REFLECTION_TEMPLATE
             )
         
         logger.info(f"🚀 智能翻译服务已初始化")
         logger.info(f"  批处理大小: {self.batch_size}")
-        logger.info(f"  上下文功能: {'✅ 启用' if TranslationConfig.ENABLE_CONTEXT else '❌ 禁用'}")
+        logger.info(f"  上下文功能: ✅ 始终启用")
         logger.info(f"  流式处理: {'✅ 启用' if TranslationConfig.ENABLE_STREAMING else '❌ 禁用'}")
         logger.info(f"  自适应批次: {'✅ 启用' if TranslationConfig.ENABLE_ADAPTIVE_BATCH else '❌ 禁用'}")
+        logger.info(f"  三步翻译法: {'✅ 启用' if TranslationConfig.ENABLE_THREE_STEP_TRANSLATION else '❌ 禁用'}")
+        logger.info(f"  翻译模式: {TranslationConfig.TRANSLATION_MODE}")
 
     async def _get_session(self) -> aiohttp.ClientSession:
         """获取或创建HTTP会话"""
@@ -272,12 +290,16 @@ class TranslationService:
         text = re.sub(r'\n\s*\n', '\n', text)
         return text.strip()
 
-    async def translate_batch_with_context(self, texts: List[str]) -> List[str]:
+    async def translate_batch_with_context(self, texts: List[str], current_batch_size: int = None) -> List[str]:
         """基于上下文的智能翻译"""
         start_time = time.time()
         
         if not self.context_manager:
             return await self.translate_batch(texts)
+        
+        # 使用传入的批次大小或当前批次大小
+        if current_batch_size is None:
+            current_batch_size = len(texts)
         
         try:
             context_info = self.context_manager.get_context_string()
@@ -292,7 +314,7 @@ class TranslationService:
                     terminology_dict=terminology_dict,
                     segments=json.dumps(segments, ensure_ascii=False)
                 )
-                logger.info(f"🌊 流式上下文翻译: {len(texts)} 条")
+                logger.info(f"🌊 流式上下文翻译: {len(texts)} 条 (批次大小: {current_batch_size})")
                 translated_segments = await self._stream_translate(prompt)
             else:
                 # 批量处理
@@ -302,7 +324,7 @@ class TranslationService:
                     current_segments=json.dumps(segments, ensure_ascii=False),
                     segment_count=len(texts)
                 )
-                logger.info(f"🧠 上下文批量翻译: {len(texts)} 条")
+                logger.info(f"🧠 上下文批量翻译: {len(texts)} 条 (批次大小: {current_batch_size})")
                 
                 session = await self._get_session()
                 data = {
@@ -322,8 +344,23 @@ class TranslationService:
             
             # 检查结果
             if len(translated_segments) != len(texts):
-                logger.warning("⚠️ 上下文翻译数量不匹配，降级处理")
-                return await self.translate_batch(texts)
+                if current_batch_size > 1:
+                    # 降级：减少批次大小到1，但保持上下文翻译模式
+                    logger.warning(f"⚠️ 上下文翻译数量不匹配 ({len(translated_segments)} vs {len(texts)})，降级到单条处理")
+                    # 递归调用，但使用单条处理
+                    single_results = []
+                    for text in texts:
+                        try:
+                            single_result = await self.translate_batch_with_context([text], current_batch_size=1)
+                            single_results.extend(single_result)
+                        except Exception as e:
+                            logger.error(f"❌ 单条翻译失败: {str(e)}")
+                            # 抛出异常，让上层处理失败情况
+                            raise Exception(f"单条翻译失败: {str(e)}")
+                    return single_results
+                else:
+                    # 已经是单条处理但仍然失败
+                    raise Exception(f"单条翻译数量不匹配: 期望1个，实际{len(translated_segments)}个")
             
             # 更新上下文和性能数据
             quality_results = self._check_translation_quality(texts, translated_segments)
@@ -337,16 +374,17 @@ class TranslationService:
             
             if self.adaptive_processor:
                 self.adaptive_processor.record_performance(
-                    len(texts), response_time, success_rate, quality_score
+                    current_batch_size, response_time, success_rate, quality_score
                 )
-                self.batch_size = self.adaptive_processor.get_optimal_batch_size()
+                # 不在这里更新batch_size，由上层调用者控制
             
-            logger.info(f"✅ 上下文翻译完成: 质量 {quality_score:.2f}, 时间 {response_time:.1f}s")
+            logger.info(f"✅ 上下文翻译完成: 质量 {quality_score:.2f}, 时间 {response_time:.1f}s, 批次 {current_batch_size}")
             return translated_segments
             
         except Exception as e:
-            logger.error(f"❌ 上下文翻译失败: {str(e)}")
-            return await self.translate_batch(texts)
+            logger.error(f"❌ 上下文翻译失败 (批次大小: {current_batch_size}): {str(e)}")
+            # 不再降级到传统翻译，直接抛出异常让上层处理
+            raise
 
     async def _stream_translate(self, prompt: str) -> List[str]:
         """流式翻译实现"""
@@ -382,6 +420,17 @@ class TranslationService:
                                         try:
                                             segment_data = json.loads(line_content)
                                             if 'id' in segment_data and 'text' in segment_data:
+                                                # 确保提取的是纯文本
+                                                text_content = segment_data['text']
+                                                if isinstance(text_content, str) and text_content.startswith('{"'):
+                                                    # text字段本身是JSON字符串，需要进一步解析
+                                                    try:
+                                                        inner_json = json.loads(text_content)
+                                                        if 'text' in inner_json:
+                                                            text_content = inner_json['text']
+                                                    except json.JSONDecodeError:
+                                                        pass
+                                                segment_data['text'] = text_content
                                                 segments.append(segment_data)
                                         except json.JSONDecodeError:
                                             pass
@@ -394,7 +443,7 @@ class TranslationService:
         except Exception as e:
             logger.error(f"❌ 流式翻译失败: {str(e)}")
             raise
-        
+
         if segments:
             segments.sort(key=lambda x: x.get('id', 0))
             return [seg['text'] for seg in segments]
@@ -409,13 +458,18 @@ class TranslationService:
         translations = []
         for line in lines:
             if (len(line) > 3 and not line.isdigit() and self._is_chinese_text(line)):
-                translations.append(line)
+                # 使用_extract_text_from_part方法处理可能的嵌套JSON
+                clean_text = self._extract_text_from_part(line)
+                translations.append(clean_text)
         
         return translations
 
     def _parse_contextual_response(self, response_text: str, expected_count: int) -> List[str]:
         """解析上下文翻译响应"""
         translations = []
+        
+        # 清理响应文本
+        response_text = self._clean_translation(response_text)
         
         # 尝试JSON解析
         lines = response_text.split('\n')
@@ -425,17 +479,37 @@ class TranslationService:
                 try:
                     segment_data = json.loads(line)
                     if 'text' in segment_data:
-                        translations.append(segment_data['text'])
+                        # 确保提取的是纯文本，如果text字段包含JSON，进一步解析
+                        text_content = segment_data['text']
+                        if isinstance(text_content, str) and text_content.startswith('{"'):
+                            # text字段本身是JSON字符串，需要进一步解析
+                            try:
+                                inner_json = json.loads(text_content)
+                                if 'text' in inner_json:
+                                    text_content = inner_json['text']
+                            except json.JSONDecodeError:
+                                pass  # 如果解析失败，使用原始文本
+                        translations.append(text_content)
                 except json.JSONDecodeError:
                     continue
         
         if len(translations) == expected_count:
             return translations
         
-        # 后备解析方法
+        # 后备解析方法1：尝试解析嵌套的JSON格式
+        logger.warning(f"主要解析失败，尝试后备解析方法。期望 {expected_count} 个，获得 {len(translations)} 个")
+        
+        # 重新解析，寻找所有可能的JSON对象
+        translations = []
+        json_pattern = r'\{"id":\s*\d+,\s*"text":\s*"([^"]+)"\}'
+        matches = re.findall(json_pattern, response_text)
+        if matches and len(matches) == expected_count:
+            return matches
+        
+        # 后备解析方法2：基于分隔符
         if "---" in response_text:
             parts = response_text.split("---")
-            translations = [part.strip() for part in parts if part.strip()]
+            translations = [self._extract_text_from_part(part) for part in parts if part.strip()]
         else:
             lines = response_text.split('\n')
             translations = []
@@ -443,7 +517,10 @@ class TranslationService:
                 line = line.strip()
                 if (line and not line.isdigit() and len(line) > 3 and 
                     self._is_chinese_text(line) and not line.startswith('#')):
-                    translations.append(line)
+                    # 进一步清理可能的JSON格式
+                    clean_text = self._extract_text_from_part(line)
+                    if clean_text:
+                        translations.append(clean_text)
         
         # 确保数量匹配
         if len(translations) > expected_count:
@@ -453,6 +530,58 @@ class TranslationService:
                 translations.append(translations[-1] if translations else "翻译失败")
         
         return translations
+
+    def _extract_text_from_part(self, text_part: str) -> str:
+        """从文本片段中提取纯文本内容"""
+        text_part = text_part.strip()
+        
+        # 如果是JSON格式，尝试解析
+        if text_part.startswith('{') and text_part.endswith('}'):
+            try:
+                json_data = json.loads(text_part)
+                if 'text' in json_data:
+                    return json_data['text']
+            except json.JSONDecodeError:
+                pass
+        
+        # 移除可能的JSON包装
+        if text_part.startswith('{"id"') and '"text"' in text_part:
+            try:
+                json_data = json.loads(text_part)
+                if 'text' in json_data:
+                    text_content = json_data['text']
+                    # 如果text字段本身还是JSON，继续解析
+                    if isinstance(text_content, str) and text_content.startswith('{"'):
+                        try:
+                            inner_json = json.loads(text_content)
+                            if 'text' in inner_json:
+                                return inner_json['text']
+                        except json.JSONDecodeError:
+                            pass
+                    return text_content
+            except json.JSONDecodeError:
+                pass
+        
+        # 使用正则表达式提取文本
+        patterns = [
+            r'"text":\s*"([^"]+)"',  # 提取JSON中的text字段
+            r'：\s*"([^"]+)"',       # 中文冒号后的引号内容
+            r':\s*"([^"]+)"',        # 英文冒号后的引号内容
+        ]
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, text_part)
+            if matches:
+                return matches[0]
+        
+        # 如果都没有匹配，返回清理后的文本
+        # 移除常见的JSON符号和格式
+        clean_text = re.sub(r'\{"id":\s*\d+,\s*"text":\s*"', '', text_part)
+        clean_text = re.sub(r'"\}$', '', clean_text)
+        clean_text = re.sub(r'^[^"]*"', '', clean_text)
+        clean_text = re.sub(r'"[^"]*$', '', clean_text)
+        
+        return clean_text.strip() if clean_text.strip() else text_part
 
     async def translate_batch(self, texts: List[str]) -> List[str]:
         """传统批量翻译（兼容性保留）"""
@@ -485,22 +614,26 @@ class TranslationService:
                     
                     # 解析结果
                     if len(texts) == 1:
-                        translated_segments = [translated_text]
+                        # 单个文本也需要用_extract_text_from_part处理可能的嵌套JSON
+                        translated_segments = [self._extract_text_from_part(translated_text)]
                     else:
                         try:
                             response_data = json.loads(translated_text)
                             if "translations" in response_data:
                                 translations = sorted(response_data["translations"], key=lambda x: x["id"])
-                                translated_segments = [t["text"] for t in translations]
+                                # 使用_extract_text_from_part处理每个text字段，防止嵌套JSON
+                                translated_segments = [self._extract_text_from_part(t["text"]) for t in translations]
                             else:
                                 raise ValueError("无效响应格式")
                         except json.JSONDecodeError:
-                            # 后备解析
+                            # 后备解析 - 使用_extract_text_from_part处理嵌套JSON
                             if "---" in translated_text:
-                                translated_segments = [s.strip() for s in translated_text.split("---") if s.strip()]
+                                parts = [s.strip() for s in translated_text.split("---") if s.strip()]
+                                translated_segments = [self._extract_text_from_part(part) for part in parts]
                             else:
-                                translated_segments = [s.strip() for s in translated_text.split("\n") 
-                                                     if s.strip() and not s.isdigit()]
+                                lines = [s.strip() for s in translated_text.split("\n") 
+                                        if s.strip() and not s.isdigit()]
+                                translated_segments = [self._extract_text_from_part(line) for line in lines]
                 
                 # 检查数量
                 if len(translated_segments) != len(texts):
@@ -527,40 +660,59 @@ class TranslationService:
                                  video_name: str,
                                  output_path: str = None,
                                  original_path: str = None) -> List[Dict[str, Any]]:
-        """智能字幕翻译主方法"""
+        """智能字幕翻译主方法 - 支持批次自适应恢复和失败重试"""
+        
+        # 设置路径
+        temp_dir = os.path.join("temp", video_name)
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        file_hash = get_file_hash(video_name)
+        if output_path is None:
+            output_path = os.path.join(temp_dir, f"{file_hash}_subtitles_zh.srt")
+        if original_path is None:
+            original_path = os.path.join(temp_dir, f"{file_hash}_subtitles_en.srt")
+            
+        # 检查是否已存在带音频的翻译文件
+        audio_json_path = os.path.join(temp_dir, f"{file_hash}_subtitles_zh_with_audio.json")
+        if os.path.exists(audio_json_path):
+            logger.info(f"🎯 发现已存在翻译文件: {audio_json_path}")
+            try:
+                with open(audio_json_path, "r", encoding="utf-8") as f:
+                    existing_subtitles = json.load(f)
+                logger.info(f"✅ 成功加载已存在的翻译: {len(existing_subtitles)} 条字幕")
+                return existing_subtitles
+            except Exception as e:
+                logger.warning(f"⚠️ 读取已存在翻译文件失败: {str(e)}，将重新翻译")
         
         # 测试连接
         logger.info("🔌 测试Ollama API连接...")
         if not await self.test_connection():
             raise Exception("无法连接到Ollama API")
-        
+            
         try:
-            # 设置路径
-            temp_dir = os.path.join("temp", video_name)
-            os.makedirs(temp_dir, exist_ok=True)
-            
-            file_hash = get_file_hash(video_name)
-            if output_path is None:
-                output_path = os.path.join(temp_dir, f"{file_hash}_subtitles_zh.srt")
-            if original_path is None:
-                original_path = os.path.join(temp_dir, f"{file_hash}_subtitles_en.srt")
-            
+            # 初始化统计和状态
             translated_subtitles = []
-            total = len(subtitles)
+            failed_items = []  # 失败的字幕项目
             successful_translations = 0
             failed_translations = 0
+            total = len(subtitles)
+            
+            # 批次大小控制 - 从1开始，逐步恢复
+            current_batch_size = 1
+            target_batch_size = self.batch_size
+            consecutive_success = 0  # 连续成功次数
             
             logger.info(f"🚀 开始智能翻译: 总计 {total} 条字幕")
-            logger.info(f"  📊 批次大小: {self.batch_size}")
+            logger.info(f"  📊 目标批次大小: {target_batch_size}, 起始: {current_batch_size}")
             logger.info(f"  🧠 上下文: {'✅' if self.context_manager else '❌'}")
             logger.info(f"  🌊 流式: {'✅' if TranslationConfig.ENABLE_STREAMING else '❌'}")
             logger.info(f"  📈 自适应: {'✅' if self.adaptive_processor else '❌'}")
             
-            # 进度条翻译
+            # 第一轮翻译：主要翻译过程
+            logger.info("🌍 开始第一轮翻译（自适应批次大小）")
             with tqdm(total=total, desc="🌍 智能翻译中", unit="字幕") as pbar:
                 i = 0
                 while i < total:
-                    current_batch_size = self.batch_size
                     batch = subtitles[i:i + current_batch_size]
                     
                     # 验证数据
@@ -569,25 +721,34 @@ class TranslationService:
                         pbar.update(len(batch))
                         i += current_batch_size
                         continue
-                    
+                        
                     batch_texts = [sub["text"] for sub in valid_batch]
+                    batch_indices = list(range(i, i + len(valid_batch)))
                     
                     try:
-                        # 智能翻译
-                        if TranslationConfig.ENABLE_CONTEXT and self.context_manager:
-                            translated_texts = await self.translate_batch_with_context(batch_texts)
+                        # 智能翻译 - 上下文模式始终启用，选择翻译方法
+                        if TranslationConfig.TRANSLATION_MODE == "contextual_three_step":
+                            # 模式1：上下文 + 三步翻译法
+                            translated_texts = await self.translate_with_context_three_step(
+                                batch_texts, current_batch_size=current_batch_size
+                            )
                         else:
-                            translated_texts = await self.translate_batch(batch_texts)
+                            # 模式2：上下文 + 单个直译法
+                            translated_texts = await self.translate_batch_with_context(
+                                batch_texts, current_batch_size=current_batch_size
+                            )
                         
-                        # 处理结果
+                        # 成功处理结果
                         quality_results = self._check_translation_quality(batch_texts, translated_texts)
                         
-                        for j, (subtitle, translated_text) in enumerate(zip(valid_batch, translated_texts)):
+                        for j, (subtitle, translated_text, index) in enumerate(zip(valid_batch, translated_texts, batch_indices)):
                             translated_subtitle = subtitle.copy()
                             translated_subtitle["text"] = translated_text
                             translated_subtitle["original_text"] = subtitle["text"]
                             translated_subtitle["translation_quality"] = "good" if quality_results[j] else "poor"
                             translated_subtitle["context_used"] = self.context_manager is not None
+                            translated_subtitle["batch_size_used"] = current_batch_size
+                            translated_subtitle["original_index"] = index
                             
                             translated_subtitles.append(translated_subtitle)
                             
@@ -598,21 +759,44 @@ class TranslationService:
                             
                             pbar.update(1)
                         
+                        # 批次成功 - 增加连续成功计数
+                        consecutive_success += 1
+                        
+                        # 自适应批次大小恢复
+                        if (consecutive_success >= 3 and  # 连续3次成功
+                            current_batch_size < target_batch_size):  # 未达到目标大小
+                            old_size = current_batch_size
+                            current_batch_size = min(current_batch_size * 2, target_batch_size)
+                            logger.info(f"📈 批次大小恢复: {old_size} → {current_batch_size}")
+                            consecutive_success = 0  # 重置计数
+                        
                         # 批次间延迟
                         if i + current_batch_size < total:
                             await asyncio.sleep(TranslationConfig.BATCH_DELAY)
                         
                     except Exception as e:
-                        logger.error(f"❌ 批次翻译失败: {str(e)}")
+                        logger.error(f"❌ 批次翻译失败 (批次大小: {current_batch_size}): {str(e)}")
                         
-                        # 失败保留原文
-                        for subtitle in valid_batch:
-                            translated_subtitle = subtitle.copy()
-                            translated_subtitle["original_text"] = subtitle["text"]
-                            translated_subtitle["translation_quality"] = "failed"
-                            translated_subtitles.append(translated_subtitle)
+                        # 批次失败 - 重置连续成功计数
+                        consecutive_success = 0
+                        
+                        # 标记失败的字幕
+                        for j, (subtitle, index) in enumerate(zip(valid_batch, batch_indices)):
+                            failed_item = {
+                                "subtitle": subtitle,
+                                "original_index": index,
+                                "error": str(e),
+                                "batch_size_attempted": current_batch_size
+                            }
+                            failed_items.append(failed_item)
                             failed_translations += 1
                             pbar.update(1)
+                        
+                        # 降级到最小批次大小
+                        if current_batch_size > 1:
+                            old_size = current_batch_size
+                            current_batch_size = 1
+                            logger.warning(f"📉 批次大小降级: {old_size} → {current_batch_size}")
                     
                     # 定期保存
                     if len(translated_subtitles) % TranslationConfig.PROGRESS_SAVE_INTERVAL == 0:
@@ -623,6 +807,98 @@ class TranslationService:
                     
                     i += current_batch_size
             
+            # 第二轮：失败重试
+            if failed_items:
+                logger.info(f"🔄 开始失败重试: {len(failed_items)} 条失败字幕")
+                retry_success = 0
+                
+                # 创建重试结果映射，避免重复
+                retry_results = {}
+                
+                with tqdm(total=len(failed_items), desc="🔄 重试失败字幕", unit="字幕") as retry_pbar:
+                    for failed_item in failed_items:
+                        try:
+                            subtitle = failed_item["subtitle"]
+                            text = subtitle["text"]
+                            original_index = failed_item["original_index"]
+                            
+                            # 单条重试，提供正确的上下文
+                            if TranslationConfig.TRANSLATION_MODE == "contextual_three_step":
+                                translated_texts = await self.translate_with_context_three_step(
+                                    [text], current_batch_size=1
+                                )
+                            else:
+                                translated_texts = await self.translate_batch_with_context(
+                                    [text], current_batch_size=1
+                                )
+                            
+                            # 重试成功
+                            if translated_texts and len(translated_texts) == 1:
+                                quality_results = self._check_translation_quality([text], translated_texts)
+                                
+                                translated_subtitle = subtitle.copy()
+                                translated_subtitle["text"] = translated_texts[0]
+                                translated_subtitle["original_text"] = subtitle["text"]
+                                translated_subtitle["translation_quality"] = "good" if quality_results[0] else "poor"
+                                translated_subtitle["context_used"] = self.context_manager is not None
+                                translated_subtitle["batch_size_used"] = 1
+                                translated_subtitle["original_index"] = original_index
+                                translated_subtitle["retry_success"] = True
+                                
+                                # 存储重试结果，而不是直接追加
+                                retry_results[original_index] = translated_subtitle
+                                retry_success += 1
+                                failed_translations -= 1
+                                successful_translations += 1
+                                
+                                logger.debug(f"✅ 重试成功: 索引 {original_index}")
+                            else:
+                                raise Exception("重试返回结果为空或数量不匹配")
+                        
+                        except Exception as e:
+                            logger.error(f"❌ 重试失败: 索引 {failed_item['original_index']}, 错误: {str(e)}")
+                            
+                            # 重试失败，保留原文
+                            subtitle = failed_item["subtitle"]
+                            translated_subtitle = subtitle.copy()
+                            translated_subtitle["original_text"] = subtitle["text"]
+                            translated_subtitle["translation_quality"] = "failed"
+                            translated_subtitle["context_used"] = False
+                            translated_subtitle["batch_size_used"] = 1
+                            translated_subtitle["original_index"] = failed_item["original_index"]
+                            translated_subtitle["retry_success"] = False
+                            translated_subtitle["retry_error"] = str(e)
+                            
+                            # 存储重试失败结果
+                            retry_results[failed_item["original_index"]] = translated_subtitle
+                        
+                        retry_pbar.update(1)
+                        
+                        # 重试间延迟
+                        await asyncio.sleep(0.5)
+                
+                # 用重试结果替换原始失败条目
+                for i, subtitle in enumerate(translated_subtitles):
+                    original_index = subtitle.get("original_index")
+                    if original_index in retry_results:
+                        translated_subtitles[i] = retry_results[original_index]
+                        logger.debug(f"🔄 替换失败条目: 索引 {original_index}")
+                
+                logger.info(f"🔄 重试完成: {retry_success}/{len(failed_items)} 成功")
+            
+            # 排序结果（按原始索引）
+            translated_subtitles.sort(key=lambda x: x.get("original_index", 0))
+            
+            # 去重处理：移除重复的字幕条目
+            if TranslationConfig.ENABLE_DEDUPLICATION:
+                original_count = len(translated_subtitles)
+                translated_subtitles = self._remove_duplicate_subtitles(translated_subtitles)
+                final_count = len(translated_subtitles)
+                if original_count != final_count:
+                    logger.info(f"🔄 去重完成: {original_count} → {final_count} 条字幕")
+            else:
+                logger.debug("🔄 去重功能已禁用")
+            
             # 最终保存
             self.save_subtitles(translated_subtitles, output_path, original_path)
             
@@ -632,6 +908,8 @@ class TranslationService:
             logger.info(f"  📊 总计: {total} 条")
             logger.info(f"  ✅ 成功: {successful_translations} ({success_rate:.1f}%)")
             logger.info(f"  ❌ 失败: {failed_translations}")
+            logger.info(f"  🔄 重试: {len(failed_items)} 条，成功 {retry_success if 'retry_success' in locals() else 0} 条")
+            logger.info(f"  📈 最终批次大小: {current_batch_size}")
             logger.info(f"  💾 文件: {output_path}")
             
             if self.context_manager:
@@ -675,3 +953,387 @@ class TranslationService:
         seconds = seconds % 60
         milliseconds = int((seconds - int(seconds)) * 1000)
         return f"{hours:02d}:{minutes:02d}:{int(seconds):02d},{milliseconds:03d}" 
+
+    # ========== 三步翻译法实现 ==========
+
+    async def translate_with_context_three_step(self, texts: List[str], current_batch_size: int = None) -> List[str]:
+        """上下文 + 三步翻译法：结合上下文和三步翻译法的优势"""
+        start_time = time.time()
+        logger.info(f"🎯 开始上下文+三步翻译法: {len(texts)} 条字幕")
+        
+        try:
+            # 获取上下文信息（上下文模式始终启用）
+            context_info = self.context_manager.get_context_string()
+            terminology_dict = self.context_manager.get_terminology_string()
+            
+            segments = [{"id": i+1, "text": text} for i, text in enumerate(texts)]
+            
+            # 第一步：使用上下文+三步翻译法进行初步翻译
+            if TranslationConfig.ENABLE_STREAMING and len(texts) <= 3:
+                prompt = self.three_step_streaming_prompt.format(
+                    context_info=context_info,
+                    terminology_dict=terminology_dict,
+                    segments=json.dumps(segments, ensure_ascii=False)
+                )
+                logger.info(f"🌊 上下文+三步流式翻译: {len(texts)} 条")
+                translated_segments = await self._stream_translate(prompt)
+            else:
+                prompt = self.three_step_prompt.format(
+                    previous_context=context_info,
+                    terminology_dict=terminology_dict,
+                    current_segments=json.dumps(segments, ensure_ascii=False),
+                    segment_count=len(texts)
+                )
+                logger.info(f"🎯 上下文+三步批量翻译: {len(texts)} 条")
+                
+                session = await self._get_session()
+                data = {
+                    "model": self.model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": TranslationConfig.get_three_step_options()
+                }
+                
+                async with session.post(f"{self.api_url}/api/generate", json=data) as response:
+                    if response.status != 200:
+                        raise Exception(f"上下文+三步翻译API请求失败: {response.status}")
+                    
+                    result = await response.json()
+                    translated_text = self._clean_translation(result.get("response", ""))
+                    translated_segments = self._parse_contextual_response(translated_text, len(texts))
+            
+            # 检查初步翻译结果
+            if len(translated_segments) != len(texts):
+                logger.warning(f"⚠️ 上下文+三步翻译数量不匹配，降级到上下文翻译")
+                return await self.translate_batch_with_context(texts, current_batch_size)
+            
+            # 第二步：反思优化（可选）
+            if TranslationConfig.ENABLE_REFLECTION_OPTIMIZATION:
+                optimized_segments = []
+                for i, (original_text, translated_text) in enumerate(zip(texts, translated_segments)):
+                    try:
+                        optimized_text = await self._reflect_and_optimize(
+                            original_text, translated_text, context_info, terminology_dict
+                        )
+                        optimized_segments.append(optimized_text)
+                        logger.debug(f"✅ 反思优化完成: 字幕 {i+1}")
+                    except Exception as e:
+                        logger.warning(f"⚠️ 反思优化失败: 字幕 {i+1}, 使用原翻译")
+                        optimized_segments.append(translated_text)
+                
+                translated_segments = optimized_segments
+            
+            # 更新上下文（上下文模式始终启用）
+            for original, translated in zip(texts, translated_segments):
+                self.context_manager.add_translation(original, translated)
+            
+            # 性能记录
+            response_time = time.time() - start_time
+            quality_results = self._check_translation_quality(texts, translated_segments)
+            quality_score = sum(quality_results) / len(quality_results) if quality_results else 0
+            
+            if self.adaptive_processor:
+                self.adaptive_processor.record_performance(
+                    len(texts), response_time, quality_score, quality_score
+                )
+            
+            logger.info(f"✅ 上下文+三步翻译完成: 质量 {quality_score:.2f}, 时间 {response_time:.1f}s")
+            return translated_segments
+            
+        except Exception as e:
+            logger.error(f"❌ 上下文+三步翻译失败: {str(e)}")
+            # 降级到上下文翻译
+            logger.info("🔄 降级到上下文翻译方法")
+            return await self.translate_batch_with_context(texts, current_batch_size)
+
+    async def translate_with_three_step_method(self, texts: List[str], current_batch_size: int = None) -> List[str]:
+        """使用吴恩达三步翻译法进行翻译"""
+        if not TranslationConfig.ENABLE_THREE_STEP_TRANSLATION:
+            return await self.translate_batch_with_context(texts, current_batch_size)
+        
+        start_time = time.time()
+        logger.info(f"🎯 开始三步翻译法: {len(texts)} 条字幕")
+        
+        try:
+            # 获取上下文信息
+            context_info = ""
+            terminology_dict = ""
+            if self.context_manager:
+                context_info = self.context_manager.get_context_string()
+                terminology_dict = self.context_manager.get_terminology_string()
+            
+            segments = [{"id": i+1, "text": text} for i, text in enumerate(texts)]
+            
+            # 第一步：使用三步翻译法进行初步翻译
+            if TranslationConfig.ENABLE_STREAMING and len(texts) <= 3:
+                prompt = self.three_step_streaming_prompt.format(
+                    context_info=context_info,
+                    terminology_dict=terminology_dict,
+                    segments=json.dumps(segments, ensure_ascii=False)
+                )
+                logger.info(f"🌊 三步流式翻译: {len(texts)} 条")
+                translated_segments = await self._stream_translate(prompt)
+            else:
+                prompt = self.three_step_prompt.format(
+                    previous_context=context_info,
+                    terminology_dict=terminology_dict,
+                    current_segments=json.dumps(segments, ensure_ascii=False),
+                    segment_count=len(texts)
+                )
+                logger.info(f"🎯 三步批量翻译: {len(texts)} 条")
+                
+                session = await self._get_session()
+                data = {
+                    "model": self.model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": TranslationConfig.get_three_step_options()
+                }
+                
+                async with session.post(f"{self.api_url}/api/generate", json=data) as response:
+                    if response.status != 200:
+                        raise Exception(f"三步翻译API请求失败: {response.status}")
+                    
+                    result = await response.json()
+                    translated_text = self._clean_translation(result.get("response", ""))
+                    translated_segments = self._parse_contextual_response(translated_text, len(texts))
+            
+            # 检查初步翻译结果
+            if len(translated_segments) != len(texts):
+                logger.warning(f"⚠️ 三步翻译数量不匹配，降级到传统翻译")
+                return await self.translate_batch_with_context(texts, current_batch_size)
+            
+            # 第二步：反思优化（可选）
+            if TranslationConfig.ENABLE_REFLECTION_OPTIMIZATION:
+                optimized_segments = []
+                for i, (original_text, translated_text) in enumerate(zip(texts, translated_segments)):
+                    try:
+                        optimized_text = await self._reflect_and_optimize(
+                            original_text, translated_text, context_info, terminology_dict
+                        )
+                        optimized_segments.append(optimized_text)
+                        logger.debug(f"✅ 反思优化完成: 字幕 {i+1}")
+                    except Exception as e:
+                        logger.warning(f"⚠️ 反思优化失败: 字幕 {i+1}, 使用原翻译")
+                        optimized_segments.append(translated_text)
+                
+                translated_segments = optimized_segments
+            
+            # 更新上下文
+            if self.context_manager:
+                for original, translated in zip(texts, translated_segments):
+                    self.context_manager.add_translation(original, translated)
+            
+            # 性能记录
+            response_time = time.time() - start_time
+            quality_results = self._check_translation_quality(texts, translated_segments)
+            quality_score = sum(quality_results) / len(quality_results) if quality_results else 0
+            
+            if self.adaptive_processor:
+                self.adaptive_processor.record_performance(
+                    len(texts), response_time, quality_score, quality_score
+                )
+            
+            logger.info(f"✅ 三步翻译完成: 质量 {quality_score:.2f}, 时间 {response_time:.1f}s")
+            return translated_segments
+            
+        except Exception as e:
+            logger.error(f"❌ 三步翻译失败: {str(e)}")
+            # 降级到传统翻译
+            logger.info("🔄 降级到传统翻译方法")
+            return await self.translate_batch_with_context(texts, current_batch_size)
+
+    async def _reflect_and_optimize(self, original_text: str, current_translation: str, 
+                                  context_info: str, terminology_dict: str) -> str:
+        """反思并优化翻译结果"""
+        try:
+            # 构建反思提示
+            prompt = self.reflection_prompt.format(
+                original_text=original_text,
+                current_translation=current_translation,
+                context_info=context_info,
+                terminology_dict=terminology_dict
+            )
+            
+            session = await self._get_session()
+            data = {
+                "model": self.model,
+                "prompt": prompt,
+                "stream": False,
+                "options": TranslationConfig.get_three_step_options()
+            }
+            
+            async with session.post(f"{self.api_url}/api/generate", json=data) as response:
+                if response.status != 200:
+                    raise Exception(f"反思优化API请求失败: {response.status}")
+                
+                result = await response.json()
+                reflection_text = self._clean_translation(result.get("response", ""))
+                
+                # 解析反思结果
+                try:
+                    reflection_data = json.loads(reflection_text)
+                    if "optimized_translation" in reflection_data:
+                        optimized_text = reflection_data["optimized_translation"]
+                        
+                        # 质量检查
+                        if self._is_valid_translation(optimized_text):
+                            return optimized_text
+                        else:
+                            logger.warning("⚠️ 反思优化结果无效，使用原翻译")
+                            return current_translation
+                    else:
+                        raise ValueError("反思结果中缺少优化翻译")
+                        
+                except json.JSONDecodeError:
+                    # 如果JSON解析失败，尝试提取翻译文本
+                    optimized_text = self._extract_optimized_translation(reflection_text)
+                    if optimized_text and self._is_valid_translation(optimized_text):
+                        return optimized_text
+                    else:
+                        logger.warning("⚠️ 无法解析反思结果，使用原翻译")
+                        return current_translation
+                        
+        except Exception as e:
+            logger.error(f"❌ 反思优化失败: {str(e)}")
+            return current_translation
+
+    def _is_valid_translation(self, text: str) -> bool:
+        """检查翻译结果是否有效"""
+        if not text or len(text.strip()) == 0:
+            return False
+        
+        # 检查是否包含中文字符
+        chinese_chars = re.findall(r'[\u4e00-\u9fff]', text)
+        if len(chinese_chars) < len(text) * 0.3:  # 至少30%是中文字符
+            return False
+        
+        # 检查是否包含明显的错误标记
+        error_indicators = ['error', 'failed', 'invalid', '无法翻译', '翻译失败']
+        if any(indicator in text.lower() for indicator in error_indicators):
+            return False
+        
+        return True
+
+    def _extract_optimized_translation(self, reflection_text: str) -> str:
+        """从反思文本中提取优化后的翻译"""
+        # 尝试多种模式匹配
+        patterns = [
+            r'"optimized_translation":\s*"([^"]+)"',
+            r'优化后的翻译[：:]\s*(.+)',
+            r'最终翻译[：:]\s*(.+)',
+            r'改进翻译[：:]\s*(.+)'
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, reflection_text)
+            if match:
+                return match.group(1).strip()
+        
+        # 如果没有找到模式匹配，尝试提取最后一段中文文本
+        lines = reflection_text.split('\n')
+        for line in reversed(lines):
+            line = line.strip()
+            if line and self._is_chinese_text(line) and len(line) > 5:
+                return line
+        
+        return ""
+
+    async def translate_batch_enhanced(self, texts: List[str]) -> List[str]:
+        """增强的批量翻译方法，根据配置选择翻译模式（上下文模式始终启用）"""
+        if TranslationConfig.TRANSLATION_MODE == "contextual_three_step":
+            return await self.translate_with_context_three_step(texts)
+        else:
+            return await self.translate_batch_with_context(texts) 
+
+    def _remove_duplicate_subtitles(self, subtitles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """移除重复的字幕条目，优先保留质量更好的翻译"""
+        # 按原始索引分组
+        grouped_subtitles = {}
+        
+        for subtitle in subtitles:
+            original_index = subtitle.get("original_index")
+            if original_index not in grouped_subtitles:
+                grouped_subtitles[original_index] = []
+            grouped_subtitles[original_index].append(subtitle)
+        
+        # 对每个索引组，选择最佳翻译
+        unique_subtitles = []
+        for original_index, group in grouped_subtitles.items():
+            if len(group) == 1:
+                # 只有一个条目，直接保留
+                unique_subtitles.append(group[0])
+            else:
+                # 多个条目，选择最佳的一个
+                best_subtitle = self._select_best_subtitle(group)
+                unique_subtitles.append(best_subtitle)
+                
+                if len(group) > 1:
+                    log_message = f"🔄 发现重复字幕: 索引 {original_index}, 保留最佳翻译，移除 {len(group)-1} 个重复条目"
+                    if TranslationConfig.DEDUPLICATION_LOG_LEVEL == "info":
+                        logger.info(log_message)
+                    elif TranslationConfig.DEDUPLICATION_LOG_LEVEL == "debug":
+                        logger.debug(log_message)
+                    elif TranslationConfig.DEDUPLICATION_LOG_LEVEL == "warning":
+                        logger.warning(log_message)
+        
+        return unique_subtitles
+    
+    def _select_best_subtitle(self, subtitles: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """从多个重复字幕中选择最佳的一个"""
+        if not subtitles:
+            return {}
+        
+        if len(subtitles) == 1:
+            return subtitles[0]
+        
+        # 评分系统：选择质量最好的字幕
+        best_subtitle = subtitles[0]
+        best_score = self._calculate_subtitle_quality_score(subtitles[0])
+        
+        for subtitle in subtitles[1:]:
+            score = self._calculate_subtitle_quality_score(subtitle)
+            if score > best_score:
+                best_score = score
+                best_subtitle = subtitle
+        
+        return best_subtitle
+    
+    def _calculate_subtitle_quality_score(self, subtitle: Dict[str, Any]) -> float:
+        """计算字幕质量评分"""
+        score = 0.0
+        
+        # 翻译质量评分
+        quality = subtitle.get("translation_quality", "poor")
+        if quality == "good":
+            score += 10.0
+        elif quality == "poor":
+            score += 5.0
+        elif quality == "failed":
+            score += 0.0
+        
+        # 重试成功加分
+        if subtitle.get("retry_success", False):
+            score += 2.0
+        
+        # 上下文使用加分
+        if subtitle.get("context_used", False):
+            score += 1.0
+        
+        # 文本长度合理性评分
+        original_text = subtitle.get("original_text", "")
+        translated_text = subtitle.get("text", "")
+        
+        if original_text and translated_text:
+            length_ratio = len(translated_text) / len(original_text)
+            if 0.5 <= length_ratio <= 2.0:  # 合理的长度比例
+                score += 1.0
+        
+        # 中文内容比例评分
+        chinese_chars = len(re.findall(r'[\u4e00-\u9fff]', translated_text))
+        if len(translated_text) > 0:
+            chinese_ratio = chinese_chars / len(translated_text)
+            if chinese_ratio >= 0.5:  # 至少50%是中文
+                score += 1.0
+        
+        return score 

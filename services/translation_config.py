@@ -49,6 +49,35 @@ class TranslationConfig:
     # 进度保存配置
     PROGRESS_SAVE_INTERVAL = 6  # 每处理多少条字幕保存一次进度（batch_size * 2）
     
+    # ========== 三步翻译法配置 ==========
+    
+    # 三步翻译法开关
+    ENABLE_THREE_STEP_TRANSLATION = True  # 启用三步翻译法
+    ENABLE_REFLECTION_OPTIMIZATION = True # 启用反思优化
+    
+    # 三步翻译法参数
+    THREE_STEP_BATCH_SIZE = 2  # 三步翻译法的批次大小（较小以确保质量）
+    REFLECTION_QUALITY_THRESHOLD = 0.7  # 反思优化的质量阈值
+    MAX_REFLECTION_ATTEMPTS = 2  # 最大反思优化次数
+    
+    # 质量评分权重
+    ACCURACY_WEIGHT = 0.25      # 准确性权重
+    NATURALNESS_WEIGHT = 0.25   # 自然度权重
+    FLUENCY_WEIGHT = 0.2        # 流畅度权重
+    CONSISTENCY_WEIGHT = 0.2    # 一致性权重
+    CONCISENESS_WEIGHT = 0.1    # 简洁度权重
+    
+    # 翻译模式选择（上下文模式始终启用）
+    TRANSLATION_MODE = "contextual_three_step"  # 翻译模式: "contextual_direct", "contextual_three_step"
+    
+    # 三步翻译法超时配置
+    THREE_STEP_TIMEOUT = 120    # 三步翻译超时时间（秒）
+    REFLECTION_TIMEOUT = 60     # 反思优化超时时间（秒）
+    
+    # 去重配置
+    ENABLE_DEDUPLICATION = True  # 启用去重功能
+    DEDUPLICATION_LOG_LEVEL = "info"  # 去重日志级别: "debug", "info", "warning"
+    
     @classmethod
     def get_model_options(cls):
         """获取模型选项"""
@@ -68,6 +97,18 @@ class TranslationConfig:
         options.update({
             "top_k": 30,  # 降低采样范围以提高一致性
             "repeat_penalty": 1.05,  # 略微降低重复惩罚
+        })
+        return options
+    
+    @classmethod
+    def get_three_step_options(cls):
+        """获取三步翻译法的模型选项"""
+        options = cls.get_model_options()
+        # 三步翻译法优化参数
+        options.update({
+            "temperature": 0.15,  # 略微提高创造性
+            "top_p": 0.9,        # 降低采样范围以提高质量
+            "top_k": 30,         # 降低采样范围
         })
         return options
     

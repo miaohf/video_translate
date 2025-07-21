@@ -264,9 +264,13 @@ async def process_translation_task(task_id: str, video_file_path: str, callback_
         if check_cancelled():
             return
             
-        # 步骤4: 创建参考音频
-        TaskManager.update_task_status(task_id, TaskStatus.GENERATING_TTS, 65, "Creating reference audio segments")
-        subtitles = translation_client.audio_processor.create_audio_segments(audio_path, subtitles, video_name)
+        # 步骤4: 创建增强参考音频
+        TaskManager.update_task_status(task_id, TaskStatus.GENERATING_TTS, 65, "Creating enhanced reference audio segments")
+        from config import ENABLE_VOCAL_SEPARATION
+        subtitles = translation_client.audio_processor.create_enhanced_audio_segments(
+            audio_path, subtitles, video_name, 
+            use_vocal_separation=ENABLE_VOCAL_SEPARATION
+        )
         
         # 上传参考音频
         subtitles = await translation_client.audio_processor.upload_reference_audio(subtitles)
