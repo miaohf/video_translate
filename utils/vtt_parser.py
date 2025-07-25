@@ -288,7 +288,7 @@ class VTTParser:
                             logger.info(f"在downloads目录找到VTT文件: {vtt_path}")
         
         return vtt_files
-
+    
     @staticmethod
     def select_best_subtitle_file(vtt_files: List[str]) -> Optional[str]:
         """

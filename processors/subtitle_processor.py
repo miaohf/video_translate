@@ -513,8 +513,8 @@ class SubtitleProcessor:
                     if best_vtt_file:
                         logger.info(f"🎯 智能选择字幕文件: {best_vtt_file}")
                         subtitles = VTTParser.parse_vtt_file(best_vtt_file)
-                        if subtitles:
-                            return subtitles
+                    if subtitles:
+                        return subtitles
                     else:
                         logger.warning("⚠️ 未找到合适的字幕文件")
             

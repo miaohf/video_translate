@@ -28,7 +28,7 @@ OLLAMA_MODEL=qwen3:8b
 # ========== DeepSeek API 配置 ==========
 # 当 TRANSLATION_PROVIDER=deepseek 时使用
 DEEPSEEK_API_URL=https://api.deepseek.com
-DEEPSEEK_API_KEY=sk-39edbcf2781f4010af834fd9226ab92e
+DEEPSEEK_API_KEY=sk-xxxxx
 DEEPSEEK_MODEL=deepseek-chat
 
 # ========== 服务器配置 ==========
