@@ -14,7 +14,7 @@
 
 ```env
 # ========== API密钥配置 ==========
-HF_TOKEN=REMOVED_SENSITIVE_TOKEN
+HF_TOKEN=your_huggingface_token_here
 
 # ========== API提供商配置 ==========
 # 翻译服务提供商选择: ollama 或 deepseek

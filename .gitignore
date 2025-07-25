@@ -69,6 +69,8 @@ test_translate.sh
 # Configuration files (contains sensitive information)
 config.py
 config_local.py
+.env.backup
+*.env.backup
 
 # Logs
 *.log
