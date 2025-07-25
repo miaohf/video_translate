@@ -7,26 +7,26 @@ import uvicorn
 import os
 import logging
 from pathlib import Path
-from config_manager import config
+from config import settings
 
 def main():
     """启动API服务器"""
     # 确保必要的目录存在
-    Path(config.temp_dir).mkdir(exist_ok=True)
-    Path(config.output_dir).mkdir(exist_ok=True)
+    Path(settings.TEMP_DIR).mkdir(exist_ok=True)
+    Path(settings.OUTPUT_DIR).mkdir(exist_ok=True)
     
     print(f"🚀 启动翻译API服务器...")
-    print(f"📡 监听地址: http://{config.api_host}:{config.api_port}")
-    print(f"📚 API文档: http://{config.api_host}:{config.api_port}/docs")
-    print(f"⚡ 工作进程: {config.api_workers}")
+    print(f"📡 监听地址: http://{settings.API_HOST}:{settings.API_PORT}")
+    print(f"📚 API文档: http://{settings.API_HOST}:{settings.API_PORT}/docs")
+    print(f"⚡ 工作进程: {settings.API_WORKERS}")
     print(f"🔧 配置文件: 已加载环境变量配置")
     
     # 启动服务器
     uvicorn.run(
         "api_server:app",
-        host=config.api_host,
-        port=config.api_port,
-        workers=config.api_workers,
+        host=settings.API_HOST,
+        port=settings.API_PORT,
+        workers=settings.API_WORKERS,
         reload=True,  # 开发模式下自动重载
         access_log=True
     )

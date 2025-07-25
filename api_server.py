@@ -15,7 +15,7 @@ from enum import Enum
 
 from main import VideoTranslationClient
 from utils.common import get_file_hash
-from config_manager import config
+from config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +27,8 @@ app = FastAPI(
 )
 
 # 挂载静态文件服务（用于提供翻译后的视频文件）
-os.makedirs(config.output_dir, exist_ok=True)
-app.mount("/files", StaticFiles(directory=config.output_dir), name="files")
+os.makedirs(settings.OUTPUT_DIR, exist_ok=True)
+app.mount("/files", StaticFiles(directory=settings.OUTPUT_DIR), name="files")
 
 # 任务状态枚举
 class TaskStatus(str, Enum):
@@ -224,12 +224,16 @@ async def process_translation_task(task_id: str, video_file_path: str, callback_
         ))
         
         # 检查是否存在已有字幕
-        subtitle_json_path = os.path.join(config.temp_dir, video_name, f"{file_hash}_subtitles.json")
+        subtitle_json_path = os.path.join(settings.TEMP_DIR, video_name, f"{file_hash}_subtitles.json")
         if os.path.exists(subtitle_json_path):
             with open(subtitle_json_path, "r", encoding="utf-8") as f:
                 subtitles = json.load(f)
         else:
-            subtitles = await translation_client.subtitle_processor.get_subtitles(audio_path, video_name, video_file_path)
+            from config import ENABLE_VOCAL_SEPARATION
+            subtitles = await translation_client.subtitle_processor.get_subtitles(
+                audio_path, video_name, video_file_path, 
+                use_vocal_separation=ENABLE_VOCAL_SEPARATION
+            )
         
         if check_cancelled():
             return
@@ -245,7 +249,7 @@ async def process_translation_task(task_id: str, video_file_path: str, callback_
         ))
         
         # 使用配置的翻译模式
-        translation_mode = config.translation_mode
+        translation_mode = settings.TRANSLATION_MODE
         use_whole_translation = (translation_mode == 'whole')
         
         if use_whole_translation:
@@ -297,18 +301,18 @@ async def process_translation_task(task_id: str, video_file_path: str, callback_
         TaskManager.update_task_status(task_id, TaskStatus.COMPOSING, 95, "Saving translation results")
         
         # 保存翻译后的字幕
-        output_subtitle_path = os.path.join(config.output_dir, f"{video_id}_{file_hash}_subtitles_zh.json")
+        output_subtitle_path = os.path.join(settings.OUTPUT_DIR, f"{video_id}_{file_hash}_subtitles_zh.json")
         os.makedirs(os.path.dirname(output_subtitle_path), exist_ok=True)
         translation_client.subtitle_processor.save_subtitles_to_json(subtitles, output_subtitle_path)
         
         # 复制音频文件到输出目录
-        output_audio_path = os.path.join(config.output_dir, f"{video_id}_{file_hash}_translated_audio.wav")
+        output_audio_path = os.path.join(settings.OUTPUT_DIR, f"{video_id}_{file_hash}_translated_audio.wav")
         if tts_audio_path and os.path.exists(tts_audio_path):
             import shutil
             shutil.copy2(tts_audio_path, output_audio_path)
         
         # 生成文件访问URL
-        translated_audio_url = f"{config.api_base_url}/files/{video_id}_{file_hash}_translated_audio.wav"
+        translated_audio_url = f"{settings.API_BASE_URL}/files/{video_id}_{file_hash}_translated_audio.wav"
         
         # 更新任务为完成状态
         TaskManager.update_task_status(task_id, TaskStatus.COMPLETED, 100, "Translation completed")
@@ -380,7 +384,7 @@ async def start_translation(request: TranslateRequest, background_tasks: Backgro
             success=True,
             task_id=task_id,
             message="Translation task started",
-            estimated_duration=config.default_estimated_duration
+            estimated_duration=settings.DEFAULT_ESTIMATED_DURATION
         )
         
     except HTTPException:
@@ -446,4 +450,4 @@ async def list_tasks():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host=config.api_host, port=config.api_port)
+    uvicorn.run(app, host=settings.API_HOST, port=settings.API_PORT)

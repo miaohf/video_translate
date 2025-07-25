@@ -288,6 +288,68 @@ class VTTParser:
                             logger.info(f"在downloads目录找到VTT文件: {vtt_path}")
         
         return vtt_files
+
+    @staticmethod
+    def select_best_subtitle_file(vtt_files: List[str]) -> Optional[str]:
+        """
+        从多个VTT文件中智能选择最佳字幕文件
+        
+        优先级顺序：
+        1. 中文字幕 (zh, zh-CN, zh-TW, chinese)
+        2. 英文字幕 (en, en-US, en-GB, english)
+        3. 其他语言字幕
+        
+        参数:
+            vtt_files: VTT文件路径列表
+            
+        返回:
+            最佳字幕文件路径或None
+        """
+        if not vtt_files:
+            return None
+        
+        # 语言优先级定义
+        language_priorities = {
+            # 中文优先级最高
+            'zh': 1, 'zh-CN': 1, 'zh-TW': 1, 'chinese': 1, 'cn': 1,
+            # 英文优先级第二
+            'en': 2, 'en-US': 2, 'en-GB': 2, 'english': 2, 'us': 2,
+            # 其他语言优先级最低
+            'ko': 3, 'kr': 3, 'korean': 3,
+            'ja': 3, 'jp': 3, 'japanese': 3,
+            'es': 3, 'spanish': 3,
+            'fr': 3, 'french': 3,
+            'de': 3, 'german': 3,
+            'it': 3, 'italian': 3,
+            'pt': 3, 'portuguese': 3,
+            'ru': 3, 'russian': 3,
+        }
+        
+        best_file = None
+        best_priority = float('inf')
+        
+        for vtt_file in vtt_files:
+            filename = os.path.basename(vtt_file)
+            priority = float('inf')  # 默认最低优先级
+            
+            # 从文件名中提取语言代码
+            for lang_code, lang_priority in language_priorities.items():
+                if f'.{lang_code}.' in filename or f'_{lang_code}.' in filename:
+                    priority = lang_priority
+                    break
+            
+            # 如果找到更高优先级的文件，更新最佳选择
+            if priority < best_priority:
+                best_priority = priority
+                best_file = vtt_file
+                logger.info(f"🎯 选择字幕文件: {filename} (优先级: {priority})")
+        
+        if best_file:
+            logger.info(f"✅ 最终选择字幕文件: {os.path.basename(best_file)}")
+        else:
+            logger.warning("⚠️ 未找到合适的字幕文件")
+        
+        return best_file
     
     @staticmethod
     def convert_json_to_vtt_format(json_subtitles: List[Dict]) -> List[Dict]:

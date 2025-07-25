@@ -155,23 +155,27 @@ class TranslationService:
     """智能翻译服务 - 集成流式处理、上下文感知、自适应批次等功能"""
     
     def __init__(self, batch_size: int = None):
-        self.api_url = settings.OLLAMA_API_URL
-        self.model = settings.OLLAMA_MODEL
-        self.llm = OllamaLLM(model=self.model)
+        # 根据配置选择API类型
+        if settings.TRANSLATION_PROVIDER.lower() == "deepseek":
+            self.api_url = settings.DEEPSEEK_API_URL
+            self.model = settings.DEEPSEEK_MODEL
+            self.api_type = "deepseek"
+            # DeepSeek不需要OllamaLLM实例
+            self.llm = None
+        else:
+            self.api_url = settings.OLLAMA_API_URL
+            self.model = settings.OLLAMA_MODEL
+            self.api_type = "ollama"
+            self.llm = OllamaLLM(model=self.model)
+        
         self._session = None
         
         # 初始化功能模块 - 上下文模式始终启用
         self.context_manager = ContextManager()  # 上下文模式始终启用
         
-        if TranslationConfig.ENABLE_ADAPTIVE_BATCH:
-            initial_batch_size = batch_size or TranslationConfig.DEFAULT_BATCH_SIZE
-            self.adaptive_processor = AdaptiveBatchProcessor(initial_batch_size)
-            self.batch_size = self.adaptive_processor.current_batch_size
-        else:
-            self.batch_size = TranslationConfig.validate_batch_size(
-                batch_size or TranslationConfig.DEFAULT_BATCH_SIZE
-            )
-            self.adaptive_processor = None
+        # 单条模式：强制设置批次大小为1
+        self.batch_size = 1
+        self.adaptive_processor = None  # 单条模式下禁用自适应处理器
         
         # 初始化模板 - 上下文模式始终启用
         self.contextual_prompt = PromptTemplate(
@@ -204,11 +208,13 @@ class TranslationService:
                 template=REFLECTION_TEMPLATE
             )
         
-        logger.info(f"🚀 智能翻译服务已初始化")
-        logger.info(f"  批处理大小: {self.batch_size}")
+        logger.info(f"🚀 单条异步翻译服务已初始化")
+        logger.info(f"  API类型: {self.api_type.upper()}")
+        logger.info(f"  模型: {self.model}")
+        logger.info(f"  API地址: {self.api_url}")
+        logger.info(f"  处理模式: 单条异步")
         logger.info(f"  上下文功能: ✅ 始终启用")
         logger.info(f"  流式处理: {'✅ 启用' if TranslationConfig.ENABLE_STREAMING else '❌ 禁用'}")
-        logger.info(f"  自适应批次: {'✅ 启用' if TranslationConfig.ENABLE_ADAPTIVE_BATCH else '❌ 禁用'}")
         logger.info(f"  三步翻译法: {'✅ 启用' if TranslationConfig.ENABLE_THREE_STEP_TRANSLATION else '❌ 禁用'}")
         logger.info(f"  翻译模式: {TranslationConfig.TRANSLATION_MODE}")
 
@@ -221,7 +227,7 @@ class TranslationService:
             )
             
             timeout = aiohttp.ClientTimeout(
-                total=TranslationConfig.REQUEST_TIMEOUT, connect=30, sock_read=60
+                total=TranslationConfig.REQUEST_TIMEOUT, connect=30, sock_read=TranslationConfig.REQUEST_TIMEOUT
             )
             
             self._session = aiohttp.ClientSession(connector=connector, timeout=timeout)
@@ -232,24 +238,96 @@ class TranslationService:
         if self._session and not self._session.closed:
             await self._session.close()
             
-    async def test_connection(self) -> bool:
-        """测试API连接"""
-        try:
-            session = await self._get_session()
-            test_data = {
+    def _prepare_api_request(self, prompt: str, options: dict = None) -> tuple:
+        """准备API请求数据，支持Ollama和DeepSeek两种格式"""
+        if self.api_type == "deepseek":
+            # DeepSeek API格式
+            data = {
                 "model": self.model,
-                "prompt": "测试连接",
-                "stream": False,
-                "options": {"temperature": 0.1}
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": options.get("temperature", 0.1) if options else 0.1,
+                "max_tokens": options.get("max_tokens", 2048) if options else 2048
             }
             
-            async with session.post(f"{self.api_url}/api/generate", json=test_data) as response:
+            headers = {
+                "Authorization": f"Bearer {settings.DEEPSEEK_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            
+            url = f"{self.api_url}/v1/chat/completions"
+            
+        else:
+            # Ollama API格式
+            data = {
+                "model": self.model,
+                "prompt": prompt,
+                "stream": False,
+                "options": options or {"temperature": 0.1}
+            }
+            
+            headers = {"Content-Type": "application/json"}
+            url = f"{self.api_url}/api/generate"
+        
+        return url, data, headers
+
+    def _create_simple_translation_prompt(self, text: str) -> str:
+        """为DeepSeek创建简化的翻译提示词"""
+        return f"""你是一位专业的英中翻译专家，正在翻译字幕。
+
+## 当前待翻译字幕：
+{text}
+
+## 翻译要求：
+1. 将英文翻译成中文
+2. 保持自然流畅的中文表达
+3. 控制句子长度，翻译后的句子长短应与原文接近
+4. 使用简洁精炼的中文
+
+## 输出格式：
+请直接输出中文翻译，不要包含任何其他内容。
+
+开始翻译："""
+
+    def _parse_api_response(self, response_data: dict) -> str:
+        """解析API响应，支持Ollama和DeepSeek两种格式"""
+        if self.api_type == "deepseek":
+            # DeepSeek响应格式
+            if "choices" in response_data and len(response_data["choices"]) > 0:
+                return response_data["choices"][0]["message"]["content"]
+            else:
+                raise ValueError("DeepSeek API响应格式无效")
+        else:
+            # Ollama响应格式
+            return response_data.get("response", "")
+
+    async def test_connection(self) -> bool:
+        """测试API连接 - 支持Ollama和DeepSeek两种API"""
+        try:
+            session = await self._get_session()
+            
+            # 打印API信息
+            logger.info(f"🔌 测试{self.api_type.upper()} API连接...")
+            logger.info(f"  模型: {self.model}")
+            logger.info(f"  API地址: {self.api_url}")
+            
+            # 检查DeepSeek API密钥
+            if self.api_type == "deepseek" and not settings.DEEPSEEK_API_KEY:
+                logger.error("❌ DeepSeek API密钥未配置")
+                return False
+            
+            # 准备测试请求
+            url, data, headers = self._prepare_api_request("测试连接", {"temperature": 0.1, "max_tokens": 10})
+            
+            async with session.post(url, json=data, headers=headers) as response:
                 if response.status == 200:
-                    logger.info("✅ Ollama API连接测试成功")
+                    logger.info(f"✅ {self.api_type.upper()} API连接测试成功")
                     return True
                 else:
-                    logger.error(f"❌ API连接失败: 状态码 {response.status}")
+                    logger.error(f"❌ {self.api_type.upper()} API连接失败: 状态码 {response.status}")
                     return False
+                        
         except Exception as e:
             logger.error(f"❌ API连接异常: {str(e)}")
             return False
@@ -290,6 +368,138 @@ class TranslationService:
         text = re.sub(r'\n\s*\n', '\n', text)
         return text.strip()
 
+    async def translate_single_subtitle(self, text: str) -> str:
+        """单条字幕异步翻译方法"""
+        start_time = time.time()
+        
+        # 对于DeepSeek API，使用简化的翻译方法
+        if self.api_type == "deepseek":
+            try:
+                logger.debug(f"🧠 DeepSeek单条翻译")
+                
+                # 使用简化的翻译提示词
+                prompt = self._create_simple_translation_prompt(text)
+                
+                session = await self._get_session()
+                url, data, headers = self._prepare_api_request(prompt, TranslationConfig.get_model_options())
+                
+                async with session.post(url, json=data, headers=headers) as response:
+                    if response.status != 200:
+                        raise Exception(f"DeepSeek API请求失败: {response.status}")
+                    
+                    result = await response.json()
+                    translated_text = self._clean_translation(self._parse_api_response(result))
+                    
+                    # 更新上下文
+                    if self.context_manager:
+                        self.context_manager.add_translation(text, translated_text)
+                    
+                    logger.debug(f"✅ DeepSeek单条翻译完成")
+                    return translated_text
+                    
+            except Exception as e:
+                logger.error(f"❌ DeepSeek单条翻译失败: {str(e)}")
+                return text
+        
+        # 对于Ollama API，使用原有的复杂逻辑
+        if not self.context_manager:
+            # 如果没有上下文管理器，使用基础翻译
+            result = await self.translate_batch([text])
+            return result[0] if result else text
+        
+        try:
+            context_info = self.context_manager.get_context_string()
+            terminology_dict = self.context_manager.get_terminology_string()
+            segments = [{"id": 1, "text": text}]
+            
+            # 根据翻译模式选择方法
+            if TranslationConfig.TRANSLATION_MODE == "contextual_three_step":
+                # 三步翻译法
+                if TranslationConfig.ENABLE_STREAMING:
+                    prompt = self.three_step_streaming_prompt.format(
+                        context_info=context_info,
+                        terminology_dict=terminology_dict,
+                        segments=json.dumps(segments, ensure_ascii=False)
+                    )
+                    logger.debug(f"🌊 单条三步流式翻译")
+                    translated_segments = await self._stream_translate(prompt)
+                else:
+                    prompt = self.three_step_prompt.format(
+                        previous_context=context_info,
+                        terminology_dict=terminology_dict,
+                        current_segments=json.dumps(segments, ensure_ascii=False),
+                        segment_count=1
+                    )
+                    logger.debug(f"🧠 单条三步翻译")
+                    
+                    session = await self._get_session()
+                    url, data, headers = self._prepare_api_request(prompt, TranslationConfig.get_three_step_options())
+                    
+                    async with session.post(url, json=data, headers=headers) as response:
+                        if response.status != 200:
+                            raise Exception(f"三步翻译API请求失败: {response.status}")
+                        
+                        result = await response.json()
+                        translated_text = self._clean_translation(self._parse_api_response(result))
+                        translated_segments = self._parse_contextual_response(translated_text, 1)
+            else:
+                # 上下文直译法
+                if TranslationConfig.ENABLE_STREAMING:
+                    prompt = self.streaming_prompt.format(
+                        context_info=context_info,
+                        terminology_dict=terminology_dict,
+                        segments=json.dumps(segments, ensure_ascii=False)
+                    )
+                    logger.debug(f"🌊 单条流式翻译")
+                    translated_segments = await self._stream_translate(prompt)
+                else:
+                    prompt = self.contextual_prompt.format(
+                        previous_context=context_info,
+                        terminology_dict=terminology_dict,
+                        current_segments=json.dumps(segments, ensure_ascii=False),
+                        segment_count=1
+                    )
+                    logger.debug(f"🧠 单条上下文翻译")
+                    
+                    session = await self._get_session()
+                    url, data, headers = self._prepare_api_request(prompt, TranslationConfig.get_model_options())
+                    
+                    async with session.post(url, json=data, headers=headers) as response:
+                        if response.status != 200:
+                            raise Exception(f"API请求失败: {response.status}")
+                        
+                        result = await response.json()
+                        translated_text = self._clean_translation(self._parse_api_response(result))
+                        translated_segments = self._parse_contextual_response(translated_text, 1)
+            
+            # 检查结果
+            if not translated_segments or len(translated_segments) != 1:
+                raise Exception(f"单条翻译数量不匹配: 期望1个，实际{len(translated_segments) if translated_segments else 0}个")
+            
+            translated_text = translated_segments[0]
+            
+            # 更新上下文和性能数据
+            quality_result = self._check_translation_quality([text], [translated_text])
+            quality_score = quality_result[0] if quality_result else False
+            
+            self.context_manager.add_translation(text, translated_text)
+            
+            response_time = time.time() - start_time
+            success_rate = 1.0 if quality_score else 0.0
+            
+            if self.adaptive_processor:
+                self.adaptive_processor.record_performance(
+                    1, response_time, success_rate, 1.0 if quality_score else 0.0
+                )
+            
+            logger.debug(f"✅ 单条翻译完成: 质量 {quality_score}, 时间 {response_time:.1f}s")
+            return translated_text
+            
+        except Exception as e:
+            logger.error(f"❌ 单条翻译失败: {str(e)}")
+            # 返回原文
+            return text
+
     async def translate_batch_with_context(self, texts: List[str], current_batch_size: int = None) -> List[str]:
         """基于上下文的智能翻译"""
         start_time = time.time()
@@ -327,19 +537,14 @@ class TranslationService:
                 logger.info(f"🧠 上下文批量翻译: {len(texts)} 条 (批次大小: {current_batch_size})")
                 
                 session = await self._get_session()
-                data = {
-                    "model": self.model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": TranslationConfig.get_model_options()
-                }
+                url, data, headers = self._prepare_api_request(prompt, TranslationConfig.get_model_options())
                 
-                async with session.post(f"{self.api_url}/api/generate", json=data) as response:
+                async with session.post(url, json=data, headers=headers) as response:
                     if response.status != 200:
                         raise Exception(f"API请求失败: {response.status}")
                     
                     result = await response.json()
-                    translated_text = self._clean_translation(result.get("response", ""))
+                    translated_text = self._clean_translation(self._parse_api_response(result))
                     translated_segments = self._parse_contextual_response(translated_text, len(texts))
             
             # 检查结果
@@ -390,6 +595,20 @@ class TranslationService:
         """流式翻译实现"""
         session = await self._get_session()
         
+        # 注意：流式翻译目前只支持Ollama API
+        if self.api_type == "deepseek":
+            logger.warning("⚠️ DeepSeek API暂不支持流式翻译，降级到普通翻译")
+            # 降级到普通翻译
+            url, data, headers = self._prepare_api_request(prompt, TranslationConfig.get_streaming_options())
+            async with session.post(url, json=data, headers=headers) as response:
+                if response.status != 200:
+                    raise Exception(f"流式降级请求失败: {response.status}")
+                
+                result = await response.json()
+                translated_text = self._clean_translation(self._parse_api_response(result))
+                return self._fallback_parse_streaming_result(translated_text)
+        
+        # Ollama流式翻译
         data = {
             "model": self.model,
             "prompt": prompt,
@@ -598,19 +817,14 @@ class TranslationService:
                     segment_count=len(texts)
                 )
                 
-                data = {
-                    "model": self.model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": TranslationConfig.get_model_options()
-                }
+                url, data, headers = self._prepare_api_request(prompt, TranslationConfig.get_model_options())
                 
-                async with session.post(f"{self.api_url}/api/generate", json=data) as response:
+                async with session.post(url, json=data, headers=headers) as response:
                     if response.status != 200:
                         raise Exception(f"API请求失败: {response.status}")
                     
                     result = await response.json()
-                    translated_text = self._clean_translation(result.get("response", ""))
+                    translated_text = self._clean_translation(self._parse_api_response(result))
                     
                     # 解析结果
                     if len(texts) == 1:
@@ -660,7 +874,7 @@ class TranslationService:
                                  video_name: str,
                                  output_path: str = None,
                                  original_path: str = None) -> List[Dict[str, Any]]:
-        """智能字幕翻译主方法 - 支持批次自适应恢复和失败重试"""
+        """智能字幕翻译主方法 - 单条异步处理"""
         
         # 设置路径
         temp_dir = os.path.join("temp", video_name)
@@ -697,106 +911,73 @@ class TranslationService:
             failed_translations = 0
             total = len(subtitles)
             
-            # 批次大小控制 - 从1开始，逐步恢复
-            current_batch_size = 1
-            target_batch_size = self.batch_size
-            consecutive_success = 0  # 连续成功次数
-            
-            logger.info(f"🚀 开始智能翻译: 总计 {total} 条字幕")
-            logger.info(f"  📊 目标批次大小: {target_batch_size}, 起始: {current_batch_size}")
+            logger.info(f"🚀 开始单条异步翻译: 总计 {total} 条字幕")
             logger.info(f"  🧠 上下文: {'✅' if self.context_manager else '❌'}")
             logger.info(f"  🌊 流式: {'✅' if TranslationConfig.ENABLE_STREAMING else '❌'}")
-            logger.info(f"  📈 自适应: {'✅' if self.adaptive_processor else '❌'}")
             
-            # 第一轮翻译：主要翻译过程
-            logger.info("🌍 开始第一轮翻译（自适应批次大小）")
-            with tqdm(total=total, desc="🌍 智能翻译中", unit="字幕") as pbar:
-                i = 0
-                while i < total:
-                    batch = subtitles[i:i + current_batch_size]
-                    
+            # 单条翻译处理
+            logger.info("🌍 开始单条异步翻译")
+            with tqdm(total=total, desc="🌍 单条翻译中", unit="字幕") as pbar:
+                for i, subtitle in enumerate(subtitles):
                     # 验证数据
-                    valid_batch = [sub for sub in batch if "text" in sub]
-                    if not valid_batch:
-                        pbar.update(len(batch))
-                        i += current_batch_size
+                    if "text" not in subtitle:
+                        pbar.update(1)
                         continue
                         
-                    batch_texts = [sub["text"] for sub in valid_batch]
-                    batch_indices = list(range(i, i + len(valid_batch)))
+                    text = subtitle["text"]
                     
                     try:
-                        # 智能翻译 - 上下文模式始终启用，选择翻译方法
-                        if TranslationConfig.TRANSLATION_MODE == "contextual_three_step":
-                            # 模式1：上下文 + 三步翻译法
-                            translated_texts = await self.translate_with_context_three_step(
-                                batch_texts, current_batch_size=current_batch_size
-                            )
-                        else:
-                            # 模式2：上下文 + 单个直译法
-                            translated_texts = await self.translate_batch_with_context(
-                                batch_texts, current_batch_size=current_batch_size
-                            )
+                        # 单条异步翻译
+                        translated_text = await self.translate_single_subtitle(text)
                         
                         # 成功处理结果
-                        quality_results = self._check_translation_quality(batch_texts, translated_texts)
+                        quality_results = self._check_translation_quality([text], [translated_text])
                         
-                        for j, (subtitle, translated_text, index) in enumerate(zip(valid_batch, translated_texts, batch_indices)):
-                            translated_subtitle = subtitle.copy()
-                            translated_subtitle["text"] = translated_text
-                            translated_subtitle["original_text"] = subtitle["text"]
-                            translated_subtitle["translation_quality"] = "good" if quality_results[j] else "poor"
-                            translated_subtitle["context_used"] = self.context_manager is not None
-                            translated_subtitle["batch_size_used"] = current_batch_size
-                            translated_subtitle["original_index"] = index
-                            
-                            translated_subtitles.append(translated_subtitle)
-                            
-                            if quality_results[j]:
-                                successful_translations += 1
-                            else:
-                                failed_translations += 1
-                            
-                            pbar.update(1)
+                        translated_subtitle = subtitle.copy()
+                        translated_subtitle["text"] = translated_text
+                        translated_subtitle["original_text"] = subtitle["text"]
+                        translated_subtitle["translation_quality"] = "good" if quality_results[0] else "poor"
+                        translated_subtitle["context_used"] = self.context_manager is not None
+                        translated_subtitle["batch_size_used"] = 1
+                        translated_subtitle["original_index"] = i
                         
-                        # 批次成功 - 增加连续成功计数
-                        consecutive_success += 1
+                        translated_subtitles.append(translated_subtitle)
                         
-                        # 自适应批次大小恢复
-                        if (consecutive_success >= 3 and  # 连续3次成功
-                            current_batch_size < target_batch_size):  # 未达到目标大小
-                            old_size = current_batch_size
-                            current_batch_size = min(current_batch_size * 2, target_batch_size)
-                            logger.info(f"📈 批次大小恢复: {old_size} → {current_batch_size}")
-                            consecutive_success = 0  # 重置计数
+                        if quality_results[0]:
+                            successful_translations += 1
+                        else:
+                            failed_translations += 1
                         
-                        # 批次间延迟
-                        if i + current_batch_size < total:
-                            await asyncio.sleep(TranslationConfig.BATCH_DELAY)
+                        logger.debug(f"✅ 单条翻译成功: 索引 {i}")
                         
                     except Exception as e:
-                        logger.error(f"❌ 批次翻译失败 (批次大小: {current_batch_size}): {str(e)}")
-                        
-                        # 批次失败 - 重置连续成功计数
-                        consecutive_success = 0
+                        logger.error(f"❌ 单条翻译失败: 索引 {i}, 错误: {str(e)}")
                         
                         # 标记失败的字幕
-                        for j, (subtitle, index) in enumerate(zip(valid_batch, batch_indices)):
-                            failed_item = {
-                                "subtitle": subtitle,
-                                "original_index": index,
-                                "error": str(e),
-                                "batch_size_attempted": current_batch_size
-                            }
-                            failed_items.append(failed_item)
-                            failed_translations += 1
-                            pbar.update(1)
+                        failed_item = {
+                            "subtitle": subtitle,
+                            "original_index": i,
+                            "error": str(e)
+                        }
+                        failed_items.append(failed_item)
+                        failed_translations += 1
                         
-                        # 降级到最小批次大小
-                        if current_batch_size > 1:
-                            old_size = current_batch_size
-                            current_batch_size = 1
-                            logger.warning(f"📉 批次大小降级: {old_size} → {current_batch_size}")
+                        # 保留原文
+                        translated_subtitle = subtitle.copy()
+                        translated_subtitle["original_text"] = subtitle["text"]
+                        translated_subtitle["translation_quality"] = "failed"
+                        translated_subtitle["context_used"] = False
+                        translated_subtitle["batch_size_used"] = 1
+                        translated_subtitle["original_index"] = i
+                        translated_subtitle["translation_error"] = str(e)
+                        
+                        translated_subtitles.append(translated_subtitle)
+                    
+                    pbar.update(1)
+                    
+                    # 单条间延迟
+                    if i + 1 < total:
+                        await asyncio.sleep(TranslationConfig.BATCH_DELAY)
                     
                     # 定期保存
                     if len(translated_subtitles) % TranslationConfig.PROGRESS_SAVE_INTERVAL == 0:
@@ -804,8 +985,6 @@ class TranslationService:
                             self.save_subtitles(translated_subtitles, output_path, original_path)
                         except Exception as e:
                             logger.warning(f"⚠️ 保存进度失败: {str(e)}")
-                    
-                    i += current_batch_size
             
             # 第二轮：失败重试
             if failed_items:
@@ -822,38 +1001,28 @@ class TranslationService:
                             text = subtitle["text"]
                             original_index = failed_item["original_index"]
                             
-                            # 单条重试，提供正确的上下文
-                            if TranslationConfig.TRANSLATION_MODE == "contextual_three_step":
-                                translated_texts = await self.translate_with_context_three_step(
-                                    [text], current_batch_size=1
-                                )
-                            else:
-                                translated_texts = await self.translate_batch_with_context(
-                                    [text], current_batch_size=1
-                                )
+                            # 单条重试
+                            translated_text = await self.translate_single_subtitle(text)
                             
                             # 重试成功
-                            if translated_texts and len(translated_texts) == 1:
-                                quality_results = self._check_translation_quality([text], translated_texts)
-                                
-                                translated_subtitle = subtitle.copy()
-                                translated_subtitle["text"] = translated_texts[0]
-                                translated_subtitle["original_text"] = subtitle["text"]
-                                translated_subtitle["translation_quality"] = "good" if quality_results[0] else "poor"
-                                translated_subtitle["context_used"] = self.context_manager is not None
-                                translated_subtitle["batch_size_used"] = 1
-                                translated_subtitle["original_index"] = original_index
-                                translated_subtitle["retry_success"] = True
-                                
-                                # 存储重试结果，而不是直接追加
-                                retry_results[original_index] = translated_subtitle
-                                retry_success += 1
-                                failed_translations -= 1
-                                successful_translations += 1
-                                
-                                logger.debug(f"✅ 重试成功: 索引 {original_index}")
-                            else:
-                                raise Exception("重试返回结果为空或数量不匹配")
+                            quality_results = self._check_translation_quality([text], [translated_text])
+                            
+                            translated_subtitle = subtitle.copy()
+                            translated_subtitle["text"] = translated_text
+                            translated_subtitle["original_text"] = subtitle["text"]
+                            translated_subtitle["translation_quality"] = "good" if quality_results[0] else "poor"
+                            translated_subtitle["context_used"] = self.context_manager is not None
+                            translated_subtitle["batch_size_used"] = 1
+                            translated_subtitle["original_index"] = original_index
+                            translated_subtitle["retry_success"] = True
+                            
+                            # 存储重试结果，而不是直接追加
+                            retry_results[original_index] = translated_subtitle
+                            retry_success += 1
+                            failed_translations -= 1
+                            successful_translations += 1
+                            
+                            logger.debug(f"✅ 重试成功: 索引 {original_index}")
                         
                         except Exception as e:
                             logger.error(f"❌ 重试失败: 索引 {failed_item['original_index']}, 错误: {str(e)}")
@@ -904,12 +1073,11 @@ class TranslationService:
             
             # 统计报告
             success_rate = (successful_translations / total * 100) if total > 0 else 0
-            logger.info(f"🎉 翻译完成!")
+            logger.info(f"🎉 单条异步翻译完成!")
             logger.info(f"  📊 总计: {total} 条")
             logger.info(f"  ✅ 成功: {successful_translations} ({success_rate:.1f}%)")
             logger.info(f"  ❌ 失败: {failed_translations}")
             logger.info(f"  🔄 重试: {len(failed_items)} 条，成功 {retry_success if 'retry_success' in locals() else 0} 条")
-            logger.info(f"  📈 最终批次大小: {current_batch_size}")
             logger.info(f"  💾 文件: {output_path}")
             
             if self.context_manager:
@@ -987,19 +1155,14 @@ class TranslationService:
                 logger.info(f"🎯 上下文+三步批量翻译: {len(texts)} 条")
                 
                 session = await self._get_session()
-                data = {
-                    "model": self.model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": TranslationConfig.get_three_step_options()
-                }
+                url, data, headers = self._prepare_api_request(prompt, TranslationConfig.get_three_step_options())
                 
-                async with session.post(f"{self.api_url}/api/generate", json=data) as response:
+                async with session.post(url, json=data, headers=headers) as response:
                     if response.status != 200:
                         raise Exception(f"上下文+三步翻译API请求失败: {response.status}")
                     
                     result = await response.json()
-                    translated_text = self._clean_translation(result.get("response", ""))
+                    translated_text = self._clean_translation(self._parse_api_response(result))
                     translated_segments = self._parse_contextual_response(translated_text, len(texts))
             
             # 检查初步翻译结果
@@ -1083,19 +1246,14 @@ class TranslationService:
                 logger.info(f"🎯 三步批量翻译: {len(texts)} 条")
                 
                 session = await self._get_session()
-                data = {
-                    "model": self.model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": TranslationConfig.get_three_step_options()
-                }
+                url, data, headers = self._prepare_api_request(prompt, TranslationConfig.get_three_step_options())
                 
-                async with session.post(f"{self.api_url}/api/generate", json=data) as response:
+                async with session.post(url, json=data, headers=headers) as response:
                     if response.status != 200:
                         raise Exception(f"三步翻译API请求失败: {response.status}")
                     
                     result = await response.json()
-                    translated_text = self._clean_translation(result.get("response", ""))
+                    translated_text = self._clean_translation(self._parse_api_response(result))
                     translated_segments = self._parse_contextual_response(translated_text, len(texts))
             
             # 检查初步翻译结果
@@ -1156,19 +1314,14 @@ class TranslationService:
             )
             
             session = await self._get_session()
-            data = {
-                "model": self.model,
-                "prompt": prompt,
-                "stream": False,
-                "options": TranslationConfig.get_three_step_options()
-            }
+            url, data, headers = self._prepare_api_request(prompt, TranslationConfig.get_three_step_options())
             
-            async with session.post(f"{self.api_url}/api/generate", json=data) as response:
+            async with session.post(url, json=data, headers=headers) as response:
                 if response.status != 200:
                     raise Exception(f"反思优化API请求失败: {response.status}")
                 
                 result = await response.json()
-                reflection_text = self._clean_translation(result.get("response", ""))
+                reflection_text = self._clean_translation(self._parse_api_response(result))
                 
                 # 解析反思结果
                 try:

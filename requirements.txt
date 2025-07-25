@@ -67,5 +67,4 @@ yarl==1.20.0
 zstandard==0.23.0
 
 # 人声分离相关依赖
-spleeter==2.4.0
-tensorflow==2.15.0
+demucs==4.0.0

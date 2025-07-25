@@ -26,7 +26,7 @@ class AudioProcessor:
         """
         self.stt_server_url = stt_server_url or STT_SERVER_URL
         self.tts_server_url = tts_server_url or TTS_SERVER_URL
-        self._spleeter_model = None  # 延迟加载Spleeter模型
+        self._demucs_available = None  # 延迟检测Demucs可用性
         
     def extract_audio(self, video_path: str, video_name: str) -> str:
         """
@@ -83,25 +83,27 @@ class AudioProcessor:
         import hashlib
         return hashlib.md5(text.encode()).hexdigest()[:length]
     
-    def _load_spleeter_model(self):
-        """延迟加载Spleeter模型"""
-        if self._spleeter_model is None:
+    def _check_demucs_availability(self):
+        """检查Demucs Python库是否可用"""
+        if self._demucs_available is None:
             try:
-                from spleeter.separator import Separator
-                logger.info("🔄 加载Spleeter模型...")
-                self._spleeter_model = Separator('spleeter:2stems')  # 分离人声和伴奏
-                logger.info("✅ Spleeter模型加载完成")
+                import demucs
+                from demucs.pretrained import get_model
+                # 尝试加载模型来验证可用性
+                model = get_model('htdemucs')
+                self._demucs_available = True
+                logger.info("✅ Demucs Python库可用")
             except ImportError:
-                logger.error("❌ 未安装Spleeter，请运行: pip install spleeter")
-                raise ImportError("Spleeter not installed")
+                logger.warning("⚠️ Demucs Python库未安装")
+                self._demucs_available = False
             except Exception as e:
-                logger.error(f"❌ 加载Spleeter模型失败: {str(e)}")
-                raise
-        return self._spleeter_model
+                logger.warning(f"⚠️ Demucs Python库不可用: {str(e)}")
+                self._demucs_available = False
+        return self._demucs_available
     
     def separate_vocals_and_background(self, audio_path: str, video_name: str) -> Tuple[str, str]:
         """
-        将音频分离为人声和背景音
+        将音频分离为人声和背景音 (使用Demucs)
         
         参数:
             audio_path: 原始音频文件路径
@@ -126,26 +128,59 @@ class AudioProcessor:
                 logger.info("🎵 使用已存在的人声和背景音分离文件")
                 return vocals_path, background_path
             
-            # 加载Spleeter模型
-            separator = self._load_spleeter_model()
+            # 检查Demucs是否可用
+            if not self._check_demucs_availability():
+                logger.warning("⚠️ Demucs不可用，使用原始音频作为人声，静音作为背景音")
+                return audio_path, self._create_silent_background(audio_path, video_name)
             
-            logger.info("🎵 开始人声和背景音分离...")
+            logger.info("🎵 开始使用Demucs Python库进行人声和背景音分离...")
             
-            # 执行分离
-            prediction = separator.separate_to_file(
-                audio_path,
-                separated_dir,
-                filename_format=f"{file_hash}_{{instrument}}.wav"
-            )
-            
-            # 重命名文件以匹配我们的命名约定
-            spleeter_vocals = os.path.join(separated_dir, f"{file_hash}_vocals.wav")
-            spleeter_accompaniment = os.path.join(separated_dir, f"{file_hash}_accompaniment.wav")
-            
-            if os.path.exists(spleeter_vocals):
-                os.rename(spleeter_vocals, vocals_path)
-            if os.path.exists(spleeter_accompaniment):
-                os.rename(spleeter_accompaniment, background_path)
+            try:
+                import torch
+                import demucs
+                from demucs.pretrained import get_model
+                from demucs.apply import apply_model
+                from demucs.audio import AudioFile, save_audio
+                
+                # 加载模型
+                logger.info("🔄 加载Demucs模型...")
+                model = get_model('htdemucs')
+                model.eval()
+                
+                # 检查是否有GPU可用
+                device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+                model.to(device)
+                logger.info(f"🎯 使用设备: {device}")
+                
+                # 加载音频文件
+                logger.info("📂 加载音频文件...")
+                wav = AudioFile(audio_path).read(streams=0, samplerate=model.samplerate, channels=model.audio_channels)
+                ref = wav.mean(0)
+                wav = (wav - ref.mean()) / ref.std()
+                
+                # 执行分离
+                logger.info("🔬 开始音频分离...")
+                sources = apply_model(model, wav[None], device=device, shifts=1, split=True, overlap=0.25, progress=True)[0]
+                sources = sources * ref.std() + ref.mean()
+                
+                # 获取人声和伴奏
+                vocals = sources[model.sources.index('vocals')]
+                
+                # 合并其他音轨作为背景音 (drums + bass + other)
+                background_sources = ['drums', 'bass', 'other']
+                background = sum(sources[model.sources.index(source)] for source in background_sources)
+                
+                # 保存文件
+                logger.info("💾 保存分离后的音频文件...")
+                save_audio(vocals, vocals_path, model.samplerate)
+                save_audio(background, background_path, model.samplerate)
+                
+                logger.info(f"🎤 人声文件已保存: {vocals_path}")
+                logger.info(f"🎼 背景音文件已保存: {background_path}")
+                
+            except Exception as e:
+                logger.error(f"❌ Demucs Python API分离失败: {str(e)}")
+                raise RuntimeError(f"Demucs Python API分离失败: {str(e)}")
             
             logger.info("✅ 人声和背景音分离完成")
             return vocals_path, background_path

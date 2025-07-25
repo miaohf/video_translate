@@ -6,9 +6,9 @@ class TranslationConfig:
     """翻译服务配置类"""
     
     # 批处理配置
-    DEFAULT_BATCH_SIZE = 3  # 默认批处理大小（针对大模型优化）
+    DEFAULT_BATCH_SIZE = 1  # 默认批处理大小（单条处理）
     MIN_BATCH_SIZE = 1      # 最小批处理大小
-    MAX_BATCH_SIZE = 10     # 最大批处理大小
+    MAX_BATCH_SIZE = 1      # 最大批处理大小（单条处理）
     
     # 流式翻译配置
     ENABLE_STREAMING = True  # 启用流式翻译
@@ -19,8 +19,8 @@ class TranslationConfig:
     TERMINOLOGY_DICT_SIZE = 100 # 术语词典最大条目数
     ENABLE_CONTEXT = True       # 启用上下文翻译
     
-    # 自适应批次配置
-    ENABLE_ADAPTIVE_BATCH = True    # 启用自适应批次大小
+    # 自适应批次配置（单条模式下禁用）
+    ENABLE_ADAPTIVE_BATCH = False   # 禁用自适应批次大小（单条模式）
     MIN_RESPONSE_TIME = 5.0         # 最小响应时间阈值（秒）
     MAX_RESPONSE_TIME = 30.0        # 最大响应时间阈值（秒）
     MIN_SUCCESS_RATE = 0.8          # 最小成功率阈值
@@ -32,7 +32,7 @@ class TranslationConfig:
     
     # API配置
     REQUEST_TIMEOUT = 180   # 请求超时时间（秒）- 增加到3分钟
-    BATCH_DELAY = 0.3       # 批次间延迟（秒）- 流式处理可以减少延迟
+    BATCH_DELAY = 0.1       # 单条间延迟（秒）- 减少延迟提高效率
     
     # 翻译质量检查配置
     MIN_LENGTH_RATIO = 0.3  # 最小长度比例
@@ -47,7 +47,7 @@ class TranslationConfig:
     MODEL_REPEAT_PENALTY = 1.1 # 重复惩罚
     
     # 进度保存配置
-    PROGRESS_SAVE_INTERVAL = 6  # 每处理多少条字幕保存一次进度（batch_size * 2）
+    PROGRESS_SAVE_INTERVAL = 10  # 每处理多少条字幕保存一次进度（单条模式）
     
     # ========== 三步翻译法配置 ==========
     
@@ -56,7 +56,7 @@ class TranslationConfig:
     ENABLE_REFLECTION_OPTIMIZATION = True # 启用反思优化
     
     # 三步翻译法参数
-    THREE_STEP_BATCH_SIZE = 2  # 三步翻译法的批次大小（较小以确保质量）
+    THREE_STEP_BATCH_SIZE = 1  # 三步翻译法的批次大小（单条处理）
     REFLECTION_QUALITY_THRESHOLD = 0.7  # 反思优化的质量阈值
     MAX_REFLECTION_ATTEMPTS = 2  # 最大反思优化次数
     

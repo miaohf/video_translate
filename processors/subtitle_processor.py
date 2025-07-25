@@ -320,7 +320,7 @@ class SubtitleProcessor:
             
         return False
 
-    async def get_subtitles(self, audio_path: str, video_name: str, video_path: str = None) -> List[Dict]:
+    async def get_subtitles(self, audio_path: str, video_name: str, video_path: str = None, use_vocal_separation: bool = True) -> List[Dict]:
         """
         获取音频的字幕
         
@@ -328,6 +328,7 @@ class SubtitleProcessor:
             audio_path: 音频文件路径
             video_name: 视频文件名（不含扩展名）
             video_path: 视频文件路径（用于查找VTT文件）
+            use_vocal_separation: 是否使用人声分离
             
         返回:
             字幕列表
@@ -354,17 +355,36 @@ class SubtitleProcessor:
             # 如果没有找到已有字幕，进行转录
             logger.info("🎤 开始音频转录...")
             
-            # 进行说话人识别
-            speaker_segments = await self.process_speaker_diarization(audio_path, video_name, file_hash)
+            # 决定使用的音频文件
+            processing_audio_path = audio_path
+            if use_vocal_separation:
+                try:
+                    # 先进行人声分离
+                    logger.info("🎵 开始人声分离...")
+                    from processors.audio_processor import AudioProcessor
+                    audio_processor = AudioProcessor()
+                    vocals_path, background_path = audio_processor.separate_vocals_and_background(audio_path, video_name)
+                    
+                    # 使用分离后的人声进行后续处理
+                    processing_audio_path = vocals_path
+                    logger.info(f"✅ 使用分离后的人声进行识别: {vocals_path}")
+                    
+                except Exception as e:
+                    logger.warning(f"⚠️ 人声分离失败，使用原始音频: {str(e)}")
+                    processing_audio_path = audio_path
             
-            # 进行音频转录
+            # 对人声进行说话人识别
+            logger.info("👤 开始说话人识别...")
+            speaker_segments = await self.process_speaker_diarization(processing_audio_path, video_name, file_hash)
+            
+            # 对人声进行音频转录
             logger.info("📝 开始音频转录...")
             session = await self.get_session()
-            with open(audio_path, 'rb') as f:
+            with open(processing_audio_path, 'rb') as f:
                 async with session.post(
                             f"{self.stt_server_url}/transcribe/",
                             data={'file': f},
-                            timeout=600  # 10分钟超时
+                            timeout=1200  # 10分钟超时
                 ) as response:
                     if response.status != 200:
                         error_text = await response.text()
@@ -484,14 +504,19 @@ class SubtitleProcessor:
                 if subtitles:
                     return subtitles
             
-            # 在视频文件同目录下查找VTT文件
+            # 在视频文件同目录下查找VTT文件，并智能选择最佳字幕文件
             if video_path:
                 vtt_files = VTTParser.find_vtt_files(video_path)
-                for vtt_file in vtt_files:
-                    logger.info(f"发现现有VTT字幕文件: {vtt_file}")
-                    subtitles = VTTParser.parse_vtt_file(vtt_file)
-                    if subtitles:
-                        return subtitles
+                if vtt_files:
+                    # 使用智能选择逻辑选择最佳字幕文件
+                    best_vtt_file = VTTParser.select_best_subtitle_file(vtt_files)
+                    if best_vtt_file:
+                        logger.info(f"🎯 智能选择字幕文件: {best_vtt_file}")
+                        subtitles = VTTParser.parse_vtt_file(best_vtt_file)
+                        if subtitles:
+                            return subtitles
+                    else:
+                        logger.warning("⚠️ 未找到合适的字幕文件")
             
             return None
             
