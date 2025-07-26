@@ -32,7 +32,7 @@ if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
 
 # 定义处理超时时间（秒）
-PROCESSING_TIMEOUT = 300  # 5分钟
+PROCESSING_TIMEOUT = 600  # 10分钟
 
 # 启用 TF32 以提高性能
 if torch.cuda.is_available():
@@ -244,7 +244,7 @@ def process_transcription(audio_path: str) -> List[Dict]:
                 else:
                     # 保存当前片段
                     if current_segment["end"] - current_segment["start"] >= min_segment_duration:
-                    results.append(current_segment)
+                        results.append(current_segment)
                     # 开始新片段
                     current_segment = {
                         "start": segment.start,
@@ -254,7 +254,7 @@ def process_transcription(audio_path: str) -> List[Dict]:
         
         # 添加最后一个片段
         if current_segment and current_segment["end"] - current_segment["start"] >= min_segment_duration:
-                results.append(current_segment)
+            results.append(current_segment)
         
         return results
         
@@ -304,7 +304,7 @@ async def transcribe_audio(file: UploadFile = File(...)):
         if file_path and os.path.exists(file_path):
             os.remove(file_path)
         raise HTTPException(status_code=504, detail="Transcription timeout")
-        except Exception as e:
+    except Exception as e:
         logger.error(f"Transcription failed: {str(e)}")
         if file_path and os.path.exists(file_path):
             os.remove(file_path)
@@ -470,12 +470,12 @@ def process_audio_with_vad(audio_path: str) -> List[Dict]:
                             "text": segment.text.strip()
                         })
                 logger.info(f"Segment {i+1} transcribed successfully")
-        except Exception as e:
-                logger.error(f"Failed to transcribe segment {i+1}: {str(e)}")
-                # 清理GPU内存
-                if device == "cuda":
-                    torch.cuda.empty_cache()
-                continue
+            except Exception as e:
+                    logger.error(f"Failed to transcribe segment {i+1}: {str(e)}")
+                    # 清理GPU内存
+                    if device == "cuda":
+                        torch.cuda.empty_cache()
+                    continue
             finally:
                 # 清理临时文件
                 if os.path.exists(temp_path):

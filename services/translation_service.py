@@ -876,7 +876,7 @@ class TranslationService:
                                  original_path: str = None) -> List[Dict[str, Any]]:
         """智能字幕翻译主方法 - 单条异步处理"""
         
-        # 设置路径
+        # 设置路径 - 使用video_name作为缓存目录（可能是video_id或原始文件名）
         temp_dir = os.path.join("temp", video_name)
         os.makedirs(temp_dir, exist_ok=True)
         
@@ -886,10 +886,22 @@ class TranslationService:
         if original_path is None:
             original_path = os.path.join(temp_dir, f"{file_hash}_subtitles_en.srt")
             
-        # 检查是否已存在带音频的翻译文件
+        # 检查是否已存在翻译文件（与任务服务保持一致）
+        translated_subtitle_json = os.path.join(temp_dir, f"{file_hash}_subtitles_zh.json")
+        if os.path.exists(translated_subtitle_json):
+            logger.info(f"🎯 发现已存在翻译文件: {translated_subtitle_json}")
+            try:
+                with open(translated_subtitle_json, "r", encoding="utf-8") as f:
+                    existing_subtitles = json.load(f)
+                logger.info(f"✅ 成功加载已存在的翻译: {len(existing_subtitles)} 条字幕")
+                return existing_subtitles
+            except Exception as e:
+                logger.warning(f"⚠️ 读取已存在翻译文件失败: {str(e)}，将重新翻译")
+        
+        # 检查是否已存在带音频的翻译文件（兼容旧版本）
         audio_json_path = os.path.join(temp_dir, f"{file_hash}_subtitles_zh_with_audio.json")
         if os.path.exists(audio_json_path):
-            logger.info(f"🎯 发现已存在翻译文件: {audio_json_path}")
+            logger.info(f"🎯 发现已存在带音频的翻译文件: {audio_json_path}")
             try:
                 with open(audio_json_path, "r", encoding="utf-8") as f:
                     existing_subtitles = json.load(f)

@@ -23,7 +23,7 @@ def main():
     
     # 启动服务器 - 生产模式
     uvicorn.run(
-        "api_server:app",
+        "app:app",
         host=settings.API_HOST,
         port=settings.API_PORT,
         workers=settings.API_WORKERS,

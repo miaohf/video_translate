@@ -745,9 +745,25 @@ class VideoTranslationClient:
                 logger.warning("⚠️ 没有任何TTS音频被处理，返回原始背景音频")
                 final_audio = background
             
-            # 导出最终音频
+            # 导出最终音频 - 使用MP3格式以提高兼容性
             logger.info("导出最终音频...")
-            final_audio.export(output_path, format="wav")
+            
+            # 确保音频格式为兼容的格式
+            # 兼容格式参数：
+            # - 采样率: 44.1kHz (CD音质)
+            # - 声道数: 2 (立体声)
+            # - 格式: MP3 (与MoviePy更兼容)
+            compatible_audio = final_audio.set_frame_rate(44100).set_channels(2)
+            
+            # 导出为MP3格式 - 提高与MoviePy的兼容性
+            compatible_audio.export(
+                output_path.replace('.wav', '.mp3'), 
+                format="mp3",
+                bitrate="192k"  # 高质量MP3
+            )
+            
+            # 更新输出路径为MP3文件
+            output_path = output_path.replace('.wav', '.mp3')
             
             # 验证输出文件
             if os.path.exists(output_path):

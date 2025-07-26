@@ -1,0 +1,35 @@
+[
+  {
+    "start": 24.83,
+    "end": 32.83,
+    "text": "我想我们还会再见。到目前为止，我们已经打了很多场比赛。",
+    "speaker": "SPEAKER_01",
+    "original_text": "I think we'll see each other again. We've had a lot of matches so far.",
+    "translation_quality": "good",
+    "context_used": true,
+    "batch_size_used": 1,
+    "original_index": 0
+  },
+  {
+    "start": 33.0,
+    "end": 40.0,
+    "text": "而且未来我们会有很多场比赛。",
+    "speaker": "SPEAKER_01",
+    "original_text": "And we're going to have a lot of matches in the future.",
+    "translation_quality": "poor",
+    "context_used": true,
+    "batch_size_used": 1,
+    "original_index": 1
+  },
+  {
+    "start": 40.5,
+    "end": 45.0,
+    "text": "我不认为世界杯上有任何一名球员。",
+    "speaker": "SPEAKER_02",
+    "original_text": "I don't think there's a single player in the WC.",
+    "translation_quality": "good",
+    "context_used": true,
+    "batch_size_used": 1,
+    "original_index": 2
+  }
+]
