@@ -52,6 +52,7 @@ class SubtitleProcessor:
         """
         # 从音频路径中提取视频名称目录
         speaker_cache_file = os.path.join("temp", video_name, f"{file_hash}_speaker_segments.json")
+        logger.info(f"speaker_cache_file: {speaker_cache_file}")
         
         # 检查缓存
         if os.path.exists(speaker_cache_file):
@@ -333,6 +334,7 @@ class SubtitleProcessor:
         返回:
             字幕列表
         """
+        logger.info(f"get_subtitles: {audio_path}, {video_name}, {video_path}, {use_vocal_separation}")
         try:
             # 计算文件哈希值
             file_hash = get_file_hash(video_name)
