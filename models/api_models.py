@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from enum import Enum
 
 # 任务状态枚举
@@ -13,6 +13,13 @@ class TaskStatus(str, Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
 
+# 语音角色映射模型
+class VoiceRoleMapping(BaseModel):
+    speaker_id: str
+    voice_role_id: int
+    voice_role_name: str
+    audio_file_path: str
+
 # 请求和响应模型
 class TranslateRequest(BaseModel):
     video_id: Optional[int] = None
@@ -22,6 +29,7 @@ class TranslateRequest(BaseModel):
     target_language: str = "zh"
     voice_type: Optional[str] = "female"
     voice_speed: Optional[float] = 1.0
+    voice_mappings: Optional[List[VoiceRoleMapping]] = None
 
 class TranslateResponse(BaseModel):
     success: bool

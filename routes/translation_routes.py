@@ -3,7 +3,7 @@ import logging
 import shutil
 from fastapi import APIRouter, HTTPException, BackgroundTasks, UploadFile, File, Form, Request
 from datetime import datetime, timezone
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 from models.api_models import (
     TranslateRequest, TranslateResponse, TaskStatusResponse, 
@@ -24,6 +24,7 @@ async def start_translation(
     translate_request: Optional[TranslateRequest] = None,
     video_id: Optional[int] = Form(None),
     audio_file: Optional[UploadFile] = File(None),
+    voice_role_files: List[UploadFile] = File([]),
     callback_url: Optional[str] = Form(None),
     source_language: str = Form("en"),
     target_language: str = Form("zh"),
@@ -41,14 +42,14 @@ async def start_translation(
         # 方式2: 音频文件上传
         elif "multipart/form-data" in content_type and audio_file:
             return await _handle_upload_translation(
-                video_id, audio_file, callback_url, source_language, 
+                request, video_id, audio_file, voice_role_files, callback_url, source_language, 
                 target_language, voice_type, voice_speed, background_tasks
             )
         
         # 方式3: 混合模式（JSON + 音频文件上传）
         elif translate_request and audio_file:
             return await _handle_upload_translation(
-                translate_request.video_id, audio_file, translate_request.callback_url,
+                request, translate_request.video_id, audio_file, voice_role_files, translate_request.callback_url,
                 translate_request.source_language, translate_request.target_language,
                 translate_request.voice_type, translate_request.voice_speed, background_tasks
             )
@@ -92,6 +93,20 @@ async def _handle_local_file_translation(request: TranslateRequest, background_t
             }
         )
     
+    # 验证voice_mappings中的音频文件是否存在
+    if request.voice_mappings:
+        for mapping in request.voice_mappings:
+            if not os.path.exists(mapping.audio_file_path):
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "success": False,
+                        "error_code": "VOICE_MAPPING_FILE_NOT_FOUND",
+                        "message": "Voice mapping audio file not found",
+                        "details": f"Audio file path: {mapping.audio_file_path}"
+                    }
+                )
+    
     # 创建任务
     task_id = task_manager.create_task(
         video_id=request.video_id,
@@ -99,15 +114,18 @@ async def _handle_local_file_translation(request: TranslateRequest, background_t
         callback_url=request.callback_url
     )
     
-    # 启动后台任务
+    # 启动后台任务，传递voice_mappings参数
     background_tasks.add_task(
         translation_task_service.process_translation_task,
         task_id,
         request.video_file_path,
-        request.callback_url
+        request.callback_url,
+        request.voice_mappings
     )
     
     logger.info(f"Started translation task {task_id} for local file: {request.video_file_path}")
+    if request.voice_mappings:
+        logger.info(f"Voice mappings configured: {len(request.voice_mappings)} mappings")
     
     return TranslateResponse(
         success=True,
@@ -117,8 +135,10 @@ async def _handle_local_file_translation(request: TranslateRequest, background_t
     )
 
 async def _handle_upload_translation(
+    request: Request,
     video_id: Optional[int],
     audio_file: UploadFile,
+    voice_role_files: List[UploadFile],
     callback_url: Optional[str],
     source_language: str,
     target_language: str,
@@ -127,6 +147,18 @@ async def _handle_upload_translation(
     background_tasks: BackgroundTasks
 ):
     """处理音频文件上传翻译请求"""
+    # 调试：打印接收到的所有表单数据
+    logger.info(f"Received audio_file: {audio_file.filename if audio_file else 'None'}")
+    logger.info(f"Received voice_role_files count: {len(voice_role_files)}")
+    for i, role_file in enumerate(voice_role_files):
+        logger.info(f"  voice_role_files[{i}]: {role_file.filename}")
+    
+    # 显示所有接收到的表单字段（调试用）
+    logger.info("All form fields received:")
+    form_data = await request.form()
+    for field_name, field_value in form_data.items():
+        logger.info(f"  {field_name}: {field_value}")
+    
     # 验证音频文件类型
     if not audio_file.filename.lower().endswith(('.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac')):
         raise HTTPException(
@@ -172,6 +204,54 @@ async def _handle_upload_translation(
     
     logger.info(f"Audio file uploaded: {file_path} (size: {os.path.getsize(file_path)} bytes)")
     
+    # 处理角色音频文件
+    voice_mappings = []
+    logger.info(f"Received {len(voice_role_files)} voice role files")
+    
+    if voice_role_files:
+        # 创建角色音频目录
+        voice_roles_dir = os.path.join(settings.TEMP_DIR, "voice_roles", str(video_id))
+        os.makedirs(voice_roles_dir, exist_ok=True)
+        
+        for i, role_file in enumerate(voice_role_files):
+            logger.info(f"Processing voice role file {i+1}: {role_file.filename} (size: {role_file.size} bytes)")
+            
+            if role_file.filename.lower().endswith(('.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac')):
+                # 生成角色音频文件名
+                role_filename = f"voice_role_{i:02d}{os.path.splitext(role_file.filename)[1]}"
+                role_file_path = os.path.join(voice_roles_dir, role_filename)
+                
+                try:
+                    with open(role_file_path, "wb") as buffer:
+                        shutil.copyfileobj(role_file.file, buffer)
+                    
+                    # 创建语音角色映射
+                    voice_mapping = {
+                        "speaker_id": f"SPEAKER_{i:02d}",
+                        "voice_role_id": i + 1,
+                        "voice_role_name": f"voice_role_{i:02d}",
+                        "audio_file_path": role_file_path
+                    }
+                    voice_mappings.append(voice_mapping)
+                    
+                    logger.info(f"Voice role file uploaded: {role_file_path} (size: {os.path.getsize(role_file_path)} bytes)")
+                    
+                except Exception as e:
+                    logger.error(f"Failed to save voice role file {role_file.filename}: {str(e)}")
+                    raise HTTPException(
+                        status_code=500,
+                        detail={
+                            "success": False,
+                            "error_code": "VOICE_ROLE_FILE_SAVE_ERROR",
+                            "message": "Failed to save voice role file",
+                            "details": f"File: {role_file.filename}, Error: {str(e)}"
+                        }
+                    )
+            else:
+                logger.warning(f"Skipping invalid voice role file: {role_file.filename}")
+        
+        logger.info(f"Processed {len(voice_mappings)} voice role files")
+    
     # 创建任务
     task_id = task_manager.create_task(
         video_id=video_id,
@@ -179,12 +259,13 @@ async def _handle_upload_translation(
         callback_url=callback_url
     )
     
-    # 启动后台任务
+    # 启动后台任务，传递voice_mappings参数
     background_tasks.add_task(
         translation_task_service.process_translation_task,
         task_id,
         file_path,
-        callback_url
+        callback_url,
+        voice_mappings if voice_mappings else None
     )
     
     logger.info(f"Started translation task {task_id} for uploaded audio {video_id}")

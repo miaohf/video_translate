@@ -69,7 +69,7 @@ class TranslationTaskService:
             logger.warning(f"⚠️ 缓存检查失败: {str(e)}")
             return None
     
-    async def process_translation_task(self, task_id: str, video_file_path: str, callback_url: Optional[str] = None):
+    async def process_translation_task(self, task_id: str, video_file_path: str, callback_url: Optional[str] = None, voice_mappings: Optional[list] = None):
         """异步处理翻译任务"""
         try:
             task_data = task_manager.get_task(task_id)
@@ -220,7 +220,7 @@ class TranslationTaskService:
                 current_step="Generating TTS audio"
             ))
             
-            tts_audio_path = await self.translation_client._generate_tts_audio(subtitles, cache_dir)
+            tts_audio_path = await self.translation_client._generate_tts_audio(subtitles, cache_dir, voice_mappings)
             
             if check_cancelled():
                 return

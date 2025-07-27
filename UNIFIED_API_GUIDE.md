@@ -81,7 +81,8 @@ def translate_local_file():
 
 **参数**:
 - `video_id` (int, optional): 视频ID（不提供时自动生成）
-- `audio_file` (file, required): 音频文件
+- `audio_file` (file, required): 主音频文件（需要翻译的音频）
+- `voice_role_files` (file[], optional): 角色音频文件列表（用于语音合成）
 - `callback_url` (string, optional): 回调URL
 - `source_language` (string, default: "en"): 源语言
 - `target_language` (string, default: "zh"): 目标语言
@@ -90,15 +91,17 @@ def translate_local_file():
 
 **curl示例**:
 ```bash
-# 完整参数
+# 完整参数（包含角色音频文件）
 curl -X POST "http://localhost:9000/translate" \
   -F "video_id=123" \
-  -F "audio_file=@/path/to/local/audio.mp3" \
+  -F "audio_file=@/path/to/main_audio.mp3" \
+  -F "voice_role_files=@/path/to/speaker1.wav" \
+  -F "voice_role_files=@/path/to/speaker2.wav" \
   -F "callback_url=http://localhost:7000/translation/callback/123"
 
-# 简化参数（只上传音频文件）
+# 简化参数（只上传主音频文件）
 curl -X POST "http://localhost:9000/translate" \
-  -F "audio_file=@/path/to/local/audio.mp3"
+  -F "audio_file=@/path/to/main_audio.mp3"
 ```
 
 **Python示例**:
@@ -108,15 +111,21 @@ import requests
 def translate_upload_audio():
     url = "http://localhost:9000/translate"
     
-    # 完整参数
-    files = {"audio_file": open("sample.mp3", "rb")}
+    # 完整参数（包含角色音频文件）
+    files = {
+        "audio_file": open("main_audio.mp3", "rb"),
+        "voice_role_files": [
+            open("speaker1.wav", "rb"),
+            open("speaker2.wav", "rb")
+        ]
+    }
     data = {
         "video_id": 123,
         "callback_url": "http://localhost:7000/callback"
     }
     
-    # 简化参数
-    files_simple = {"audio_file": open("sample.mp3", "rb")}
+    # 简化参数（只上传主音频文件）
+    files_simple = {"audio_file": open("main_audio.mp3", "rb")}
     
     response = requests.post(url, files=files_simple)
     return response.json()

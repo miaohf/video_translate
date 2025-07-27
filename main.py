@@ -175,6 +175,8 @@ class VideoTranslationClient:
             
             # 生成 TTS 音频
             logger.info("\n6. 开始生成 TTS 音频...")
+            # 注意：这里没有voice_mappings参数，因为这是本地文件处理
+            # voice_mappings只在文件上传时使用
             tts_audio_path = await self._generate_tts_audio(subtitles, video_name)
             logger.info("TTS 音频生成完成")
             
@@ -416,17 +418,20 @@ class VideoTranslationClient:
         
         return diagnosis
 
-    async def _generate_tts_audio(self, subtitles: List[Dict], video_name: str) -> str:
+    async def _generate_tts_audio(self, subtitles: List[Dict], video_name: str, voice_mappings: Optional[List[Dict]] = None) -> str:
         """
         生成 TTS 音频
         
         参数:
             subtitles: 字幕列表
             video_name: 视频名称
+            voice_mappings: 语音角色映射列表
             
         返回:
             生成的音频文件路径
         """
+        # 用于记录已上传的角色音频文件，避免重复上传
+        uploaded_role_audios = set()
         try:
             # 检查最终音频文件是否已存在
             final_audio_path = os.path.join("temp", video_name, "final_audio.mp3")
@@ -473,21 +478,61 @@ class VideoTranslationClient:
                     
                     # 从reference_audio字段中提取说话人信息
                     reference_audio = subtitle.get("reference_audio", "")
+                    speaker = "Unknown"
+                    
                     if reference_audio:
                         # 从文件路径中提取说话人信息，格式为：file_hash_index_SPEAKER_XX.mp3
                         speaker = Path(reference_audio).stem
-                    else:
-                        speaker = "Unknown"
                     
-                    # 准备请求数据
+                    # 准备基础请求数据
                     data = {
                         "text": text_to_convert,
-                        "speaker": speaker,
                         "temperature": 0.8,
-                        "top_k": 50,  # 确保是整数
+                        "top_k": 50,
                         "top_p": 0.95,
-                        "seed": 421 + i  # 为每个片段使用不同的种子
+                        "seed": 421 + i
                     }
+                    
+                    # 尝试使用voice_mappings匹配说话人
+                    voice_mapping_found = False
+                    if voice_mappings:
+                        import re
+                        speaker_match = re.search(r'SPEAKER_\d+', speaker)
+                        if speaker_match:
+                            detected_speaker_id = speaker_match.group(0)
+                            
+                            # 查找匹配的voice_mapping
+                            for mapping in voice_mappings:
+                                if mapping["speaker_id"] == detected_speaker_id:
+                                    # 确保角色音频文件已上传到TTS服务器
+                                    role_audio_path = mapping["audio_file_path"]
+                                    if os.path.exists(role_audio_path):
+                                        # 避免重复上传同一个角色音频文件
+                                        if role_audio_path not in uploaded_role_audios:
+                                            await self._upload_role_audio_to_tts(role_audio_path, tts_server_url)
+                                            uploaded_role_audios.add(role_audio_path)
+                                        else:
+                                            logger.debug(f"角色音频文件已上传，跳过: {os.path.basename(role_audio_path)}")
+                                    
+                                    data["prompt_speech_path"] = role_audio_path
+                                    # 更新字幕的reference_audio字段，使用voice_mapping中的音频文件
+                                    updated_subtitle["reference_audio"] = role_audio_path
+                                    logger.info(f"🎯 使用voice_mapping: {detected_speaker_id} -> {mapping['voice_role_name']} -> {role_audio_path}")
+                                    voice_mapping_found = True
+                                    break
+                    
+                    # 如果没有找到voice_mapping，使用音频切片作为参考音频
+                    if not voice_mapping_found:
+                        if reference_audio and os.path.exists(reference_audio):
+                            # 使用音频切片作为参考音频
+                            data["prompt_speech_path"] = reference_audio
+                            logger.info(f"🎵 使用音频切片作为参考音频: {reference_audio}")
+                        else:
+                            # 使用默认speaker
+                            data["speaker"] = speaker
+                            logger.info(f"🔊 使用默认speaker: {speaker}")
+                    
+
                     
                     # 发送请求到 TTS 服务器
                     session = await self.subtitle_processor.get_session()
@@ -786,6 +831,38 @@ class VideoTranslationClient:
             raise
 
 
+
+    async def _upload_role_audio_to_tts(self, audio_path: str, tts_server_url: str):
+        """
+        上传角色音频文件到TTS服务器
+        
+        参数:
+            audio_path: 音频文件路径
+            tts_server_url: TTS服务器地址
+        """
+        try:
+            # 检查文件是否已上传（使用文件名作为标识）
+            filename = os.path.basename(audio_path)
+            
+            # 创建上传会话
+            session = await self.subtitle_processor.get_session()
+            
+            # 准备上传数据 - 使用aiohttp.FormData
+            import aiohttp
+            data = aiohttp.FormData()
+            
+            with open(audio_path, 'rb') as f:
+                data.add_field('file', f, filename=filename, content_type='audio/wav')
+                
+                async with session.post(f"{tts_server_url}/upload_audio", data=data) as response:
+                    if response.status == 200:
+                        logger.info(f"✅ 角色音频文件已上传到TTS服务器: {filename}")
+                    else:
+                        error_text = await response.text()
+                        logger.warning(f"⚠️ 角色音频文件上传失败: {filename}, 错误: {error_text}")
+                        
+        except Exception as e:
+            logger.warning(f"⚠️ 上传角色音频文件失败: {audio_path}, 错误: {str(e)}")
 
     def _force_overlay_audio(self, background_audio: 'AudioSegment', tts_audio: 'AudioSegment', 
                             position_ms: int, subtitle_index: int) -> 'AudioSegment':
