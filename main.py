@@ -509,7 +509,7 @@ class VideoTranslationClient:
                                     if os.path.exists(role_audio_path):
                                         # 避免重复上传同一个角色音频文件
                                         if role_audio_path not in uploaded_role_audios:
-                                            await self._upload_role_audio_to_tts(role_audio_path, tts_server_url)
+                                            self._upload_role_audio_to_tts(role_audio_path, tts_server_url)
                                             uploaded_role_audios.add(role_audio_path)
                                         else:
                                             logger.debug(f"角色音频文件已上传，跳过: {os.path.basename(role_audio_path)}")
@@ -832,7 +832,7 @@ class VideoTranslationClient:
 
 
 
-    async def _upload_role_audio_to_tts(self, audio_path: str, tts_server_url: str):
+    def _upload_role_audio_to_tts(self, audio_path: str, tts_server_url: str):
         """
         上传角色音频文件到TTS服务器
         
@@ -841,26 +841,26 @@ class VideoTranslationClient:
             tts_server_url: TTS服务器地址
         """
         try:
+            import requests
+            
             # 检查文件是否已上传（使用文件名作为标识）
             filename = os.path.basename(audio_path)
             
-            # 创建上传会话
-            session = await self.subtitle_processor.get_session()
-            
-            # 准备上传数据 - 使用aiohttp.FormData
-            import aiohttp
-            data = aiohttp.FormData()
-            
+            # 使用同步的requests库进行上传
             with open(audio_path, 'rb') as f:
-                data.add_field('file', f, filename=filename, content_type='audio/wav')
+                files = {'file': (filename, f, 'audio/wav')}
                 
-                async with session.post(f"{tts_server_url}/upload_audio", data=data) as response:
-                    if response.status == 200:
-                        logger.info(f"✅ 角色音频文件已上传到TTS服务器: {filename}")
-                    else:
-                        error_text = await response.text()
-                        logger.warning(f"⚠️ 角色音频文件上传失败: {filename}, 错误: {error_text}")
-                        
+                response = requests.post(
+                    f"{tts_server_url}/upload_audio",
+                    files=files,
+                    timeout=30
+                )
+                
+                if response.status_code == 200:
+                    logger.info(f"✅ 角色音频文件已上传到TTS服务器: {filename}")
+                else:
+                    logger.warning(f"⚠️ 角色音频文件上传失败: {filename}, 错误: {response.text}")
+                    
         except Exception as e:
             logger.warning(f"⚠️ 上传角色音频文件失败: {audio_path}, 错误: {str(e)}")
 

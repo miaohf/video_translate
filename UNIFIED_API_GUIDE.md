@@ -22,14 +22,16 @@
   "source_language": "en",
   "target_language": "zh",
   "voice_type": "female",
-  "voice_speed": 1.0
+  "voice_speed": 1.0,
+  "summarize": true
 }
 ```
 
 **简化请求体**（所有可选参数都有默认值）:
 ```json
 {
-  "video_file_path": "/path/to/video.mp4"
+  "video_file_path": "/path/to/video.mp4",
+  "summarize": true
 }
 ```
 
@@ -149,19 +151,37 @@ def translate_upload_audio():
 - OGG (.ogg)
 - FLAC (.flac)
 
-## 🔧 参数说明
+## 📋 参数说明
 
 ### 必需参数
-- **JSON方式**: `video_file_path` - 视频文件路径
-- **上传方式**: `audio_file` - 音频文件
+- `video_file_path` - 视频文件路径（JSON方式）或 `audio_file` - 音频文件（上传方式）
 
 ### 可选参数
-- `video_id` - 视频ID（不提供时自动生成时间戳ID）
+- `video_id` - 视频ID（不提供时自动生成）
 - `callback_url` - 回调URL
 - `source_language` - 源语言（默认: "en"）
 - `target_language` - 目标语言（默认: "zh"）
 - `voice_type` - 语音类型（默认: "female"）
 - `voice_speed` - 语音速度（默认: 1.0）
+- `summarize` - 是否生成内容总结（默认: false）
+
+## 📝 总结功能说明
+
+### 功能特点
+- **基于原始音频**: 使用原始语音字幕进行总结，避免翻译过程中的信息损失
+- **并行处理**: 总结在字幕生成后立即开始，与翻译并行进行
+- **中文输出**: 总结内容以中文形式输出，长度控制在500-800字
+- **多格式保存**: 同时生成JSON和TXT格式的总结文件
+
+### 处理流程
+```
+1. 提取音频 → 2. 生成字幕 → 3. 生成总结(并行) → 4. 翻译字幕 → 5. TTS生成 → 6. 完成
+```
+
+### 获取总结
+- **任务状态**: 总结URL包含在任务状态响应中
+- **专用端点**: 使用 `GET /tasks/{task_id}/summary` 获取总结信息
+- **文件访问**: 总结文件可通过API端点下载
 
 ## 📊 对比分析
 

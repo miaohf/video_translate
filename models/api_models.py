@@ -30,6 +30,7 @@ class TranslateRequest(BaseModel):
     voice_type: Optional[str] = "female"
     voice_speed: Optional[float] = 1.0
     voice_mappings: Optional[List[VoiceRoleMapping]] = None
+    summarize: Optional[bool] = False  # 新增：是否进行内容总结
 
 class TranslateResponse(BaseModel):
     success: bool
@@ -47,6 +48,8 @@ class TaskStatusResponse(BaseModel):
     started_at: str
     estimated_completion: Optional[str] = None
     translated_video_url: Optional[str] = None
+    summary_url: Optional[str] = None  # 新增：总结文件URL
+    summary_metadata: Optional[dict] = None  # 新增：总结元数据
 
 class CallbackData(BaseModel):
     video_id: int
@@ -56,6 +59,8 @@ class CallbackData(BaseModel):
     current_step: str
     error_message: Optional[str] = None
     translated_video_url: Optional[str] = None
+    summary_url: Optional[str] = None  # 新增：总结文件URL
+    summary_metadata: Optional[dict] = None  # 新增：总结元数据
 
 class CancelResponse(BaseModel):
     success: bool

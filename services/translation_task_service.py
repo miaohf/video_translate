@@ -69,7 +69,7 @@ class TranslationTaskService:
             logger.warning(f"⚠️ 缓存检查失败: {str(e)}")
             return None
     
-    async def process_translation_task(self, task_id: str, video_file_path: str, callback_url: Optional[str] = None, voice_mappings: Optional[list] = None):
+    async def process_translation_task(self, task_id: str, video_file_path: str, callback_url: Optional[str] = None, voice_mappings: Optional[list] = None, summarize: Optional[bool] = False):
         """异步处理翻译任务"""
         try:
             task_data = task_manager.get_task(task_id)
@@ -78,6 +78,10 @@ class TranslationTaskService:
                 return
                 
             video_id = task_data["video_id"]
+            
+            # 记录总结模式
+            if summarize:
+                logger.info(f"📝 总结模式已启用，任务 {task_id} 将生成内容总结")
             
             # 检查任务是否被取消
             def check_cancelled():
@@ -165,6 +169,40 @@ class TranslationTaskService:
             
             if check_cancelled():
                 return
+                
+            # 步骤2.5: 生成内容总结（如果启用，在翻译前进行）
+            if summarize:
+                try:
+                    logger.info(f"📝 开始生成内容总结...")
+                    task_manager.update_task_status(task_id, TaskStatus.EXTRACTING, 40, "Generating content summary")
+                    
+                    # 导入总结服务
+                    from services.summarization_service import summarization_service
+                    
+                    # 基于原始字幕生成总结
+                    summary_result = await summarization_service.generate_content_summary(
+                        subtitles=subtitles,  # 使用原始字幕
+                        video_name=cache_dir,
+                        video_id=video_id
+                    )
+                    
+                    if summary_result["success"]:
+                        # 获取总结文件URL
+                        summary_url = summarization_service.get_summary_file_url(video_id)
+                        
+                        # 更新任务数据，添加总结信息
+                        task_data = task_manager.get_task(task_id)
+                        if task_data:
+                            task_data["summary_url"] = summary_url
+                            task_data["summary_metadata"] = summary_result["metadata"]
+                        
+                        logger.info(f"✅ 内容总结生成完成: {summary_url}")
+                    else:
+                        logger.warning(f"⚠️ 内容总结生成失败: {summary_result.get('error', 'Unknown error')}")
+                        
+                except Exception as e:
+                    logger.error(f"❌ 生成内容总结时发生错误: {str(e)}")
+                    # 总结失败不影响翻译流程
                 
             # 步骤3: 翻译字幕
             task_manager.update_task_status(task_id, TaskStatus.TRANSLATING, 50, "Translating subtitles")

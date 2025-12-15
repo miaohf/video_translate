@@ -29,7 +29,8 @@ async def start_translation(
     source_language: str = Form("en"),
     target_language: str = Form("zh"),
     voice_type: Optional[str] = Form("female"),
-    voice_speed: Optional[float] = Form(1.0)
+    voice_speed: Optional[float] = Form(1.0),
+    summarize: Optional[bool] = Form(False)  # 新增：summarize参数
 ):
     """启动翻译任务（支持本地文件路径和音频文件上传两种方式）"""
     try:
@@ -43,7 +44,7 @@ async def start_translation(
         elif "multipart/form-data" in content_type and audio_file:
             return await _handle_upload_translation(
                 request, video_id, audio_file, voice_role_files, callback_url, source_language, 
-                target_language, voice_type, voice_speed, background_tasks
+                target_language, voice_type, voice_speed, background_tasks, summarize
             )
         
         # 方式3: 混合模式（JSON + 音频文件上传）
@@ -51,7 +52,7 @@ async def start_translation(
             return await _handle_upload_translation(
                 request, translate_request.video_id, audio_file, voice_role_files, translate_request.callback_url,
                 translate_request.source_language, translate_request.target_language,
-                translate_request.voice_type, translate_request.voice_speed, background_tasks
+                translate_request.voice_type, translate_request.voice_speed, background_tasks, translate_request.summarize
             )
         
         else:
@@ -114,18 +115,21 @@ async def _handle_local_file_translation(request: TranslateRequest, background_t
         callback_url=request.callback_url
     )
     
-    # 启动后台任务，传递voice_mappings参数
+    # 启动后台任务，传递voice_mappings和summarize参数
     background_tasks.add_task(
         translation_task_service.process_translation_task,
         task_id,
         request.video_file_path,
         request.callback_url,
-        request.voice_mappings
+        request.voice_mappings,
+        request.summarize  # 新增：传递summarize参数
     )
     
     logger.info(f"Started translation task {task_id} for local file: {request.video_file_path}")
     if request.voice_mappings:
         logger.info(f"Voice mappings configured: {len(request.voice_mappings)} mappings")
+    if request.summarize:
+        logger.info(f"Content summarization enabled for task {task_id}")
     
     return TranslateResponse(
         success=True,
@@ -144,7 +148,8 @@ async def _handle_upload_translation(
     target_language: str,
     voice_type: Optional[str],
     voice_speed: Optional[float],
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
+    summarize: Optional[bool] = False # 新增：summarize参数
 ):
     """处理音频文件上传翻译请求"""
     # 调试：打印接收到的所有表单数据
@@ -217,8 +222,23 @@ async def _handle_upload_translation(
             logger.info(f"Processing voice role file {i+1}: {role_file.filename} (size: {role_file.size} bytes)")
             
             if role_file.filename.lower().endswith(('.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac')):
+                # 尝试从原始文件名中提取说话人信息
+                original_name = os.path.splitext(role_file.filename)[0]
+                file_extension = os.path.splitext(role_file.filename)[1]
+                
+                # 从文件名中提取speaker_id，如果失败则使用索引
+                import re
+                if 'SPEAKER' in original_name.upper():
+                    speaker_match = re.search(r'SPEAKER_\d+', original_name.upper())
+                    if speaker_match:
+                        detected_speaker_id = speaker_match.group(0)
+                    else:
+                        detected_speaker_id = f"SPEAKER_{i:02d}"
+                else:
+                    detected_speaker_id = f"SPEAKER_{i:02d}"
+                
                 # 生成角色音频文件名
-                role_filename = f"voice_role_{i:02d}{os.path.splitext(role_file.filename)[1]}"
+                role_filename = f"voice_role_{detected_speaker_id.lower()}{file_extension}"
                 role_file_path = os.path.join(voice_roles_dir, role_filename)
                 
                 try:
@@ -227,9 +247,9 @@ async def _handle_upload_translation(
                     
                     # 创建语音角色映射
                     voice_mapping = {
-                        "speaker_id": f"SPEAKER_{i:02d}",
+                        "speaker_id": detected_speaker_id,
                         "voice_role_id": i + 1,
-                        "voice_role_name": f"voice_role_{i:02d}",
+                        "voice_role_name": f"voice_role_{detected_speaker_id.lower()}",
                         "audio_file_path": role_file_path
                     }
                     voice_mappings.append(voice_mapping)
@@ -265,7 +285,8 @@ async def _handle_upload_translation(
         task_id,
         file_path,
         callback_url,
-        voice_mappings if voice_mappings else None
+        voice_mappings if voice_mappings else None,
+        summarize # 新增：传递summarize参数
     )
     
     logger.info(f"Started translation task {task_id} for uploaded audio {video_id}")
@@ -312,4 +333,46 @@ async def cancel_task(task_id: str):
                 "message": "Task not found",
                 "details": f"Task ID: {task_id}"
             }
-        ) 
+        )
+
+@router.get("/tasks/{task_id}/summary")
+async def get_task_summary(task_id: str):
+    """获取任务的内容总结"""
+    task_data = task_manager.get_task(task_id)
+    if not task_data:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "success": False,
+                "error_code": "TASK_NOT_FOUND",
+                "message": "Task not found",
+                "details": f"Task ID: {task_id}"
+            }
+        )
+    
+    video_id = task_data["video_id"]
+    
+    # 导入总结服务
+    from services.summarization_service import summarization_service
+    
+    # 获取总结文件URL
+    summary_url = summarization_service.get_summary_file_url(video_id)
+    
+    if not summary_url:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "success": False,
+                "error_code": "SUMMARY_NOT_FOUND",
+                "message": "Summary not found",
+                "details": f"No summary available for task {task_id}"
+            }
+        )
+    
+    return {
+        "success": True,
+        "task_id": task_id,
+        "video_id": video_id,
+        "summary_url": summary_url,
+        "summary_metadata": task_data.get("summary_metadata")
+    } 
