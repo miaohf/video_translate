@@ -45,6 +45,7 @@ class TranslationConfig:
     MODEL_TOP_K = 40          # Top-k采样（流式处理可以略降低）
     MODEL_NUM_CTX = 4096      # 上下文长度（增加以支持更多上下文）
     MODEL_REPEAT_PENALTY = 1.1 # 重复惩罚
+    MODEL_MAX_TOKENS = 2048    # 最大生成token数（统一参数名，内部自动转换为对应API格式）
     
     # 进度保存配置
     PROGRESS_SAVE_INTERVAL = 10  # 每处理多少条字幕保存一次进度（单条模式）
@@ -86,7 +87,8 @@ class TranslationConfig:
             "top_p": cls.MODEL_TOP_P,
             "top_k": cls.MODEL_TOP_K,
             "num_ctx": cls.MODEL_NUM_CTX,
-            "repeat_penalty": cls.MODEL_REPEAT_PENALTY
+            "repeat_penalty": cls.MODEL_REPEAT_PENALTY,
+            "max_tokens": cls.MODEL_MAX_TOKENS
         }
     
     @classmethod

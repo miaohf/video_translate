@@ -1,0 +1,11 @@
+[project]
+name = "video-translate"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.125.0",
+    "python-multipart>=0.0.21",
+    "uvicorn>=0.38.0",
+]

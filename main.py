@@ -3,9 +3,17 @@ import argparse
 import logging
 import platform
 import asyncio
+import tempfile
 from typing import Dict, Optional, List
 from pathlib import Path
 import json
+
+# ffmpeg-python 用于音频加速（替代 pydub.speedup 的不稳定实现）
+try:
+    import ffmpeg as ffmpeg_lib
+    FFMPEG_AVAILABLE = True
+except ImportError:
+    FFMPEG_AVAILABLE = False
 
 from services.translation_service import TranslationService
 from processors.audio_processor import AudioProcessor
@@ -143,19 +151,13 @@ class VideoTranslationClient:
                 
                 if use_whole_translation:
                     print("使用整体翻译")
-                    translated_subtitles = await translation_service.translate_whole_subtitles(
-                        subtitles=subtitles,
-                        video_name=video_name,
-                        output_path=translated_subtitle_path,
-                        original_path=subtitle_json_path
+                    translated_subtitles = await translation_service.translate_subtitles(
+                        subtitles=subtitles
                     )
                 else:
                     print("使用批量翻译")
                     translated_subtitles = await translation_service.translate_subtitles(
-                        subtitles=subtitles,
-                        video_name=video_name,
-                        output_path=translated_subtitle_path,
-                        original_path=subtitle_json_path
+                        subtitles=subtitles
                     )
                 logger.info("字幕翻译完成")
 
@@ -652,6 +654,75 @@ class VideoTranslationClient:
             logger.error(f"生成 TTS 音频失败: {str(e)}")
             raise
 
+    def _speedup_audio_ffmpeg(self, input_path: str, speed_ratio: float) -> str:
+        """
+        使用 ffmpeg-python 实现音频加速（保持音高不变）
+        
+        参数:
+            input_path: 输入音频文件路径
+            speed_ratio: 加速比例 (如 1.2 表示加速 20%)
+            
+        返回:
+            加速后的临时文件路径（调用方需要负责清理）
+        """
+        if not FFMPEG_AVAILABLE:
+            raise ImportError("ffmpeg-python 未安装，请运行: pip install ffmpeg-python")
+        
+        # 创建临时输出文件
+        suffix = os.path.splitext(input_path)[1] or '.wav'
+        temp_fd, temp_path = tempfile.mkstemp(suffix=suffix)
+        os.close(temp_fd)
+        
+        try:
+            # 构建 atempo 滤镜链（atempo 范围是 0.5-2.0，超出需要链式调用）
+            atempo_chain = self._build_atempo_chain(speed_ratio)
+            
+            # 使用 ffmpeg-python 构建处理流
+            stream = ffmpeg_lib.input(input_path)
+            for atempo_value in atempo_chain:
+                stream = stream.filter('atempo', atempo_value)
+            
+            # 执行 ffmpeg
+            stream.output(temp_path).overwrite_output().run(quiet=True, capture_stderr=True)
+            
+            logger.debug(f"ffmpeg 加速完成: {speed_ratio:.2f}x -> {temp_path}")
+            return temp_path
+            
+        except Exception as e:
+            # 清理临时文件
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+            error_msg = str(e)
+            if hasattr(e, 'stderr') and e.stderr:
+                error_msg = e.stderr.decode() if isinstance(e.stderr, bytes) else str(e.stderr)
+            raise Exception(f"ffmpeg 加速失败: {error_msg}")
+    
+    def _build_atempo_chain(self, speed_ratio: float) -> list:
+        """
+        构建 atempo 滤镜链（处理 0.5-2.0 范围限制）
+        
+        atempo 滤镜的有效范围是 0.5 到 2.0
+        超出范围需要链式调用，例如 3x 加速: atempo=2.0,atempo=1.5
+        """
+        chain = []
+        remaining = speed_ratio
+        
+        # 处理大于 2.0 的情况
+        while remaining > 2.0:
+            chain.append(2.0)
+            remaining /= 2.0
+        
+        # 处理小于 0.5 的情况
+        while remaining < 0.5:
+            chain.append(0.5)
+            remaining /= 0.5
+        
+        # 添加剩余的比例
+        if abs(remaining - 1.0) > 0.001:  # 避免添加 1.0（无意义）
+            chain.append(remaining)
+        
+        return chain if chain else [1.0]
+
     async def _mix_audio_simple(self, subtitles: List[Dict], video_name: str, output_path: str) -> str:
         """
         简化的音频合并方法
@@ -732,10 +803,37 @@ class VideoTranslationClient:
                     
                     # 3. 时长对齐处理
                     if tts_duration_ms > subtitle_duration_ms:
-                        # TTS时长超过字幕时长，加快播放
+                        # TTS时长超过字幕时长，需要加快播放
                         speedup_ratio = tts_duration_ms / subtitle_duration_ms
-                        tts_audio = tts_audio.speedup(playback_speed=speedup_ratio)
-                        logger.info(f"✅ 字幕{i+1} 加速{speedup_ratio:.2f}x: {tts_duration_ms/1000:.2f}s → {len(tts_audio)/1000:.2f}s")
+                        original_duration = len(tts_audio)
+                        
+                        # 当加速比例小于1.03时，直接截断而不加速（差异太小）
+                        if speedup_ratio < 1.03:
+                            tts_audio = tts_audio[:int(subtitle_duration_ms)]
+                            logger.info(f"✅ 字幕{i+1} 微调截断: {original_duration/1000:.2f}s → {len(tts_audio)/1000:.2f}s (比例{speedup_ratio:.3f}x)")
+                        else:
+                            # 使用 ffmpeg-python 进行加速（保持音高不变，比 pydub.speedup 更稳定）
+                            temp_spedup_path = None
+                            try:
+                                if FFMPEG_AVAILABLE:
+                                    temp_spedup_path = self._speedup_audio_ffmpeg(generated_audio_path, speedup_ratio)
+                                    tts_audio = AudioSegment.from_file(temp_spedup_path)
+                                    logger.info(f"✅ 字幕{i+1} ffmpeg加速{speedup_ratio:.2f}x: {original_duration/1000:.2f}s → {len(tts_audio)/1000:.2f}s")
+                                else:
+                                    # ffmpeg-python 不可用，使用截断作为后备方案
+                                    logger.warning(f"⚠️ 字幕{i+1} ffmpeg不可用，使用截断方案")
+                                    tts_audio = tts_audio[:int(subtitle_duration_ms)]
+                            except Exception as e:
+                                # ffmpeg 加速失败，回退到截断方案
+                                logger.warning(f"⚠️ 字幕{i+1} ffmpeg加速失败: {str(e)}，使用截断方案")
+                                tts_audio = AudioSegment.from_file(generated_audio_path)[:int(subtitle_duration_ms)]
+                            finally:
+                                # 清理临时文件
+                                if temp_spedup_path and os.path.exists(temp_spedup_path):
+                                    try:
+                                        os.remove(temp_spedup_path)
+                                    except:
+                                        pass
                     elif tts_duration_ms < subtitle_duration_ms:
                         # TTS时长不足，在尾部用静音补足
                         silence_duration_ms = subtitle_duration_ms - tts_duration_ms
@@ -1030,8 +1128,31 @@ class VideoTranslationClient:
 if __name__ == "__main__":
     # 创建命令行参数解析器
     parser = argparse.ArgumentParser(description="Video Translation Program")
-    parser.add_argument("--input_video", required=True, help="Input Video File Path")   
+    parser.add_argument("--input_video", required=False, help="Input Video File Path")   
     args = parser.parse_args()
     
+    # 如果没有提供视频文件，提示用户输入或显示帮助
+    if not args.input_video:
+        print("🎬 视频翻译程序")
+        print("请提供视频文件路径:")
+        print("  python main.py --input_video /path/to/your/video.mp4")
+        print("\n或者直接输入视频文件路径:")
+        
+        try:
+            video_path = input("视频文件路径: ").strip()
+            if not video_path:
+                print("❌ 未提供视频文件路径，程序退出")
+                exit(1)
+            args.input_video = video_path
+        except (KeyboardInterrupt, EOFError):
+            print("\n👋 程序已取消")
+            exit(0)
+    
+    # 检查文件是否存在
+    if not os.path.exists(args.input_video):
+        print(f"❌ 视频文件不存在: {args.input_video}")
+        exit(1)
+    
+    print(f"🚀 开始处理视频: {args.input_video}")
     video_translation_client = VideoTranslationClient()
     asyncio.run(video_translation_client.process_video(args.input_video))
