@@ -24,6 +24,9 @@ from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from langchain_ollama import ChatOllama
 from langchain_core.messages import HumanMessage, SystemMessage
 
+# Pydantic for structured output
+from pydantic import BaseModel, Field
+
 from config import settings
 from services.translation_config import TranslationConfig
 from services.translation_templates import (
@@ -33,6 +36,162 @@ from services.translation_templates import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+# ========== 颜色日志辅助函数 ==========
+
+class LogColors:
+    """ANSI 颜色代码"""
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
+    
+    # 前景色
+    RED = "\033[31m"
+    GREEN = "\033[32m"
+    YELLOW = "\033[33m"
+    BLUE = "\033[34m"
+    MAGENTA = "\033[35m"
+    CYAN = "\033[36m"
+    WHITE = "\033[37m"
+    
+    # 高亮前景色
+    BRIGHT_RED = "\033[91m"
+    BRIGHT_GREEN = "\033[92m"
+    BRIGHT_YELLOW = "\033[93m"
+    BRIGHT_BLUE = "\033[94m"
+    BRIGHT_MAGENTA = "\033[95m"
+    BRIGHT_CYAN = "\033[96m"
+
+def _color_text(text: str, color: str) -> str:
+    """给文本添加颜色"""
+    if TranslationConfig.DEBUG_LOG_USE_COLOR:
+        return f"{color}{text}{LogColors.RESET}"
+    return text
+
+def _format_log_content(content: str) -> str:
+    """格式化日志内容（不截断）"""
+    max_len = TranslationConfig.DEBUG_LOG_MAX_LENGTH
+    if max_len > 0 and len(content) > max_len:
+        return content[:max_len] + "..."
+    return content
+
+def _log_step(step_name: str, step_num: int, total: int = 3):
+    """记录步骤日志"""
+    step_colors = {
+        1: LogColors.BRIGHT_CYAN,
+        2: LogColors.BRIGHT_YELLOW,
+        3: LogColors.BRIGHT_GREEN,
+    }
+    color = step_colors.get(step_num, LogColors.WHITE)
+    logger.info(_color_text(f"    {'─'*40}", LogColors.BLUE))
+    logger.info(_color_text(f"    📋 Step {step_num}/{total}: {step_name}", color))
+    logger.info(_color_text(f"    {'─'*40}", LogColors.BLUE))
+
+def _log_prompt(role: str, content: str):
+    """记录提示词日志"""
+    role_colors = {
+        "System": LogColors.BRIGHT_MAGENTA,
+        "Human": LogColors.BRIGHT_CYAN,
+    }
+    color = role_colors.get(role, LogColors.WHITE)
+    formatted_content = _format_log_content(content)
+    
+    logger.info(_color_text(f"    ┌─ {role} Prompt ─────────────────────", color))
+    for line in formatted_content.split('\n'):
+        logger.info(_color_text(f"    │ {line}", color))
+    logger.info(_color_text(f"    └{'─'*45}", color))
+
+def _log_response(step_name: str, content: str):
+    """记录响应日志"""
+    formatted_content = _format_log_content(content)
+    logger.info(_color_text(f"    ┌─ {step_name} 响应 ─────────────────────", LogColors.BRIGHT_GREEN))
+    for line in formatted_content.split('\n'):
+        logger.info(_color_text(f"    │ {line}", LogColors.GREEN))
+    logger.info(_color_text(f"    └{'─'*45}", LogColors.BRIGHT_GREEN))
+
+
+# ========== Pydantic 结构化输出模型 ==========
+
+class TranslationItem(BaseModel):
+    """单条翻译结果"""
+    id: int = Field(description="字幕序号")
+    text: str = Field(description="中文翻译")
+
+class BatchTranslationResult(BaseModel):
+    """批量翻译结果"""
+    translations: List[TranslationItem] = Field(description="翻译结果列表")
+
+# ========== 批量三步翻译法提示模板 ==========
+
+# 第一步：翻译
+BATCH_STEP1_TRANSLATE_PROMPT = """你是专业的英中翻译专家。请将以下英文字幕翻译成中文。
+
+待翻译字幕:
+{subtitles}
+
+要求:
+1. 翻译成自然流畅的中文
+2. 保持原文含义完整准确
+3. 必须翻译全部 {count} 条"""
+
+# 第二步：反思
+BATCH_STEP2_REFLECT_PROMPT = """你是翻译质量评估专家。请对以下翻译结果进行反思评估。
+
+原文:
+{originals}
+
+翻译结果:
+{translations}
+
+请评估并指出每条翻译的问题:
+1. 是否自然流畅？是否符合中文表达习惯？
+2. 是否有更好的中文表达方式？
+3. 句子长度是否合适？是否需要精简？
+
+输出格式: 每条一行，指出需要改进的地方"""
+
+# 第三步：优化
+BATCH_STEP3_OPTIMIZE_PROMPT = """你是专业的英中翻译专家。请基于反思意见优化翻译。
+
+原文:
+{originals}
+
+初次翻译:
+{translations}
+
+反思意见:
+{reflections}
+
+请输出优化后的最终翻译:
+1. 调整句式结构，使其更符合中文习惯
+2. 优化词汇选择，使用更地道的中文表达
+3. 控制句子长度，保持简洁明了
+4. 必须输出全部 {count} 条优化翻译"""
+
+# 批量翻译提示模板（文本格式，备用）
+BATCH_TRANSLATION_PROMPT = """你是专业的英中翻译专家。请翻译以下全部字幕。
+
+## 待翻译字幕（共{count}条，必须全部翻译）:
+{subtitles}
+
+## 要求:
+- 翻译成自然流畅的中文
+- 必须翻译所有{count}条，从[1]到[{count}]
+- 每行格式: [序号] 译文
+
+## 输出（直接开始，不要解释）:
+"""
+
+# 批量翻译提示模板（JSON 结构化输出）- 简单模式备用
+BATCH_TRANSLATION_JSON_PROMPT = """你是专业的英中翻译专家。请将以下英文字幕翻译成中文。
+
+待翻译字幕:
+{subtitles}
+
+要求:
+1. 翻译成自然流畅的中文
+2. 必须翻译全部 {count} 条
+3. 保持简洁，适合字幕显示"""
 
 
 class ContextManager:
@@ -97,7 +256,14 @@ class TranslationService:
     def __init__(self):
         # 初始化配置
         self.api_type = settings.TRANSLATION_PROVIDER.lower()
-        self.model = settings.OLLAMA_MODEL if self.api_type == "ollama" else settings.DEEPSEEK_MODEL
+        
+        # 根据 API 类型选择模型
+        if self.api_type == "ollama":
+            self.model = settings.OLLAMA_MODEL
+        elif self.api_type == "vllm":
+            self.model = settings.VLLM_MODEL
+        else:
+            self.model = settings.DEEPSEEK_MODEL
         
         # 上下文管理器
         self.context_manager = ContextManager()
@@ -127,10 +293,21 @@ class TranslationService:
                 model=self.model,
                 base_url=settings.OLLAMA_API_URL,
                 temperature=TranslationConfig.MODEL_TEMPERATURE,
-                num_predict=TranslationConfig.MODEL_MAX_TOKENS,  # 使用统一的参数名
+                num_predict=TranslationConfig.MODEL_MAX_TOKENS,
                 top_p=TranslationConfig.MODEL_TOP_P,
                 top_k=TranslationConfig.MODEL_TOP_K,
                 repeat_penalty=TranslationConfig.MODEL_REPEAT_PENALTY,
+            )
+        elif self.api_type == "vllm":
+            # vLLM 使用 OpenAI 兼容 API
+            from langchain_openai import ChatOpenAI
+            self.llm = ChatOpenAI(
+                model=self.model,
+                openai_api_base=f"{settings.VLLM_API_URL}/v1",
+                openai_api_key=settings.VLLM_API_KEY,
+                temperature=TranslationConfig.MODEL_TEMPERATURE,
+                max_tokens=TranslationConfig.MODEL_MAX_TOKENS,
+                top_p=TranslationConfig.MODEL_TOP_P,
             )
         else:
             # DeepSeek 使用自定义 HTTP 调用
@@ -171,9 +348,9 @@ class TranslationService:
             self.three_step_prompt = ChatPromptTemplate.from_messages([
                 ("system", """你是一位专业的英中翻译专家。请使用三步翻译法：
 
-1. **直译**：先进行逐字逐句的直译
-2. **意译**：基于直译结果，调整为自然流畅的中文表达
-3. **润色**：最终优化，确保译文准确、自然、简洁
+1. **翻译**：先进行准确的翻译
+2. **反思**：评估翻译是否自然流畅，符合中文表达习惯
+3. **优化**：根据反思意见进行最终优化
 
 ## 上下文信息：
 {previous_context}
@@ -181,7 +358,7 @@ class TranslationService:
 ## 术语对照：
 {terminology_dict}
 
-请按照三步法翻译以下内容，只输出最终的润色结果："""),
+请按照三步法翻译以下内容，只输出最终的优化结果："""),
                 ("human", "{text}")
             ])
     
@@ -250,13 +427,14 @@ class TranslationService:
                 raise Exception(f"DeepSeek API error: {response.status}")
     
     async def translate_single(self, text: str, use_context: bool = True) -> str:
-        """翻译单个文本"""
+        """翻译单个文本 - 使用三步翻译法"""
         try:
-            if self.api_type == "ollama":
-                # 使用 LangChain 链
-                if use_context and TranslationConfig.ENABLE_THREE_STEP_TRANSLATION:
-                    result = await self.three_step_chain.ainvoke(text)
-                elif use_context:
+            if self.api_type in ("ollama", "vllm") and use_context and TranslationConfig.ENABLE_THREE_STEP_TRANSLATION:
+                # 真正的三步翻译法：3次独立请求
+                result = await self._translate_single_three_step(text)
+            elif self.api_type in ("ollama", "vllm"):
+                # 简单翻译模式
+                if use_context:
                     result = await self.contextual_chain.ainvoke(text)
                 else:
                     result = await self.simple_chain.ainvoke({"text": text})
@@ -286,8 +464,62 @@ class TranslationService:
             logger.error(f"翻译失败: {e}")
             return f"翻译失败: {str(e)}"
     
+    async def _translate_single_three_step(self, text: str) -> str:
+        """
+        单条三步翻译法：发送3次独立请求
+        
+        1. 翻译
+        2. 反思
+        3. 优化
+        """
+        context = self.context_manager.get_context_summary()
+        terms = self.context_manager.get_terminology_dict_str()
+        
+        # ========== 第一步：翻译 ==========
+        step1_prompt = f"""你是专业的英中翻译专家。请将以下英文翻译成中文。
+
+上下文: {context}
+术语对照: {terms}
+
+原文: {text}
+
+请翻译成自然流畅的中文，只输出翻译结果："""
+        
+        first_translation = await self.simple_chain.ainvoke({"text": step1_prompt})
+        first_translation = self._strip_thinking_tags(first_translation).strip()
+        
+        # ========== 第二步：反思 ==========
+        step2_prompt = f"""你是翻译质量评估专家。请评估以下翻译的质量。
+
+原文: {text}
+翻译: {first_translation}
+
+请评估:
+1. 是否自然流畅？是否符合中文表达习惯？
+2. 是否有更好的中文表达方式？
+3. 长度是否合适？
+
+请指出需要改进的地方："""
+        
+        reflection = await self.simple_chain.ainvoke({"text": step2_prompt})
+        reflection = self._strip_thinking_tags(reflection).strip()
+        
+        # ========== 第三步：优化 ==========
+        step3_prompt = f"""你是专业的英中翻译专家。请基于反思意见优化翻译。
+
+原文: {text}
+初次翻译: {first_translation}
+反思意见: {reflection}
+
+请输出优化后的最终翻译（只输出翻译结果，不要解释）："""
+        
+        optimized = await self.simple_chain.ainvoke({"text": step3_prompt})
+        optimized = self._strip_thinking_tags(optimized).strip()
+        
+        return optimized
+    
     async def translate_batch(self, texts: List[str], use_context: bool = True) -> List[str]:
-        """批量翻译"""
+        """批量翻译（逐条模式）"""
         results = []
         for text in texts:
             result = await self.translate_single(text, use_context)
@@ -295,6 +527,496 @@ class TranslationService:
             # 添加小延迟避免API限制
             await asyncio.sleep(TranslationConfig.BATCH_DELAY)
         return results
+    
+    def _strip_thinking_tags(self, text: str) -> str:
+        """去除 LLM 输出中的思考链标签 <think>...</think>"""
+        # 移除 <think>...</think> 标签及其内容
+        result = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+        return result.strip()
+    
+    def _parse_batch_translation_result(self, result: str, expected_count: int) -> Dict[int, str]:
+        """
+        解析批量翻译结果
+        
+        格式: [序号] 译文
+        返回: {序号: 译文} 字典
+        """
+        # 先去除思考链
+        result = self._strip_thinking_tags(result)
+        
+        translations = {}
+        
+        # 匹配 [序号] 译文 格式
+        pattern = r'\[(\d+)\]\s*(.+?)(?=\[\d+\]|$)'
+        matches = re.findall(pattern, result, re.DOTALL)
+        
+        for idx_str, text in matches:
+            try:
+                idx = int(idx_str)
+                # 清理文本：去除前后空白和多余换行
+                clean_text = text.strip()
+                # 只取第一行（防止解析到下一条的内容）
+                clean_text = clean_text.split('\n')[0].strip()
+                if clean_text:
+                    translations[idx] = clean_text
+            except ValueError:
+                continue
+        
+        # 检查完整性
+        if len(translations) < expected_count:
+            logger.warning(f"批量翻译解析不完整: 期望 {expected_count} 条，实际 {len(translations)} 条")
+        
+        return translations
+    
+    async def _translate_batch_structured(self, batch_indices: List[int], subtitles: List[Dict[str, Any]]) -> Dict[int, str]:
+        """
+        使用三步翻译法 + Pydantic 结构化输出进行批量翻译
+        
+        三步翻译流程:
+        1. 翻译 - 准确翻译
+        2. 反思 - 评估翻译质量，指出问题
+        3. 优化 - 基于反思结果优化翻译
+        
+        返回: {本地序号: 译文} 字典
+        """
+        # 构造批量输入
+        batch_texts = []
+        for local_idx, global_idx in enumerate(batch_indices, 1):
+            subtitle = subtitles[global_idx]
+            original_text = subtitle.get('original_text', subtitle.get('text', ''))
+            batch_texts.append(f"{local_idx}. {original_text}")
+        
+        input_text = "\n".join(batch_texts)
+        count = len(batch_indices)
+        
+        if self.api_type in ("ollama", "vllm"):
+            # 创建支持结构化输出的 LLM
+            if self.api_type == "ollama":
+                batch_llm = ChatOllama(
+                    model=self.model,
+                    base_url=settings.OLLAMA_API_URL,
+                    temperature=TranslationConfig.MODEL_TEMPERATURE,
+                    num_predict=TranslationConfig.BATCH_TRANSLATION_MAX_TOKENS,
+                    top_p=TranslationConfig.MODEL_TOP_P,
+                    top_k=TranslationConfig.MODEL_TOP_K,
+                    repeat_penalty=TranslationConfig.MODEL_REPEAT_PENALTY,
+                    format="json",
+                )
+            else:  # vllm
+                from langchain_openai import ChatOpenAI
+                batch_llm = ChatOpenAI(
+                    model=self.model,
+                    openai_api_base=f"{settings.VLLM_API_URL}/v1",
+                    openai_api_key=settings.VLLM_API_KEY,
+                    temperature=TranslationConfig.MODEL_TEMPERATURE,
+                    max_tokens=TranslationConfig.BATCH_TRANSLATION_MAX_TOKENS,
+                    top_p=TranslationConfig.MODEL_TOP_P,
+                    model_kwargs={"response_format": {"type": "json_object"}},
+                )
+            structured_llm = batch_llm.with_structured_output(BatchTranslationResult)
+            
+            # ========== 第一步：翻译 ==========
+            if TranslationConfig.DEBUG_LOG_PROMPTS:
+                _log_step("初次翻译", 1, 3)
+            else:
+                logger.info(f"    📝 Step 1/3: 初次翻译...")
+            
+            step1_prompt = ChatPromptTemplate.from_messages([
+                ("system", "你是专业的英中翻译专家。"),
+                ("human", BATCH_STEP1_TRANSLATE_PROMPT)
+            ])
+            step1_chain = step1_prompt | structured_llm
+            
+            # 调试日志：打印请求提示词
+            if TranslationConfig.DEBUG_LOG_PROMPTS:
+                full_prompt = BATCH_STEP1_TRANSLATE_PROMPT.format(subtitles=input_text, count=count)
+                _log_prompt("System", "你是专业的英中翻译专家。")
+                _log_prompt("Human", full_prompt)
+            
+            step1_result = await step1_chain.ainvoke({
+                "subtitles": input_text,
+                "count": count
+            })
+            
+            # 调试日志：打印响应内容
+            if TranslationConfig.DEBUG_LOG_RESPONSES:
+                if step1_result and hasattr(step1_result, 'translations'):
+                    result_text = "\n".join([f"{t.id}. {t.text}" for t in step1_result.translations])
+                    _log_response("Step1", f"获得 {len(step1_result.translations)} 条翻译:\n{result_text}")
+            
+            # 解析初次翻译结果
+            first_translations = {}
+            if step1_result and hasattr(step1_result, 'translations'):
+                for item in step1_result.translations:
+                    if 1 <= item.id <= count:
+                        first_translations[item.id] = item.text
+            
+            # 如果翻译失败，直接返回
+            if len(first_translations) < count * 0.5:
+                logger.warning(f"    ⚠️ 翻译结果不完整 ({len(first_translations)}/{count})，跳过后续步骤")
+                return first_translations
+            
+            # 构造翻译结果文本
+            translations_text = "\n".join([f"{i}. {first_translations.get(i, '[缺失]')}" for i in range(1, count + 1)])
+            
+            # ========== 第二步：反思 ==========
+            if TranslationConfig.DEBUG_LOG_PROMPTS:
+                _log_step("反思评估", 2, 3)
+            else:
+                logger.info(f"    🔍 Step 2/3: 反思评估...")
+            
+            # 反思使用普通 LLM（不需要结构化输出）
+            if self.api_type == "ollama":
+                reflect_llm = ChatOllama(
+                    model=self.model,
+                    base_url=settings.OLLAMA_API_URL,
+                    temperature=0.3,  # 稍高温度鼓励批判性思考
+                    num_predict=TranslationConfig.BATCH_TRANSLATION_MAX_TOKENS,
+                )
+            else:  # vllm
+                from langchain_openai import ChatOpenAI
+                reflect_llm = ChatOpenAI(
+                    model=self.model,
+                    openai_api_base=f"{settings.VLLM_API_URL}/v1",
+                    openai_api_key=settings.VLLM_API_KEY,
+                    temperature=0.3,
+                    max_tokens=TranslationConfig.BATCH_TRANSLATION_MAX_TOKENS,
+                )
+            
+            step2_prompt = ChatPromptTemplate.from_messages([
+                ("system", "你是翻译质量评估专家。请批判性地评估翻译质量。"),
+                ("human", BATCH_STEP2_REFLECT_PROMPT)
+            ])
+            step2_chain = step2_prompt | reflect_llm | StrOutputParser()
+            
+            # 调试日志：打印反思请求
+            if TranslationConfig.DEBUG_LOG_PROMPTS:
+                full_prompt = BATCH_STEP2_REFLECT_PROMPT.format(
+                    originals=input_text, 
+                    translations=translations_text,
+                    count=count
+                )
+                _log_prompt("System", "你是翻译质量评估专家。请批判性地评估翻译质量。")
+                _log_prompt("Human", full_prompt)
+            
+            reflections = await step2_chain.ainvoke({
+                "originals": input_text,
+                "translations": translations_text,
+                "count": count
+            })
+            
+            # 去除思考链标签
+            reflections = self._strip_thinking_tags(reflections)
+            
+            # 调试日志：打印反思响应
+            if TranslationConfig.DEBUG_LOG_RESPONSES:
+                _log_response("Step2", reflections)
+            
+            # ========== 第三步：优化 ==========
+            if TranslationConfig.DEBUG_LOG_PROMPTS:
+                _log_step("优化翻译", 3, 3)
+            else:
+                logger.info(f"    ✨ Step 3/3: 优化翻译...")
+            
+            step3_prompt = ChatPromptTemplate.from_messages([
+                ("system", "你是专业的英中翻译专家。请基于反思意见输出最优翻译。"),
+                ("human", BATCH_STEP3_OPTIMIZE_PROMPT)
+            ])
+            step3_chain = step3_prompt | structured_llm
+            
+            # 调试日志：打印优化请求
+            if TranslationConfig.DEBUG_LOG_PROMPTS:
+                full_prompt = BATCH_STEP3_OPTIMIZE_PROMPT.format(
+                    originals=input_text,
+                    translations=translations_text,
+                    reflections=reflections,
+                    count=count
+                )
+                _log_prompt("System", "你是专业的英中翻译专家。请基于反思意见输出最优翻译。")
+                _log_prompt("Human", full_prompt)
+            
+            step3_result = await step3_chain.ainvoke({
+                "originals": input_text,
+                "translations": translations_text,
+                "reflections": reflections,
+                "count": count
+            })
+            
+            # 调试日志：打印优化响应
+            if TranslationConfig.DEBUG_LOG_RESPONSES:
+                if step3_result and hasattr(step3_result, 'translations'):
+                    result_text = "\n".join([f"{t.id}. {t.text}" for t in step3_result.translations])
+                    _log_response("Step3", f"获得 {len(step3_result.translations)} 条优化翻译:\n{result_text}")
+            
+            # 解析最终优化结果
+            translations = {}
+            if step3_result and hasattr(step3_result, 'translations'):
+                for item in step3_result.translations:
+                    if 1 <= item.id <= count:
+                        translations[item.id] = item.text
+            
+            # 如果优化结果不完整，用初次翻译结果补充
+            for i in range(1, count + 1):
+                if i not in translations and i in first_translations:
+                    translations[i] = first_translations[i]
+            
+            return translations
+        else:
+            # DeepSeek 使用传统方式（简化版三步）
+            prompt = BATCH_TRANSLATION_PROMPT.format(subtitles=input_text, count=count)
+            result = await self._make_deepseek_request(prompt)
+            return self._parse_batch_translation_result(result, count)
+    
+    async def _translate_batch_once(self, batch_indices: List[int], subtitles: List[Dict[str, Any]], 
+                                    translated_subtitles: List[Dict[str, Any]], 
+                                    use_structured: bool = True) -> tuple:
+        """
+        执行一次批量翻译
+        
+        参数:
+            batch_indices: 要翻译的字幕索引
+            subtitles: 原始字幕列表
+            translated_subtitles: 翻译结果列表（会被修改）
+            use_structured: 是否使用结构化输出
+        
+        返回: (成功数, 失败的索引列表)
+        """
+        success_count = 0
+        failed_indices = []
+        
+        try:
+            if use_structured and self.api_type in ("ollama", "vllm"):
+                # 使用结构化输出
+                translations = await self._translate_batch_structured(batch_indices, subtitles)
+            else:
+                # 使用传统文本解析
+                batch_texts = []
+                for local_idx, global_idx in enumerate(batch_indices, 1):
+                    subtitle = subtitles[global_idx]
+                    original_text = subtitle.get('original_text', subtitle.get('text', ''))
+                    batch_texts.append(f"[{local_idx}] {original_text}")
+                
+                input_text = "\n".join(batch_texts)
+                prompt = BATCH_TRANSLATION_PROMPT.format(subtitles=input_text, count=len(batch_indices))
+                
+                if self.api_type == "ollama":
+                    batch_llm = ChatOllama(
+                        model=self.model,
+                        base_url=settings.OLLAMA_API_URL,
+                        temperature=TranslationConfig.MODEL_TEMPERATURE,
+                        num_predict=TranslationConfig.BATCH_TRANSLATION_MAX_TOKENS,
+                        top_p=TranslationConfig.MODEL_TOP_P,
+                        top_k=TranslationConfig.MODEL_TOP_K,
+                        repeat_penalty=TranslationConfig.MODEL_REPEAT_PENALTY,
+                    )
+                    messages = [HumanMessage(content=prompt)]
+                    response = await batch_llm.ainvoke(messages)
+                    result = response.content
+                elif self.api_type == "vllm":
+                    from langchain_openai import ChatOpenAI
+                    batch_llm = ChatOpenAI(
+                        model=self.model,
+                        openai_api_base=f"{settings.VLLM_API_URL}/v1",
+                        openai_api_key=settings.VLLM_API_KEY,
+                        temperature=TranslationConfig.MODEL_TEMPERATURE,
+                        max_tokens=TranslationConfig.BATCH_TRANSLATION_MAX_TOKENS,
+                    )
+                    messages = [HumanMessage(content=prompt)]
+                    response = await batch_llm.ainvoke(messages)
+                    result = response.content
+                else:
+                    result = await self._make_deepseek_request(prompt)
+                
+                translations = self._parse_batch_translation_result(result, len(batch_indices))
+        except Exception as e:
+            logger.warning(f"结构化输出失败，回退到文本解析: {e}")
+            # 回退到传统方式
+            batch_texts = []
+            for local_idx, global_idx in enumerate(batch_indices, 1):
+                subtitle = subtitles[global_idx]
+                original_text = subtitle.get('original_text', subtitle.get('text', ''))
+                batch_texts.append(f"[{local_idx}] {original_text}")
+            
+            input_text = "\n".join(batch_texts)
+            prompt = BATCH_TRANSLATION_PROMPT.format(subtitles=input_text, count=len(batch_indices))
+            
+            if self.api_type == "ollama":
+                batch_llm = ChatOllama(
+                    model=self.model,
+                    base_url=settings.OLLAMA_API_URL,
+                    temperature=TranslationConfig.MODEL_TEMPERATURE,
+                    num_predict=TranslationConfig.BATCH_TRANSLATION_MAX_TOKENS,
+                )
+            elif self.api_type == "vllm":
+                from langchain_openai import ChatOpenAI
+                batch_llm = ChatOpenAI(
+                    model=self.model,
+                    openai_api_base=f"{settings.VLLM_API_URL}/v1",
+                    openai_api_key=settings.VLLM_API_KEY,
+                    temperature=TranslationConfig.MODEL_TEMPERATURE,
+                    max_tokens=TranslationConfig.BATCH_TRANSLATION_MAX_TOKENS,
+                )
+            else:
+                result = await self._make_deepseek_request(prompt)
+                translations = self._parse_batch_translation_result(result, len(batch_indices))
+                batch_llm = None
+            
+            if batch_llm:
+                messages = [HumanMessage(content=prompt)]
+                response = await batch_llm.ainvoke(messages)
+                translations = self._parse_batch_translation_result(response.content, len(batch_indices))
+        
+        # 应用翻译结果
+        for local_idx, global_idx in enumerate(batch_indices, 1):
+            if local_idx in translations:
+                translated_subtitles[global_idx] = subtitles[global_idx].copy()
+                original_text = subtitles[global_idx].get('original_text', subtitles[global_idx].get('text', ''))
+                translated_subtitles[global_idx]['original_text'] = original_text
+                translated_subtitles[global_idx]['text'] = translations[local_idx]
+                translated_subtitles[global_idx]['translation_failed'] = False
+                success_count += 1
+            else:
+                failed_indices.append(global_idx)
+        
+        return success_count, failed_indices
+    
+    async def translate_subtitles_batch_mode(self, subtitles: List[Dict[str, Any]], 
+                                            batch_size: int = None,
+                                            progress_callback: Optional[Callable] = None) -> List[Dict[str, Any]]:
+        """
+        自适应批量翻译字幕
+        
+        特性:
+        - 自动根据成功率调整批次大小
+        - 失败的部分自动拆分成小批次重试
+        - 最终回退到逐条翻译
+        
+        参数:
+            subtitles: 字幕列表
+            batch_size: 初始批大小（默认使用配置值）
+            progress_callback: 进度回调
+        
+        返回:
+            翻译后的字幕列表
+        """
+        if batch_size is None:
+            batch_size = TranslationConfig.BATCH_TRANSLATION_SIZE
+        
+        total = len(subtitles)
+        translated_subtitles = [s.copy() for s in subtitles]  # 深复制
+        
+        # 找出需要翻译的字幕索引
+        pending_indices = []
+        for i, subtitle in enumerate(subtitles):
+            if not self._is_translation_successful(subtitle):
+                pending_indices.append(i)
+        
+        if not pending_indices:
+            logger.info("✅ 所有字幕已翻译，无需处理")
+            return translated_subtitles
+        
+        use_structured = TranslationConfig.USE_STRUCTURED_OUTPUT
+        mode_str = "结构化JSON" if use_structured else "文本解析"
+        logger.info(f"📝 自适应批量翻译: 共 {total} 条，待翻译 {len(pending_indices)} 条，初始批次 {batch_size}，模式: {mode_str}")
+        
+        # 自适应批量翻译
+        current_batch_size = min(batch_size, len(pending_indices))
+        remaining_indices = pending_indices.copy()
+        total_success = 0
+        batch_num = 0
+        
+        # 最小批次阈值：低于此值时切换到逐条翻译
+        min_batch_threshold = max(3, batch_size // 10)  # 最小为3，或初始批次的1/10
+        
+        while remaining_indices and current_batch_size >= min_batch_threshold:
+            batch_num += 1
+            # 取当前批次
+            batch_indices = remaining_indices[:current_batch_size]
+            
+            logger.info(f"🔄 批次 {batch_num}: 处理 {len(batch_indices)} 条 (批次大小: {current_batch_size})")
+            
+            try:
+                success_count, failed_indices = await self._translate_batch_once(
+                    batch_indices, subtitles, translated_subtitles, use_structured=use_structured
+                )
+                
+                success_rate = success_count / len(batch_indices) if batch_indices else 0
+                logger.info(f"  ✅ 成功 {success_count}/{len(batch_indices)} ({success_rate*100:.1f}%)")
+                
+                # 移除成功的索引
+                successful_indices = [idx for idx in batch_indices if idx not in failed_indices]
+                for idx in successful_indices:
+                    if idx in remaining_indices:
+                        remaining_indices.remove(idx)
+                total_success += success_count
+                
+                # 根据成功率调整批次大小
+                if success_rate < 0.5:
+                    # 成功率低于50%，减半批次大小
+                    new_batch_size = max(min_batch_threshold, current_batch_size // 2)
+                    logger.info(f"  📉 成功率低，批次大小: {current_batch_size} → {new_batch_size}")
+                    current_batch_size = new_batch_size
+                elif success_rate >= 0.9 and current_batch_size < batch_size:
+                    # 成功率高于90%，可以尝试增大批次
+                    new_batch_size = min(batch_size, int(current_batch_size * 1.5))
+                    logger.info(f"  📈 成功率高，批次大小: {current_batch_size} → {new_batch_size}")
+                    current_batch_size = new_batch_size
+                
+            except Exception as e:
+                logger.error(f"  ❌ 批次失败: {e}")
+                # 出错时减半批次大小
+                new_batch_size = max(min_batch_threshold, current_batch_size // 2)
+                logger.info(f"  📉 异常发生，批次大小: {current_batch_size} → {new_batch_size}")
+                current_batch_size = new_batch_size
+            
+            # 进度回调
+            if progress_callback:
+                done = len(pending_indices) - len(remaining_indices)
+                progress = int(done / len(pending_indices) * 100)
+                await progress_callback(progress, f"批量翻译 {done}/{len(pending_indices)}")
+            
+            # 批次间延迟
+            await asyncio.sleep(0.3)
+        
+        # 剩余的用逐条方式处理
+        if remaining_indices:
+            logger.info(f"🔄 对剩余 {len(remaining_indices)} 条字幕进行逐条翻译...")
+            for i, global_idx in enumerate(remaining_indices):
+                try:
+                    original_text = subtitles[global_idx].get('original_text', subtitles[global_idx].get('text', ''))
+                    if original_text:
+                        translated_text = await self.translate_single(original_text, use_context=True)
+                        if not translated_text.startswith('翻译失败:'):
+                            translated_subtitles[global_idx]['original_text'] = original_text
+                            translated_subtitles[global_idx]['text'] = translated_text
+                            translated_subtitles[global_idx]['translation_failed'] = False
+                            if 'translation_error' in translated_subtitles[global_idx]:
+                                del translated_subtitles[global_idx]['translation_error']
+                            total_success += 1
+                            logger.info(f"  ✅ [{global_idx+1}] 成功")
+                        else:
+                            translated_subtitles[global_idx]['original_text'] = original_text
+                            translated_subtitles[global_idx]['translation_failed'] = True
+                            translated_subtitles[global_idx]['translation_error'] = translated_text
+                            logger.warning(f"  ❌ [{global_idx+1}] 失败")
+                except Exception as e:
+                    translated_subtitles[global_idx]['translation_failed'] = True
+                    translated_subtitles[global_idx]['translation_error'] = str(e)
+                    logger.warning(f"  ❌ [{global_idx+1}] 异常: {e}")
+                
+                # 进度回调
+                if progress_callback:
+                    done = len(pending_indices) - len(remaining_indices) + i + 1
+                    progress = int(done / len(pending_indices) * 100)
+                    await progress_callback(progress, f"逐条翻译 {i+1}/{len(remaining_indices)}")
+                
+                await asyncio.sleep(TranslationConfig.BATCH_DELAY)
+        
+        # 最终统计
+        final_failed = sum(1 for s in translated_subtitles if s.get('translation_failed', False))
+        logger.info(f"📊 翻译完成: 成功 {len(pending_indices) - final_failed}/{len(pending_indices)} 条")
+        
+        return translated_subtitles
     
     def _is_translation_successful(self, subtitle: Dict[str, Any]) -> bool:
         """
@@ -333,7 +1055,8 @@ class TranslationService:
 
     async def translate_subtitles(self, subtitles: List[Dict[str, Any]], 
                                 progress_callback: Optional[Callable] = None,
-                                max_retries: int = 3) -> List[Dict[str, Any]]:
+                                max_retries: int = 3,
+                                use_batch_mode: bool = None) -> List[Dict[str, Any]]:
         """
         翻译字幕列表，支持跳过已翻译和自动重试失败项
         
@@ -341,7 +1064,21 @@ class TranslationService:
             subtitles: 字幕列表
             progress_callback: 进度回调函数
             max_retries: 失败重试次数
+            use_batch_mode: 是否使用批量模式（None时使用配置值）
         """
+        # 判断是否使用批量模式
+        if use_batch_mode is None:
+            use_batch_mode = TranslationConfig.ENABLE_BATCH_TRANSLATION
+        
+        if use_batch_mode:
+            logger.info("📦 使用批量翻译模式")
+            return await self.translate_subtitles_batch_mode(
+                subtitles, 
+                progress_callback=progress_callback
+            )
+        
+        # 逐条翻译模式
+        logger.info("📝 使用逐条翻译模式")
         translated_subtitles = []
         total = len(subtitles)
         skipped_count = 0

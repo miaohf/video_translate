@@ -26,11 +26,8 @@ try:
 except ImportError:
     app_config = None
 
-# 配置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+# 日志配置已在 app.py 入口文件中统一设置
+# 这里只获取 logger 实例
 logger = logging.getLogger(__name__)
 
 class VideoTranslationClient:
@@ -722,6 +719,114 @@ class VideoTranslationClient:
             chain.append(remaining)
         
         return chain if chain else [1.0]
+    
+    async def _regenerate_single_tts(self, subtitle: Dict, index: int, temp_dir: str, 
+                                     tts_server_url: str, video_name: str) -> Optional[str]:
+        """
+        为单个字幕重新生成TTS音频
+        
+        参数:
+            subtitle: 字幕数据
+            index: 字幕索引
+            temp_dir: TTS音频临时目录
+            tts_server_url: TTS服务器地址
+            video_name: 视频名称
+            
+        返回:
+            生成的音频文件路径，失败返回 None
+        """
+        try:
+            segment_path = os.path.join(temp_dir, f"segment_{index:04d}.wav")
+            
+            # 获取要转换的文本
+            text_to_convert = subtitle.get("translated_text") or subtitle.get("text")
+            if not text_to_convert:
+                logger.warning(f"第 {index+1} 个字幕没有文本内容，无法重新生成")
+                return None
+            
+            # 准备请求数据
+            data = {
+                "text": text_to_convert,
+                "temperature": 0.8,
+                "top_k": 50,
+                "top_p": 0.95,
+                "seed": 421 + index
+            }
+            
+            # 获取参考音频
+            reference_audio = subtitle.get("reference_audio", "")
+            if reference_audio:
+                # 检查参考音频是否存在于TTS服务器
+                # 如果是本地路径，需要先上传
+                if os.path.exists(reference_audio):
+                    # 上传参考音频到TTS服务器
+                    try:
+                        await self._upload_reference_audio_async(reference_audio, tts_server_url)
+                    except Exception as e:
+                        logger.warning(f"上传参考音频失败: {e}")
+                
+                data["prompt_speech_path"] = reference_audio
+                logger.info(f"🎵 使用参考音频重新生成: {reference_audio}")
+            else:
+                # 使用默认speaker
+                speaker = subtitle.get("speaker", "Unknown")
+                data["speaker"] = speaker
+                logger.info(f"🔊 使用默认speaker重新生成: {speaker}")
+            
+            # 发送请求到 TTS 服务器
+            session = await self.subtitle_processor.get_session()
+            async with session.post(f"{tts_server_url}/tts", json=data) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    logger.error(f"重新生成 TTS 音频失败: {error_text}")
+                    return None
+                
+                # 保存音频片段
+                with open(segment_path, "wb") as f:
+                    f.write(await response.read())
+                
+                # 检查生成的音频
+                from pydub import AudioSegment
+                audio = AudioSegment.from_file(segment_path)
+                if audio.duration_seconds < 0.05:
+                    logger.warning(f"重新生成的音频过短 ({audio.duration_seconds:.3f}s)")
+                    return None
+                
+                logger.info(f"✅ 重新生成TTS音频成功: {segment_path}, 时长={audio.duration_seconds:.2f}s")
+                return segment_path
+                
+        except Exception as e:
+            logger.error(f"重新生成TTS音频异常: {e}")
+            return None
+    
+    async def _upload_reference_audio_async(self, audio_path: str, tts_server_url: str):
+        """异步上传参考音频到TTS服务器"""
+        try:
+            if not os.path.exists(audio_path):
+                return
+            
+            filename = os.path.basename(audio_path)
+            
+            # 读取文件内容
+            with open(audio_path, 'rb') as f:
+                file_content = f.read()
+            
+            # 使用 aiohttp 上传
+            import aiohttp
+            from aiohttp import FormData
+            
+            data = FormData()
+            data.add_field('file', file_content, filename=filename, content_type='audio/wav')
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(f"{tts_server_url}/upload_prompt", data=data) as response:
+                    if response.status == 200:
+                        logger.debug(f"参考音频上传成功: {filename}")
+                    else:
+                        error_text = await response.text()
+                        logger.warning(f"参考音频上传失败: {error_text}")
+        except Exception as e:
+            logger.warning(f"上传参考音频异常: {e}")
 
     async def _mix_audio_simple(self, subtitles: List[Dict], video_name: str, output_path: str) -> str:
         """
@@ -776,12 +881,29 @@ class VideoTranslationClient:
             processed_count = 0
             total_subtitles = len(subtitles)
             
+            # 获取 TTS 服务器地址（用于重新生成缺失的音频）
+            tts_server_url = os.getenv("TTS_SERVER_URL", "http://localhost:8002")
+            temp_dir = os.path.join("temp", video_name, "tts_segments")
+            os.makedirs(temp_dir, exist_ok=True)
+            
             for i, subtitle in enumerate(subtitles):
                 try:
                     generated_audio_path = subtitle.get("generated_audio")
                     if not generated_audio_path or not os.path.exists(generated_audio_path):
-                        logger.warning(f"第 {i+1} 个字幕缺少生成的音频文件: {generated_audio_path}")
-                        continue
+                        logger.warning(f"第 {i+1} 个字幕缺少生成的音频文件: {generated_audio_path}，尝试重新生成...")
+                        
+                        # 尝试重新生成TTS音频
+                        regenerated_path = await self._regenerate_single_tts(
+                            subtitle, i, temp_dir, tts_server_url, video_name
+                        )
+                        
+                        if regenerated_path and os.path.exists(regenerated_path):
+                            logger.info(f"✅ 第 {i+1} 个字幕音频重新生成成功: {regenerated_path}")
+                            generated_audio_path = regenerated_path
+                            subtitle["generated_audio"] = regenerated_path
+                        else:
+                            logger.error(f"❌ 第 {i+1} 个字幕音频重新生成失败，跳过")
+                            continue
                     
                     # 加载TTS音频
                     tts_audio = AudioSegment.from_file(generated_audio_path)

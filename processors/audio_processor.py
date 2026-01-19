@@ -170,7 +170,7 @@ class AudioProcessor:
                 background_sources = ['drums', 'bass', 'other']
                 background = sum(sources[model.sources.index(source)] for source in background_sources)
                 
-                # 保存文件
+                # 保存文件 - 使用 Demucs 的 save_audio（需要 torchcodec）
                 logger.info("💾 保存分离后的音频文件...")
                 save_audio(vocals, vocals_path, model.samplerate)
                 save_audio(background, background_path, model.samplerate)
